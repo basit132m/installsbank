@@ -1,0 +1,54 @@
+<?php
+
+namespace App\Http\Controllers\Publisher;
+
+use App\Http\Controllers\Controller;
+use App\Models\Click;
+use App\Models\DailyEarning;
+use Carbon\Carbon;
+use Illuminate\Http\Request;
+
+class StatsController extends Controller
+{
+    public function index(Request $request)
+    {
+        $user = auth()->user();
+        $profile = $user->publisherProfile;
+
+        $period = $request->get('period', '7');
+        $startDate = match($period) {
+            '1' => today(),
+            '7' => now()->subDays(6),
+            '30' => now()->subDays(29),
+            '90' => now()->subDays(89),
+            default => now()->subDays(6),
+        };
+
+        $dailyStats = DailyEarning::where('user_id', $user->id)
+            ->whereBetween('date', [$startDate->toDateString(), today()->toDateString()])
+            ->orderBy('date')
+            ->get();
+
+        $totals = [
+            'clicks' => $dailyStats->sum('valid_clicks'),
+            'earnings' => $profile->payment_enabled ? $dailyStats->sum('earnings') : null,
+        ];
+
+        // Country breakdown aggregated
+        $countryAgg = [];
+        foreach ($dailyStats as $day) {
+            if ($day->country_breakdown) {
+                foreach ($day->country_breakdown as $code => $data) {
+                    $countryAgg[$code] = $countryAgg[$code] ?? ['code' => $code, 'clicks' => 0, 'earnings' => 0];
+                    $countryAgg[$code]['clicks'] += $data['clicks'] ?? 0;
+                    if ($profile->payment_enabled) {
+                        $countryAgg[$code]['earnings'] += $data['earnings'] ?? 0;
+                    }
+                }
+            }
+        }
+        arsort($countryAgg);
+
+        return view('publisher.stats', compact('dailyStats', 'totals', 'countryAgg', 'period', 'profile'));
+    }
+}
