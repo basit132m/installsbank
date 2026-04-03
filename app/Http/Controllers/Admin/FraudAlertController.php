@@ -4,24 +4,52 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\FraudAlert;
+use App\Models\User;
 use Illuminate\Http\Request;
 
 class FraudAlertController extends Controller
 {
     public function index(Request $request)
     {
-        $query = FraudAlert::with(['publisher', 'trackingLink']);
-        if ($request->filled('type')) {
-            $query->where('alert_type', $request->type);
-        }
-        if ($request->filled('resolved')) {
-            $query->where('is_resolved', $request->resolved === '1');
-        } else {
-            $query->where('is_resolved', false);
-        }
-        $alerts = $query->latest()->paginate(30);
-        $alertTypes = FraudAlert::distinct()->pluck('alert_type');
-        return view('admin.fraud.index', compact('alerts', 'alertTypes'));
+        $resolved = $request->get('resolved', '0') === '1';
+
+        // Group by publisher — one row per publisher
+        $publisherIds = FraudAlert::where('is_resolved', $resolved)
+            ->distinct()
+            ->pluck('user_id');
+
+        $publishers = User::whereIn('id', $publisherIds)
+            ->with(['publisherProfile'])
+            ->get()
+            ->map(function ($user) use ($resolved) {
+                $alerts = FraudAlert::where('user_id', $user->id)
+                    ->where('is_resolved', $resolved)
+                    ->get();
+
+                $user->fraud_total       = $alerts->count();
+                $user->fraud_occurrences = $alerts->sum('occurrences');
+                $user->fraud_types       = $alerts->groupBy('alert_type')
+                    ->map(fn($g) => $g->count())
+                    ->toArray();
+                $user->last_alert_at     = $alerts->max('created_at');
+                return $user;
+            })
+            ->sortByDesc('last_alert_at');
+
+        return view('admin.fraud.index', compact('publishers', 'resolved'));
+    }
+
+    public function show(User $user, Request $request)
+    {
+        $resolved = $request->get('resolved', '0') === '1';
+
+        $alerts = FraudAlert::where('user_id', $user->id)
+            ->where('is_resolved', $resolved)
+            ->with('trackingLink')
+            ->latest()
+            ->paginate(30);
+
+        return view('admin.fraud.show', compact('user', 'alerts', 'resolved'));
     }
 
     public function resolve(FraudAlert $fraudAlert)

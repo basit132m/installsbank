@@ -5,51 +5,87 @@
 @section('content')
 <div class="flex-between mb-4">
     <div style="display:flex;gap:8px;">
-        <a href="?resolved=0" class="btn {{ request('resolved', '0') === '0' ? 'btn-primary' : 'btn-ghost' }} btn-sm">Unresolved</a>
-        <a href="?resolved=1" class="btn {{ request('resolved') === '1' ? 'btn-primary' : 'btn-ghost' }} btn-sm">Resolved</a>
+        <a href="?resolved=0" class="btn {{ !$resolved ? 'btn-primary' : 'btn-ghost' }} btn-sm">Unresolved</a>
+        <a href="?resolved=1" class="btn {{ $resolved ? 'btn-primary' : 'btn-ghost' }} btn-sm">Resolved</a>
     </div>
+    @if(!$resolved)
     <form method="POST" action="{{ route('admin.fraud.resolve-all') }}" onsubmit="return confirm('Resolve all alerts?')">
         @csrf<button class="btn btn-success btn-sm">Resolve All</button>
     </form>
+    @endif
 </div>
 
 <div class="card">
+    @php
+    $typeColors = [
+        'duplicate_ip'   => ['bg'=>'#fef3c7','color'=>'#d97706','label'=>'Duplicate IP'],
+        'vpn_detected'   => ['bg'=>'#fee2e2','color'=>'#dc2626','label'=>'VPN'],
+        'proxy_detected' => ['bg'=>'#fee2e2','color'=>'#dc2626','label'=>'Proxy'],
+        'bot_detected'   => ['bg'=>'#ede9fe','color'=>'#7c3aed','label'=>'Bot'],
+        'traffic_spike'  => ['bg'=>'#cffafe','color'=>'#0891b2','label'=>'Traffic Spike'],
+    ];
+    @endphp
+
     <div class="table-wrap">
         <table>
-            <thead><tr><th>Publisher</th><th>Alert Type</th><th>IP</th><th>Country</th><th>Count</th><th>Detected</th><th>Action</th></tr></thead>
-            <tbody>
-                @forelse($alerts as $alert)
+            <thead>
                 <tr>
-                    <td><a href="{{ route('admin.publishers.show', $alert->publisher) }}" style="color:#01BF63;font-weight:600;">{{ $alert->publisher->name }}</a></td>
+                    <th>Publisher</th>
+                    <th>Alert Types</th>
+                    <th>Total Alerts</th>
+                    <th>Total Occurrences</th>
+                    <th>Last Alert</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                @forelse($publishers as $publisher)
+                <tr>
                     <td>
-                        @php $typeColors = ['duplicate_ip'=>'badge-warning','vpn_detected'=>'badge-danger','proxy_detected'=>'badge-danger','bot_detected'=>'badge-danger','traffic_spike'=>'badge-warning','fingerprint_spoof'=>'badge-danger','suspicious_pattern'=>'badge-warning']; @endphp
-                        <span class="badge {{ $typeColors[$alert->alert_type] ?? 'badge-gray' }}">{{ str_replace('_',' ',ucfirst($alert->alert_type)) }}</span>
+                        <div style="font-weight:700;font-size:14px;color:#111827;">{{ $publisher->name }}</div>
+                        <div style="font-size:12px;color:#9ca3af;">{{ $publisher->email }}</div>
                     </td>
-                    <td style="font-family:monospace;font-size:12px;">{{ $alert->ip_address ?? '—' }}</td>
-                    <td style="font-size:13px;">{{ $alert->country_code ?? '—' }}</td>
-                    <td><strong>{{ $alert->occurrences }}x</strong></td>
-                    <td style="color:#9ca3af;font-size:13px;">{{ $alert->created_at->diffForHumans() }}</td>
                     <td>
-                        @if(!$alert->is_resolved)
-                            <form method="POST" action="{{ route('admin.fraud.resolve', $alert) }}">@csrf<button class="btn btn-ghost btn-sm">Resolve</button></form>
-                        @else
-                            <span style="color:#9ca3af;font-size:12px;">Resolved</span>
-                        @endif
+                        <div style="display:flex;gap:4px;flex-wrap:wrap;">
+                            @foreach($publisher->fraud_types as $type => $count)
+                                @php $meta = $typeColors[$type] ?? ['bg'=>'#f3f4f6','color'=>'#6b7280','label'=>ucwords(str_replace('_',' ',$type))]; @endphp
+                                <span style="background:{{ $meta['bg'] }};color:{{ $meta['color'] }};padding:2px 8px;border-radius:10px;font-size:11px;font-weight:700;">
+                                    {{ $meta['label'] }} ({{ $count }})
+                                </span>
+                            @endforeach
+                        </div>
+                    </td>
+                    <td>
+                        <span style="font-size:18px;font-weight:800;color:#ef4444;">{{ number_format($publisher->fraud_total) }}</span>
+                    </td>
+                    <td>
+                        <span style="font-size:18px;font-weight:800;color:#f59e0b;">{{ number_format($publisher->fraud_occurrences) }}</span>
+                        <div style="font-size:11px;color:#9ca3af;">total hits</div>
+                    </td>
+                    <td style="font-size:13px;color:#9ca3af;">
+                        {{ $publisher->last_alert_at ? \Carbon\Carbon::parse($publisher->last_alert_at)->diffForHumans() : '—' }}
+                    </td>
+                    <td>
+                        <div style="display:flex;gap:6px;">
+                            <a href="{{ route('admin.fraud.show', [$publisher, 'resolved' => $resolved ? '1' : '0']) }}"
+                                class="btn btn-primary btn-sm">View Details</a>
+                            <a href="{{ route('admin.publishers.stats', $publisher) }}"
+                                class="btn btn-ghost btn-sm">Stats</a>
+                        </div>
                     </td>
                 </tr>
                 @empty
-                <tr><td colspan="7" style="text-align:center;padding:48px;color:#9ca3af;">
-                    @if(request('resolved') !== '1')
-                        <svg width="40" height="40" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="margin:0 auto 12px;display:block;color:#01BF63;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                        No unresolved fraud alerts
-                    @else
-                        No resolved alerts
-                    @endif
-                </td></tr>
+                <tr>
+                    <td colspan="6" style="text-align:center;padding:48px;color:#9ca3af;">
+                        <svg width="40" height="40" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="margin:0 auto 12px;display:block;color:#01BF63;">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                        {{ $resolved ? 'No resolved alerts' : 'No unresolved fraud alerts' }}
+                    </td>
+                </tr>
                 @endforelse
             </tbody>
         </table>
     </div>
-    {{ $alerts->links() }}
 </div>
 @endsection

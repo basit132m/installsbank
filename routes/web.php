@@ -92,6 +92,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin,manager'
     // Fraud alerts
     Route::prefix('fraud')->name('fraud.')->group(function () {
         Route::get('/', [Admin\FraudAlertController::class, 'index'])->name('index');
+        Route::get('/publisher/{user}', [Admin\FraudAlertController::class, 'show'])->name('show');
         Route::post('/{fraudAlert}/resolve', [Admin\FraudAlertController::class, 'resolve'])->name('resolve');
         Route::post('/resolve-all', [Admin\FraudAlertController::class, 'resolveAll'])->name('resolve-all');
     });
