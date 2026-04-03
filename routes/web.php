@@ -29,6 +29,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin,manager'
     Route::prefix('publishers')->name('publishers.')->group(function () {
         Route::get('/', [Admin\PublisherController::class, 'index'])->name('index');
         Route::get('/{user}', [Admin\PublisherController::class, 'show'])->name('show');
+        Route::get('/{user}/stats', [Admin\PublisherController::class, 'stats'])->name('stats');
         Route::post('/{user}/activate', [Admin\PublisherController::class, 'activate'])->name('activate');
         Route::post('/{user}/suspend', [Admin\PublisherController::class, 'suspend'])->name('suspend');
         Route::post('/{user}/divider', [Admin\PublisherController::class, 'updateDivider'])->name('update-divider');

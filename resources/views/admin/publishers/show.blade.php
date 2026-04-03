@@ -5,6 +5,7 @@
 @section('content')
 <div style="display:flex;gap:8px;align-items:center;margin-bottom:20px;">
     <a href="{{ route('admin.publishers.index') }}" class="btn btn-ghost btn-sm">← Back</a>
+    <a href="{{ route('admin.publishers.stats', $user) }}" class="btn btn-ghost btn-sm" style="color:#3b82f6;border-color:#3b82f6;">📊 Detailed Stats</a>
     <span class="badge {{ $user->status === 'active' ? 'badge-success' : ($user->status === 'pending' ? 'badge-warning' : 'badge-danger') }}">{{ ucfirst($user->status) }}</span>
     @if($user->status === 'pending')
         <form method="POST" action="{{ route('admin.publishers.activate', $user) }}" style="display:inline;">@csrf<button class="btn btn-success btn-sm">Activate Publisher</button></form>

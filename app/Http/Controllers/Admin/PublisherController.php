@@ -110,6 +110,79 @@ class PublisherController extends Controller
         return back()->with('success', 'Payment status updated.');
     }
 
+    public function stats(User $user, Request $request)
+    {
+        $period = $request->get('period', '7');
+        $startDate = match($period) {
+            '1'    => today(),
+            '7'    => now()->subDays(6),
+            '30'   => now()->subDays(29),
+            '90'   => now()->subDays(89),
+            'all'  => now()->subYears(10),
+            default => now()->subDays(6),
+        };
+
+        $baseQuery = fn() => Click::where('user_id', $user->id)
+            ->where('created_at', '>=', $startDate->startOfDay());
+
+        // Summary
+        $summary = [
+            'total_raw'    => ($baseQuery)()->count(),
+            'valid'        => ($baseQuery)()->where('is_counted', true)->count(),
+            'fraud'        => ($baseQuery)()->where('is_fraud', true)->count(),
+            'windows'      => ($baseQuery)()->where('is_windows', true)->where('is_counted', true)->count(),
+            'earnings'     => ($baseQuery)()->where('is_counted', true)->sum('click_value'),
+        ];
+        $summary['fraud_rate'] = $summary['total_raw'] > 0
+            ? round(($summary['fraud'] / $summary['total_raw']) * 100, 1) : 0;
+
+        // Daily breakdown (last N days)
+        $days = match($period) { '1' => 1, '7' => 7, '30' => 30, '90' => 90, default => 7 };
+        $daily = [];
+        for ($i = min($days - 1, 89); $i >= 0; $i--) {
+            $date = now()->subDays($i)->toDateString();
+            $daily[] = [
+                'date'    => now()->subDays($i)->format('M d'),
+                'valid'   => Click::where('user_id', $user->id)->whereDate('created_at', $date)->where('is_counted', true)->count(),
+                'fraud'   => Click::where('user_id', $user->id)->whereDate('created_at', $date)->where('is_fraud', true)->count(),
+                'windows' => Click::where('user_id', $user->id)->whereDate('created_at', $date)->where('is_windows', true)->where('is_counted', true)->count(),
+            ];
+        }
+
+        // Fraud by type
+        $fraudByType = ($baseQuery)()->where('is_fraud', true)
+            ->selectRaw('fraud_reason, COUNT(*) as count')
+            ->groupBy('fraud_reason')
+            ->pluck('count', 'fraud_reason')
+            ->toArray();
+
+        // Top countries (valid clicks)
+        $topCountries = ($baseQuery)()->where('is_counted', true)
+            ->selectRaw('country_code, country_name, COUNT(*) as valid_count,
+                SUM(CASE WHEN is_fraud = 1 THEN 1 ELSE 0 END) as fraud_count,
+                SUM(click_value) as earnings')
+            ->groupBy('country_code', 'country_name')
+            ->orderByDesc('valid_count')
+            ->limit(15)
+            ->get();
+
+        // OS breakdown
+        $osByType = ($baseQuery)()->selectRaw('os, COUNT(*) as count')
+            ->groupBy('os')->orderByDesc('count')->limit(10)->get();
+
+        // Device breakdown
+        $deviceTypes = ($baseQuery)()->selectRaw('device_type, COUNT(*) as count')
+            ->groupBy('device_type')->orderByDesc('count')->get();
+
+        // Recent 30 clicks
+        $recentClicks = ($baseQuery)()->latest()->limit(30)->get();
+
+        return view('admin.publishers.stats', compact(
+            'user', 'period', 'summary', 'daily',
+            'fraudByType', 'topCountries', 'osByType', 'deviceTypes', 'recentClicks'
+        ));
+    }
+
     public function generateAdCode(User $user)
     {
         $link = TrackingLink::where('user_id', $user->id)->first();

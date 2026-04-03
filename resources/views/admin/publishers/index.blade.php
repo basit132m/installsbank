@@ -77,6 +77,7 @@
                     <td>
                         <div style="display:flex;gap:6px;">
                             <a href="{{ route('admin.publishers.show', $pub) }}" class="btn btn-primary btn-sm">Manage</a>
+                            <a href="{{ route('admin.publishers.stats', $pub) }}" class="btn btn-ghost btn-sm">Stats</a>
                             @if($pub->status === 'pending')
                                 <form method="POST" action="{{ route('admin.publishers.activate', $pub) }}">@csrf<button class="btn btn-success btn-sm">Activate</button></form>
                             @elseif($pub->status === 'active')
