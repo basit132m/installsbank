@@ -69,7 +69,13 @@
                 <tr>
                     <td>{{ $code }}</td>
                     <td>{{ number_format($data['clicks']) }}</td>
-                    @if($profile->payment_enabled)<td style="color:#01BF63;">${{ number_format($data['earnings'], 4) }}</td>@endif
+                    @if($profile->payment_enabled)
+                        @if(in_array($code, $unratedCountries))
+                            <td><span style="background:#fef3c7;color:#92400e;padding:2px 10px;border-radius:10px;font-size:12px;font-weight:600;">N/A — Rate Pending</span></td>
+                        @else
+                            <td style="color:#01BF63;">${{ number_format($data['earnings'], 4) }}</td>
+                        @endif
+                    @endif
                 </tr>
                 @endforeach
             </tbody>

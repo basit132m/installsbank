@@ -56,9 +56,24 @@ class ClickTrackingService
 
         // Only Windows clicks earn money — other devices tracked but earn $0
         if ($isCounted && $isWindows) {
-            $countryRate = CountryRate::where('country_code', $geoData['country_code'])
-                ->where('is_active', true)->first();
-            $clickValue = $countryRate ? $countryRate->rate_per_click : 0;
+            $countryCode = $geoData['country_code'];
+            $countryRate = CountryRate::where('country_code', $countryCode)->first();
+
+            if (!$countryRate && !in_array($countryCode, ['XX', 'Unknown'])) {
+                // Auto-create unrated country so admin can set a rate
+                $countryRate = CountryRate::create([
+                    'country_code'      => $countryCode,
+                    'country_name'      => $geoData['country_name'],
+                    'rate_per_click'    => 0,
+                    'is_active'         => false,
+                    'needs_rate_update' => true,
+                ]);
+            }
+
+            // Only earn if rate is set and active (needs_rate_update = false)
+            if ($countryRate && $countryRate->is_active && !$countryRate->needs_rate_update) {
+                $clickValue = $countryRate->rate_per_click;
+            }
         }
 
         $click = Click::create(array_merge($clickData, [

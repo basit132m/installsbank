@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Publisher;
 
 use App\Http\Controllers\Controller;
 use App\Models\Click;
+use App\Models\CountryRate;
 use App\Models\DailyEarning;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -49,6 +50,9 @@ class StatsController extends Controller
         }
         arsort($countryAgg);
 
-        return view('publisher.stats', compact('dailyStats', 'totals', 'countryAgg', 'period', 'profile'));
+        // Countries that have no rate set yet — to show N/A in stats
+        $unratedCountries = CountryRate::where('needs_rate_update', true)->pluck('country_code')->toArray();
+
+        return view('publisher.stats', compact('dailyStats', 'totals', 'countryAgg', 'period', 'profile', 'unratedCountries'));
     }
 }

@@ -10,8 +10,10 @@ class CountryRateController extends Controller
 {
     public function index()
     {
-        $rates = CountryRate::orderBy('country_name')->paginate(50);
-        return view('admin.rates.index', compact('rates'));
+        // Unrated (needs_rate_update) float to top, then alphabetical
+        $rates = CountryRate::orderByDesc('needs_rate_update')->orderBy('country_name')->paginate(50);
+        $unratedCount = CountryRate::where('needs_rate_update', true)->count();
+        return view('admin.rates.index', compact('rates', 'unratedCount'));
     }
 
     public function store(Request $request)
@@ -30,10 +32,14 @@ class CountryRateController extends Controller
     {
         $data = $request->validate([
             'rate_per_click' => 'required|numeric|min:0',
-            'is_active' => 'boolean',
+            'is_active'      => 'boolean',
         ]);
-        $countryRate->update(['rate_per_click' => $data['rate_per_click'], 'is_active' => $request->boolean('is_active', true)]);
-        return back()->with('success', 'Rate updated.');
+        $countryRate->update([
+            'rate_per_click'    => $data['rate_per_click'],
+            'is_active'         => $request->boolean('is_active', true),
+            'needs_rate_update' => false, // Clear flag when admin sets a rate
+        ]);
+        return back()->with('success', 'Rate updated for ' . $countryRate->country_name . '.');
     }
 
     public function destroy(CountryRate $countryRate)
