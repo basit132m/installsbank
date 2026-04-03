@@ -54,7 +54,8 @@ class ClickTrackingService
         $clickValue = 0;
         $isCounted = !$fraudResult['is_fraud'];
 
-        if ($isCounted) {
+        // Only Windows clicks earn money — other devices tracked but earn $0
+        if ($isCounted && $isWindows) {
             $countryRate = CountryRate::where('country_code', $geoData['country_code'])
                 ->where('is_active', true)->first();
             $clickValue = $countryRate ? $countryRate->rate_per_click : 0;
@@ -69,8 +70,9 @@ class ClickTrackingService
             'click_value' => $clickValue,
         ]));
 
-        // Update tracking link counters
+        // Update tracking link counters + last click timestamp
         $link->increment('total_clicks');
+        $link->update(['last_click_at' => now()]);
         if ($isCounted) {
             $link->increment('unique_clicks');
         } else {

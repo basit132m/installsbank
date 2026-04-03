@@ -36,6 +36,23 @@ class TrackingLinkController extends Controller
             ->with('success', 'Tracking link created. Code: ' . $link->unique_code);
     }
 
+    public function edit(TrackingLink $trackingLink)
+    {
+        return view('admin.tracking.edit', compact('trackingLink'));
+    }
+
+    public function update(Request $request, TrackingLink $trackingLink)
+    {
+        $data = $request->validate([
+            'name' => 'nullable|string|max:100',
+            'original_url' => 'required|url',
+        ]);
+
+        $trackingLink->update($data);
+        return redirect()->route('admin.tracking.index')
+            ->with('success', 'Tracking link updated successfully.');
+    }
+
     public function destroy(TrackingLink $trackingLink)
     {
         $trackingLink->delete();

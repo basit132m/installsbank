@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Installs Bank — Premium PPI Network | Earn With Every Click</title>
+    <link rel="icon" type="image/x-icon" href="/images/favicon.ico">
     <meta name="description" content="Installs Bank is a premium Pay-Per-Install network offering the highest rates per click. Join thousands of publishers earning passive income daily.">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <style>

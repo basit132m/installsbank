@@ -60,6 +60,8 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin,manager'
         Route::get('/', [Admin\TrackingLinkController::class, 'index'])->name('index');
         Route::get('/create', [Admin\TrackingLinkController::class, 'create'])->name('create');
         Route::post('/', [Admin\TrackingLinkController::class, 'store'])->name('store');
+        Route::get('/{trackingLink}/edit', [Admin\TrackingLinkController::class, 'edit'])->name('edit');
+        Route::put('/{trackingLink}', [Admin\TrackingLinkController::class, 'update'])->name('update');
         Route::delete('/{trackingLink}', [Admin\TrackingLinkController::class, 'destroy'])->name('destroy');
         Route::post('/{trackingLink}/toggle', [Admin\TrackingLinkController::class, 'toggle'])->name('toggle');
     });

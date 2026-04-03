@@ -9,11 +9,12 @@ class TrackingLink extends Model
 {
     protected $fillable = [
         'user_id', 'name', 'original_url', 'unique_code',
-        'is_active', 'total_clicks', 'unique_clicks', 'fraud_clicks',
+        'is_active', 'total_clicks', 'unique_clicks', 'fraud_clicks', 'last_click_at',
     ];
 
     protected $casts = [
         'is_active' => 'boolean',
+        'last_click_at' => 'datetime',
     ];
 
     public function user()
