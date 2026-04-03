@@ -3,7 +3,9 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Click;
 use App\Models\CountryRate;
+use App\Models\DailyEarning;
 use Illuminate\Http\Request;
 
 class CountryRateController extends Controller
@@ -34,12 +36,64 @@ class CountryRateController extends Controller
             'rate_per_click' => 'required|numeric|min:0',
             'is_active'      => 'boolean',
         ]);
+
+        $wasUnrated = $countryRate->needs_rate_update;
+        $newRate    = (float) $data['rate_per_click'];
+
         $countryRate->update([
-            'rate_per_click'    => $data['rate_per_click'],
+            'rate_per_click'    => $newRate,
             'is_active'         => $request->boolean('is_active', true),
-            'needs_rate_update' => false, // Clear flag when admin sets a rate
+            'needs_rate_update' => false,
         ]);
-        return back()->with('success', 'Rate updated for ' . $countryRate->country_name . '.');
+
+        // Retroactively credit past clicks that earned $0 due to missing rate
+        $retroCount = 0;
+        if ($wasUnrated && $newRate > 0) {
+            $retroCount = $this->recalculatePastEarnings($countryRate->country_code, $newRate);
+        }
+
+        $msg = 'Rate set for ' . $countryRate->country_name . '.';
+        if ($retroCount > 0) {
+            $msg .= " {$retroCount} past click(s) have been retroactively credited.";
+        }
+
+        return back()->with('success', $msg);
+    }
+
+    private function recalculatePastEarnings(string $countryCode, float $rate): int
+    {
+        // Find all counted Windows clicks from this country that earned $0 (no rate at the time)
+        $clicks = Click::where('country_code', $countryCode)
+            ->where('is_counted', true)
+            ->where('is_windows', true)
+            ->where('click_value', 0)
+            ->get();
+
+        if ($clicks->isEmpty()) return 0;
+
+        foreach ($clicks as $click) {
+            $click->update(['click_value' => $rate]);
+
+            $date    = $click->created_at->toDateString();
+            $earning = DailyEarning::firstOrCreate(
+                ['user_id' => $click->user_id, 'date' => $date],
+                ['total_raw_clicks' => 0, 'windows_clicks' => 0, 'windows_clicks_divided' => 0, 'valid_clicks' => 0, 'earnings' => 0]
+            );
+
+            // Update country breakdown in the daily earning JSON
+            $breakdown                       = $earning->country_breakdown ?? [];
+            $breakdown[$countryCode]         = $breakdown[$countryCode] ?? ['clicks' => 0, 'earnings' => 0];
+            $breakdown[$countryCode]['earnings'] += $rate;
+            $earning->country_breakdown      = $breakdown;
+            $earning->earnings               += $rate;
+            $earning->save();
+
+            // Credit publisher balance
+            $earning->user?->publisherProfile?->increment('balance', $rate);
+            $earning->user?->publisherProfile?->increment('total_earnings', $rate);
+        }
+
+        return $clicks->count();
     }
 
     public function destroy(CountryRate $countryRate)

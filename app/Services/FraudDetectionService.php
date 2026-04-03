@@ -8,9 +8,37 @@ use Illuminate\Support\Facades\Cache;
 
 class FraudDetectionService
 {
-    private const DUPLICATE_IP_WINDOW = 6 * 3600; // 6 hours in seconds
-    private const TRAFFIC_SPIKE_THRESHOLD = 3; // 3x normal hourly rate
+    private const DUPLICATE_IP_WINDOW = 6 * 3600;
+    private const TRAFFIC_SPIKE_THRESHOLD = 3;
     private const SPIKE_CHECK_HOURS = 24;
+
+    // Known VPN provider names (matched against ASN org name)
+    private const VPN_KEYWORDS = [
+        'nordvpn', 'expressvpn', 'browsec', 'windscribe', 'mullvad',
+        'protonvpn', 'cyberghost', 'ipvanish', 'surfshark', 'tunnelbear',
+        'torguard', 'hidemyass', 'strongvpn', 'privatevpn', 'purevpn',
+        'vyprvpn', 'hotspot shield', 'zenmate', 'private internet access',
+        'ivpn', 'airvpn', 'hide.me', 'anonine', 'perfectprivacy',
+        'trust.zone', 'bolehvpn', 'goose vpn', 'speedify', 'safervpn',
+    ];
+
+    // Known datacenter/hosting providers used by VPNs and bots
+    private const DATACENTER_KEYWORDS = [
+        'digitalocean', 'linode', 'vultr', 'choopa', 'ovh', 'ovhcloud',
+        'hetzner', 'leaseweb', 'datacamp', 'm247', 'quadranet', 'psychz',
+        'multacom', 'serverius', 'sharktech', 'nexeon', 'hostwinds',
+        'frantech', 'buyvm', 'hostus', 'aeza', 'combahton', 'nforce',
+        'voxility', 'path network', 'servermania', 'hostkey', 'greenfloid',
+        'tzulo', 'packethub', 'colocation america', 'snel.com',
+        'datapoint', 'dacentec', 'robust server', 'corelink',
+        'awweb', 'namecheap hosting', 'nocix', 'incapsula',
+    ];
+
+    // Generic keywords indicating non-residential traffic
+    private const GENERIC_PROXY_KEYWORDS = [
+        ' vpn', 'vpn ', '-vpn', 'vpn-', 'proxy', 'anonymous',
+        'tor exit', 'tornode', 'exit node', 'hosting',
+    ];
 
     public function check(array $clickData): array
     {
@@ -24,7 +52,7 @@ class FraudDetectionService
             return $result;
         }
 
-        // 2. VPN/Proxy check (basic known ranges + headers)
+        // 2. VPN/Proxy check — headers + MaxMind ASN reputation
         $vpnCheck = $this->checkVpnProxy($clickData['ip_address'], $clickData['headers'] ?? []);
         if ($vpnCheck['is_vpn']) {
             $result['is_vpn'] = true;
@@ -66,7 +94,6 @@ class FraudDetectionService
         if (Cache::has($key)) return true;
         Cache::put($key, 1, self::DUPLICATE_IP_WINDOW);
 
-        // Also check database for recent clicks
         return Click::where('tracking_link_id', $linkId)
             ->where('ip_address', $ip)
             ->where('created_at', '>=', now()->subSeconds(self::DUPLICATE_IP_WINDOW))
@@ -77,18 +104,64 @@ class FraudDetectionService
     {
         $result = ['is_vpn' => false, 'is_proxy' => false];
 
-        // Check proxy headers
-        $proxyHeaders = ['HTTP_VIA', 'HTTP_X_FORWARDED_FOR', 'HTTP_FORWARDED', 'HTTP_CLIENT_IP', 'HTTP_PROXY_CONNECTION'];
-        foreach ($proxyHeaders as $header) {
-            if (!empty($headers[$header])) {
+        // Check common proxy/forwarding headers (lowercased key matching)
+        $proxyHeaderNames = ['via', 'x-forwarded-for', 'forwarded', 'client-ip',
+            'proxy-connection', 'x-proxy-id', 'mt-proxy-id', 'x-tinyproxy',
+            'x-forwarded', 'forwarded-for', 'x-real-ip'];
+        foreach ($headers as $key => $value) {
+            $normalizedKey = strtolower(str_replace(['http_', '_'], ['', '-'], $key));
+            if (in_array($normalizedKey, $proxyHeaderNames) && !empty($value)) {
                 $result['is_proxy'] = true;
                 return $result;
             }
         }
 
-        // Check for known VPN/datacenter IP ranges (basic check)
-        // In production, integrate with ipqualityscore.com or similar
+        // ASN-based reputation check using MaxMind GeoLite2-ASN database
+        $asnResult = $this->checkAsnReputation($ip);
+        if ($asnResult === 'vpn') {
+            $result['is_vpn'] = true;
+        } elseif ($asnResult === 'proxy') {
+            $result['is_proxy'] = true;
+        }
+
         return $result;
+    }
+
+    private function checkAsnReputation(string $ip): ?string
+    {
+        $dbPath = storage_path('app/geoip/GeoLite2-ASN.mmdb');
+        if (!file_exists($dbPath)) {
+            \Log::warning('GeoLite2-ASN database not found. VPN detection limited.');
+            return null;
+        }
+
+        return Cache::remember("asn_{$ip}", 86400, function () use ($ip, $dbPath) {
+            try {
+                $reader = new \MaxMind\Db\Reader($dbPath);
+                $record = $reader->get($ip);
+                $reader->close();
+
+                if (!$record) return null;
+
+                $org = strtolower($record['autonomous_system_organization'] ?? '');
+                if (empty($org)) return null;
+
+                foreach (self::VPN_KEYWORDS as $keyword) {
+                    if (str_contains($org, $keyword)) return 'vpn';
+                }
+                foreach (self::DATACENTER_KEYWORDS as $keyword) {
+                    if (str_contains($org, $keyword)) return 'vpn';
+                }
+                foreach (self::GENERIC_PROXY_KEYWORDS as $keyword) {
+                    if (str_contains($org, $keyword)) return 'proxy';
+                }
+
+                return null;
+            } catch (\Exception $e) {
+                \Log::warning('MaxMind ASN lookup failed: ' . $e->getMessage());
+                return null;
+            }
+        });
     }
 
     private function isBot(string $ua): bool
@@ -135,14 +208,14 @@ class FraudDetectionService
             $existing->increment('occurrences');
         } else {
             FraudAlert::create([
-                'user_id' => $clickData['user_id'],
+                'user_id'          => $clickData['user_id'],
                 'tracking_link_id' => $clickData['tracking_link_id'],
-                'alert_type' => $type,
-                'ip_address' => $clickData['ip_address'] ?? null,
-                'country_code' => $clickData['country_code'] ?? null,
-                'details' => $clickData,
-                'occurrences' => 1,
-                'is_resolved' => false,
+                'alert_type'       => $type,
+                'ip_address'       => $clickData['ip_address'] ?? null,
+                'country_code'     => $clickData['country_code'] ?? null,
+                'details'          => $clickData,
+                'occurrences'      => 1,
+                'is_resolved'      => false,
             ]);
         }
     }
