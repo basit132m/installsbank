@@ -55,7 +55,11 @@
             top: -100px; right: -100px;
             border-radius: 50%;
         }
-        .hero-content { max-width: 650px; position: relative; }
+        .hero-inner { display: flex; align-items: center; gap: 60px; width: 100%; max-width: 1200px; }
+        .hero-content { max-width: 580px; position: relative; flex-shrink: 0; }
+        .hero-image { flex: 1; display: flex; justify-content: flex-end; }
+        .hero-image img { max-width: 480px; width: 100%; border-radius: 16px; box-shadow: 0 24px 80px rgba(1,191,99,0.18); }
+        @media (max-width: 900px) { .hero-inner { flex-direction: column; } .hero-image { display: none; } }
         .hero-badge { display: inline-flex; align-items: center; gap: 6px; background: #e6faf2; color: var(--primary-dark); padding: 6px 14px; border-radius: 20px; font-size: 13px; font-weight: 600; margin-bottom: 24px; border: 1px solid #a7f3d0; }
         .hero-badge::before { content: ''; width: 6px; height: 6px; background: var(--primary); border-radius: 50%; animation: pulse 1.5s infinite; }
         @keyframes pulse { 0%,100%{opacity:1;}50%{opacity:0.4;} }
@@ -166,6 +170,7 @@
 
     <!-- Hero -->
     <section class="hero">
+        <div class="hero-inner">
         <div class="hero-content">
             <div class="hero-badge">Live Network · Tracking Active</div>
             <h1>Earn More With <span>Every Click</span> You Drive</h1>
@@ -192,6 +197,10 @@
                     <div class="hero-stat-label">Live Tracking</div>
                 </div>
             </div>
+        </div>
+        <div class="hero-image">
+            <img src="https://installsbank.com/images/installs-bank-hero.webp" alt="Installs Bank Platform">
+        </div>
         </div>
     </section>
 

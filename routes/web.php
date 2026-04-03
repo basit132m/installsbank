@@ -55,6 +55,14 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin,manager'
         Route::delete('/{user}', [Admin\ManagerController::class, 'destroy'])->name('destroy');
     });
 
+    // Tracking domains
+    Route::prefix('tracking-domains')->name('tracking-domains.')->group(function () {
+        Route::get('/', [Admin\TrackingDomainController::class, 'index'])->name('index');
+        Route::post('/', [Admin\TrackingDomainController::class, 'store'])->name('store');
+        Route::post('/{trackingDomain}/toggle', [Admin\TrackingDomainController::class, 'toggle'])->name('toggle');
+        Route::delete('/{trackingDomain}', [Admin\TrackingDomainController::class, 'destroy'])->name('destroy');
+    });
+
     // Tracking links
     Route::prefix('tracking')->name('tracking.')->group(function () {
         Route::get('/', [Admin\TrackingLinkController::class, 'index'])->name('index');

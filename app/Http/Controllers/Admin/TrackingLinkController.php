@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\AdButton;
 use App\Models\AdPreset;
+use App\Models\TrackingDomain;
 use App\Models\TrackingLink;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -20,19 +21,21 @@ class TrackingLinkController extends Controller
     public function create()
     {
         $publishers = User::where('role', 'publisher')->where('status', 'active')->get();
-        return view('admin.tracking.create', compact('publishers'));
+        $domains = TrackingDomain::where('is_active', true)->get();
+        return view('admin.tracking.create', compact('publishers', 'domains'));
     }
 
     public function store(Request $request)
     {
         $data = $request->validate([
-            'user_id'      => 'required|exists:users,id',
-            'name'         => 'nullable|string|max:100',
-            'original_url' => 'required|url',
-            'url_windows'  => 'nullable|url',
-            'url_android'  => 'nullable|url',
-            'url_mac'      => 'nullable|url',
-            'url_other'    => 'nullable|url',
+            'user_id'            => 'required|exists:users,id',
+            'tracking_domain_id' => 'nullable|exists:tracking_domains,id',
+            'name'               => 'nullable|string|max:100',
+            'original_url'       => 'required|url',
+            'url_windows'        => 'nullable|url',
+            'url_android'        => 'nullable|url',
+            'url_mac'            => 'nullable|url',
+            'url_other'          => 'nullable|url',
         ]);
 
         $link = TrackingLink::create($data);
@@ -42,18 +45,20 @@ class TrackingLinkController extends Controller
 
     public function edit(TrackingLink $trackingLink)
     {
-        return view('admin.tracking.edit', compact('trackingLink'));
+        $domains = TrackingDomain::where('is_active', true)->get();
+        return view('admin.tracking.edit', compact('trackingLink', 'domains'));
     }
 
     public function update(Request $request, TrackingLink $trackingLink)
     {
         $data = $request->validate([
-            'name'         => 'nullable|string|max:100',
-            'original_url' => 'required|url',
-            'url_windows'  => 'nullable|url',
-            'url_android'  => 'nullable|url',
-            'url_mac'      => 'nullable|url',
-            'url_other'    => 'nullable|url',
+            'tracking_domain_id' => 'nullable|exists:tracking_domains,id',
+            'name'               => 'nullable|string|max:100',
+            'original_url'       => 'required|url',
+            'url_windows'        => 'nullable|url',
+            'url_android'        => 'nullable|url',
+            'url_mac'            => 'nullable|url',
+            'url_other'          => 'nullable|url',
         ]);
 
         $trackingLink->update($data);

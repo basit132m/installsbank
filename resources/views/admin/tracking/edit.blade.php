@@ -16,6 +16,20 @@
             @method('PUT')
 
             <div class="form-group">
+                <label class="form-label">Tracking Domain</label>
+                <select name="tracking_domain_id" class="form-control form-select">
+                    <option value="">Default (installsbank.com)</option>
+                    @foreach($domains as $d)
+                        <option value="{{ $d->id }}" {{ old('tracking_domain_id', $trackingLink->tracking_domain_id) == $d->id ? 'selected' : '' }}>
+                            {{ $d->domain }}{{ $d->label ? ' — ' . $d->label : '' }}
+                        </option>
+                    @endforeach
+                </select>
+                <div style="font-size:12px;color:#9ca3af;margin-top:4px;">
+                    <a href="{{ route('admin.tracking-domains.index') }}" style="color:var(--primary);">Manage domains →</a>
+                </div>
+            </div>
+            <div class="form-group">
                 <label class="form-label">Link Name (Optional)</label>
                 <input type="text" name="name" class="form-control" value="{{ old('name', $trackingLink->name) }}" placeholder="e.g. Main Campaign">
             </div>

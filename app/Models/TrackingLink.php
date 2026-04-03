@@ -8,7 +8,7 @@ use Illuminate\Support\Str;
 class TrackingLink extends Model
 {
     protected $fillable = [
-        'user_id', 'name', 'original_url', 'unique_code',
+        'user_id', 'tracking_domain_id', 'name', 'original_url', 'unique_code',
         'url_windows', 'url_android', 'url_mac', 'url_other',
         'is_active', 'total_clicks', 'unique_clicks', 'fraud_clicks', 'last_click_at',
     ];
@@ -21,6 +21,11 @@ class TrackingLink extends Model
     public function user()
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function trackingDomain()
+    {
+        return $this->belongsTo(TrackingDomain::class);
     }
 
     public function clicks()
@@ -64,6 +69,9 @@ class TrackingLink extends Model
 
     public function getTrackingUrlAttribute(): string
     {
+        if ($this->trackingDomain && $this->trackingDomain->is_active) {
+            return $this->trackingDomain->base_url . '/track/' . $this->unique_code;
+        }
         return url('/track/' . $this->unique_code);
     }
 
