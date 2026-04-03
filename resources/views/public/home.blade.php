@@ -199,7 +199,7 @@
             </div>
         </div>
         <div class="hero-image">
-            <img src="https://installsbank.com/images/installs-bank-hero.webp" alt="Installs Bank Platform">
+            <img src="https://installsbank.com/images/installs-bank-banner.webp" alt="Installs Bank Platform">
         </div>
         </div>
     </section>
