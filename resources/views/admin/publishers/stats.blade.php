@@ -258,8 +258,12 @@ new ApexCharts(document.getElementById('dailyChart'), {
 }).render();
 
 @if(!empty($fraudByType))
-const fraudData = @json(array_values($fraudByType));
-const fraudLabels = @json(array_map(fn($t) => ucwords(str_replace('_', ' ', $t)), array_keys($fraudByType)));
+@php
+    $fraudChartData   = array_values($fraudByType);
+    $fraudChartLabels = array_map(function($t) { return ucwords(str_replace('_', ' ', $t)); }, array_keys($fraudByType));
+@endphp
+const fraudData = @json($fraudChartData);
+const fraudLabels = @json($fraudChartLabels);
 new ApexCharts(document.getElementById('fraudPieChart'), {
     series: fraudData,
     labels: fraudLabels,
