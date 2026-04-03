@@ -104,24 +104,14 @@ class FraudDetectionService
     {
         $result = ['is_vpn' => false, 'is_proxy' => false];
 
-        // Check common proxy/forwarding headers (lowercased key matching)
-        $proxyHeaderNames = ['via', 'x-forwarded-for', 'forwarded', 'client-ip',
-            'proxy-connection', 'x-proxy-id', 'mt-proxy-id', 'x-tinyproxy',
-            'x-forwarded', 'forwarded-for', 'x-real-ip'];
-        foreach ($headers as $key => $value) {
-            $normalizedKey = strtolower(str_replace(['http_', '_'], ['', '-'], $key));
-            if (in_array($normalizedKey, $proxyHeaderNames) && !empty($value)) {
-                $result['is_proxy'] = true;
-                return $result;
-            }
-        }
+        // NOTE: We do NOT check proxy headers (X-Forwarded-For, Via, etc.)
+        // because shared hosting (Hostinger) adds these headers to ALL requests
+        // through their load balancer, causing every click to be falsely flagged.
 
-        // ASN-based reputation check using MaxMind GeoLite2-ASN database
+        // ASN-based VPN detection using MaxMind GeoLite2-ASN database only
         $asnResult = $this->checkAsnReputation($ip);
         if ($asnResult === 'vpn') {
             $result['is_vpn'] = true;
-        } elseif ($asnResult === 'proxy') {
-            $result['is_proxy'] = true;
         }
 
         return $result;
