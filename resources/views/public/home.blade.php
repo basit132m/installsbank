@@ -58,7 +58,7 @@
         .hero-inner { display: flex; align-items: center; gap: 60px; width: 100%; max-width: 1200px; }
         .hero-content { max-width: 580px; position: relative; flex-shrink: 0; }
         .hero-image { flex: 1; display: flex; justify-content: flex-end; }
-        .hero-image img { max-width: 480px; width: 100%; border-radius: 16px; box-shadow: 0 24px 80px rgba(1,191,99,0.18); }
+        .hero-image img { max-width: 480px; width: 100%; }
         @media (max-width: 900px) { .hero-inner { flex-direction: column; } .hero-image { display: none; } }
         .hero-badge { display: inline-flex; align-items: center; gap: 6px; background: #e6faf2; color: var(--primary-dark); padding: 6px 14px; border-radius: 20px; font-size: 13px; font-weight: 600; margin-bottom: 24px; border: 1px solid #a7f3d0; }
         .hero-badge::before { content: ''; width: 6px; height: 6px; background: var(--primary); border-radius: 50%; animation: pulse 1.5s infinite; }
@@ -155,7 +155,6 @@
     <nav>
         <a href="{{ route('home') }}" class="nav-brand">
             <img src="https://installsbank.com/images/logo.webp" alt="Installs Bank" onerror="this.style.display='none'">
-            <span class="nav-brand-text">Installs Bank</span>
         </a>
         <div class="nav-links">
             <a href="#features">Features</a>
@@ -298,19 +297,28 @@
         <div class="rates-table-wrap">
             <table class="rates-table">
                 <thead>
-                    <tr><th>Country</th><th>Rate per 1,000 Clicks</th><th>Tier</th></tr>
+                    <tr><th>Tier</th><th>Countries</th><th>Rate per 1,000 Clicks</th></tr>
                 </thead>
                 <tbody>
-                    <tr><td>🇺🇸 United States</td><td class="rate-val">Up to $0.80</td><td><span style="background:#e6faf2;color:#065f46;padding:3px 10px;border-radius:12px;font-size:12px;font-weight:600;">Tier 1</span></td></tr>
-                    <tr><td>🇬🇧 United Kingdom</td><td class="rate-val">Up to $0.70</td><td><span style="background:#e6faf2;color:#065f46;padding:3px 10px;border-radius:12px;font-size:12px;font-weight:600;">Tier 1</span></td></tr>
-                    <tr><td>🇨🇦 Canada</td><td class="rate-val">Up to $0.65</td><td><span style="background:#e6faf2;color:#065f46;padding:3px 10px;border-radius:12px;font-size:12px;font-weight:600;">Tier 1</span></td></tr>
-                    <tr><td>🇦🇺 Australia</td><td class="rate-val">Up to $0.60</td><td><span style="background:#dbeafe;color:#1e40af;padding:3px 10px;border-radius:12px;font-size:12px;font-weight:600;">Tier 2</span></td></tr>
-                    <tr><td>🇩🇪 Germany</td><td class="rate-val">Up to $0.55</td><td><span style="background:#dbeafe;color:#1e40af;padding:3px 10px;border-radius:12px;font-size:12px;font-weight:600;">Tier 2</span></td></tr>
-                    <tr><td>🌍 Other Countries</td><td class="rate-val">Custom Rate</td><td><span style="background:#f3f4f6;color:#6b7280;padding:3px 10px;border-radius:12px;font-size:12px;font-weight:600;">Tier 3</span></td></tr>
+                    <tr>
+                        <td><span style="background:#e6faf2;color:#065f46;padding:4px 14px;border-radius:12px;font-size:13px;font-weight:700;">Tier 1</span></td>
+                        <td style="color:#374151;">US, UK, CA, AU, DE, FR, NL, SE, NO, DK</td>
+                        <td class="rate-val" style="font-size:18px;">$40 <span style="font-size:13px;color:#9ca3af;font-weight:500;">/ 1,000 clicks</span></td>
+                    </tr>
+                    <tr>
+                        <td><span style="background:#dbeafe;color:#1e40af;padding:4px 14px;border-radius:12px;font-size:13px;font-weight:700;">Tier 2</span></td>
+                        <td style="color:#374151;">ES, IT, PT, PL, CZ, HU, RO, GR, TR, AE</td>
+                        <td class="rate-val" style="font-size:18px;">$30 <span style="font-size:13px;color:#9ca3af;font-weight:500;">/ 1,000 clicks</span></td>
+                    </tr>
+                    <tr>
+                        <td><span style="background:#f3f4f6;color:#6b7280;padding:4px 14px;border-radius:12px;font-size:13px;font-weight:700;">Tier 3</span></td>
+                        <td style="color:#374151;">All other countries</td>
+                        <td class="rate-val" style="font-size:18px;">$20 <span style="font-size:13px;color:#9ca3af;font-weight:500;">/ 1,000 clicks</span></td>
+                    </tr>
                 </tbody>
             </table>
         </div>
-        <div style="text-align:center;margin-top:24px;font-size:13px;color:#9ca3af;">Rates shown are indicative. Your exact rate is determined after your 48-hour test period.</div>
+        <div style="text-align:center;margin-top:24px;font-size:13px;color:#9ca3af;">Rates apply to Windows clicks only. Your exact tier is confirmed after the 48-hour test period.</div>
     </section>
 
     <!-- CTA -->
@@ -325,7 +333,6 @@
         <div class="footer-grid">
             <div>
                 <div class="footer-brand">
-                    <img src="https://installsbank.com/images/logo.webp" alt="Installs Bank" onerror="this.style.display='none'">
                     <span class="footer-brand-text">Installs Bank</span>
                 </div>
                 <p class="footer-desc">A premium PPI network connecting publishers with high-paying click opportunities. Trusted, transparent, and built for growth.</p>
