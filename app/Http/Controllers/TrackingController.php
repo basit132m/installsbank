@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\TrackingLink;
 use App\Services\ClickTrackingService;
 use Illuminate\Http\Request;
+use Jenssegers\Agent\Agent;
 
 class TrackingController extends Controller
 {
@@ -18,6 +19,12 @@ class TrackingController extends Controller
             abort(404);
         }
 
+        // Detect OS for device-specific redirect
+        $agent = new Agent();
+        $agent->setUserAgent($request->userAgent() ?? '');
+        $os = $agent->platform() ?: 'Unknown';
+        $redirectUrl = $link->resolveUrlForOs($os);
+
         // Process click async-like (quick response)
         try {
             $this->trackingService->processClick($link, $request);
@@ -25,6 +32,6 @@ class TrackingController extends Controller
             \Log::error('Click tracking error: ' . $e->getMessage());
         }
 
-        return redirect()->away($link->original_url);
+        return redirect()->away($redirectUrl);
     }
 }

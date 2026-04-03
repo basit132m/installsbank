@@ -26,9 +26,13 @@ class TrackingLinkController extends Controller
     public function store(Request $request)
     {
         $data = $request->validate([
-            'user_id' => 'required|exists:users,id',
-            'name' => 'nullable|string|max:100',
+            'user_id'      => 'required|exists:users,id',
+            'name'         => 'nullable|string|max:100',
             'original_url' => 'required|url',
+            'url_windows'  => 'nullable|url',
+            'url_android'  => 'nullable|url',
+            'url_mac'      => 'nullable|url',
+            'url_other'    => 'nullable|url',
         ]);
 
         $link = TrackingLink::create($data);
@@ -44,8 +48,12 @@ class TrackingLinkController extends Controller
     public function update(Request $request, TrackingLink $trackingLink)
     {
         $data = $request->validate([
-            'name' => 'nullable|string|max:100',
+            'name'         => 'nullable|string|max:100',
             'original_url' => 'required|url',
+            'url_windows'  => 'nullable|url',
+            'url_android'  => 'nullable|url',
+            'url_mac'      => 'nullable|url',
+            'url_other'    => 'nullable|url',
         ]);
 
         $trackingLink->update($data);

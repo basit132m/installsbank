@@ -9,6 +9,7 @@ class TrackingLink extends Model
 {
     protected $fillable = [
         'user_id', 'name', 'original_url', 'unique_code',
+        'url_windows', 'url_android', 'url_mac', 'url_other',
         'is_active', 'total_clicks', 'unique_clicks', 'fraud_clicks', 'last_click_at',
     ];
 
@@ -35,6 +36,30 @@ class TrackingLink extends Model
     public function fraudAlerts()
     {
         return $this->hasMany(FraudAlert::class);
+    }
+
+    /**
+     * Resolve the destination URL based on detected OS.
+     * Falls back to original_url if no device-specific URL is set.
+     */
+    public function resolveUrlForOs(string $os): string
+    {
+        $os = strtolower($os);
+
+        if (str_contains($os, 'windows') && $this->url_windows) {
+            return $this->url_windows;
+        }
+        if (str_contains($os, 'android') && $this->url_android) {
+            return $this->url_android;
+        }
+        if ((str_contains($os, 'mac') || str_contains($os, 'ios') || str_contains($os, 'iphone') || str_contains($os, 'ipad')) && $this->url_mac) {
+            return $this->url_mac;
+        }
+        if ($this->url_other) {
+            return $this->url_other;
+        }
+
+        return $this->original_url;
     }
 
     public function getTrackingUrlAttribute(): string
