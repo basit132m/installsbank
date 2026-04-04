@@ -39,12 +39,16 @@ class _DashboardScreenState extends State<DashboardScreen> with AutomaticKeepAli
 
   Future<void> _load() async {
     setState(() { _loading = _data == null; _error = null; });
-    final res = await ApiService.get('/dashboard');
-    if (!mounted) return;
-    if (res.ok) {
-      setState(() { _data = res.data; _loading = false; });
-    } else {
-      setState(() { _error = res.message; _loading = false; });
+    try {
+      final res = await ApiService.get('/dashboard');
+      if (!mounted) return;
+      if (res.ok) {
+        setState(() { _data = res.data as Map<String, dynamic>; _loading = false; });
+      } else {
+        setState(() { _error = res.message; _loading = false; });
+      }
+    } catch (e) {
+      if (mounted) setState(() { _error = e.toString(); _loading = false; });
     }
   }
 
@@ -54,20 +58,17 @@ class _DashboardScreenState extends State<DashboardScreen> with AutomaticKeepAli
   }
 
   Future<void> _fetchLive() async {
-    final res = await ApiService.get('/live-stats');
-    if (mounted && res.ok) setState(() => _live = res.data);
+    try {
+      final res = await ApiService.get('/live-stats');
+      if (mounted && res.ok) setState(() => _live = res.data as Map<String, dynamic>);
+    } catch (_) {}
   }
 
   @override
   Widget build(BuildContext context) {
     super.build(context);
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Dashboard'),
-        actions: [
-          IconButton(icon: const Icon(Icons.refresh), onPressed: _load),
-        ],
-      ),
+      backgroundColor: AppTheme.background,
       body: _loading
           ? const LoadingWidget()
           : _error != null
@@ -81,118 +82,148 @@ class _DashboardScreenState extends State<DashboardScreen> with AutomaticKeepAli
   }
 
   Widget _buildBody() {
-    final stats = _data!['stats'] as Map;
-    final chart = (_data!['chart'] as List).cast<Map>();
-    final country = (_data!['country_breakdown'] as List).cast<Map>();
-    final showEarnings = _data!['show_earnings'] as bool;
-    final badge = _live?['badge'];
-    final accountStatus = _data!['account_status'];
-    final contract = _data!['contract'];
+    try {
+      final stats = (_data!['stats'] as Map<String, dynamic>?) ?? {};
+      final chart = ((_data!['chart'] as List?) ?? []).map((e) => Map<String, dynamic>.from(e as Map)).toList();
+      final country = ((_data!['country_breakdown'] as List?) ?? []).map((e) => Map<String, dynamic>.from(e as Map)).toList();
+      final showEarnings = (_data!['show_earnings'] as bool?) ?? false;
+      final accountStatus = _data!['account_status'] as String? ?? '';
+      final contract = _data!['contract'] as Map?;
+      final badge = _live?['badge'] as Map?;
 
-    return ListView(
-      padding: const EdgeInsets.all(16),
-      children: [
-        // Status banner
-        if (accountStatus == 'pending') _pendingBanner(),
-
-        // Live badge + counter
-        if (_live != null) ...[
-          Row(children: [
-            _buildBadge(badge),
-            const SizedBox(width: 10),
-            _buildLiveCounter(),
-          ]),
+      return ListView(
+        padding: EdgeInsets.zero,
+        children: [
+          _buildHeader(stats, showEarnings, accountStatus, badge),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 20, 16, 0),
+            child: _statsGrid(stats, showEarnings),
+          ),
           const SizedBox(height: 16),
-        ],
-
-        // Stats grid
-        _statsGrid(stats, showEarnings),
-        const SizedBox(height: 16),
-
-        // Chart
-        SectionCard(
-          title: 'Clicks — Last 7 Days',
-          child: SizedBox(height: 180, child: _buildChart(chart, showEarnings)),
-        ),
-        const SizedBox(height: 16),
-
-        // Country breakdown
-        if (country.isNotEmpty) ...[
-          SectionCard(
-            title: 'Traffic by Country (Today)',
-            padding: const EdgeInsets.all(0),
-            child: Column(
-              children: country.take(8).map((c) => _countryRow(c, showEarnings)).toList(),
+          if (_live != null)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+              child: _liveRow(badge),
+            ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+            child: SectionCard(
+              title: 'Last 7 Days',
+              child: SizedBox(height: 160, child: _buildChart(chart)),
             ),
           ),
-          const SizedBox(height: 16),
-        ],
-
-        // Contract
-        SectionCard(
-          title: 'Contract Status',
-          child: contract != null
-              ? Container(
-                  padding: const EdgeInsets.all(14),
-                  decoration: BoxDecoration(
-                    color: AppTheme.primaryLight,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                    const Text('Active Contract', style: TextStyle(fontSize: 12, color: AppTheme.textSecondary)),
-                    const SizedBox(height: 4),
-                    Text(
-                      contract['type'] == 'per_click'
-                          ? '\$${contract['rate']} per 1,000 clicks'
-                          : '\$${contract['rate']}/day fixed',
-                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: AppTheme.primary),
-                    ),
-                  ]),
-                )
-              : const Text('No active contract yet.', style: TextStyle(color: AppTheme.textSecondary, fontSize: 14)),
-        ),
-        const SizedBox(height: 80),
-      ],
-    );
-  }
-
-  Widget _pendingBanner() {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: const Color(0xFFFFF7ED),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFFED7AA)),
-      ),
-      child: const Row(children: [
-        Icon(Icons.access_time, color: Color(0xFFF59E0B)),
-        SizedBox(width: 10),
-        Expanded(
-          child: Text(
-            'Your account is pending approval. Our team will review it in 1–3 business days.',
-            style: TextStyle(fontSize: 13, color: Color(0xFF78350F)),
+          if (country.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+              child: SectionCard(
+                title: 'Traffic by Country (Today)',
+                padding: EdgeInsets.zero,
+                child: Column(
+                  children: [
+                    ...country.take(6).map((c) => _countryRow(c, showEarnings)),
+                  ],
+                ),
+              ),
+            ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+            child: _contractCard(contract),
           ),
+          const SizedBox(height: 80),
+        ],
+      );
+    } catch (e) {
+      return ErrorWidget2(message: 'Failed to render dashboard: $e', onRetry: _load);
+    }
+  }
+
+  Widget _buildHeader(Map stats, bool showEarnings, String accountStatus, Map? badge) {
+    final clicksToday = _toInt(stats['clicks_today']);
+    return Container(
+      decoration: const BoxDecoration(gradient: AppTheme.primaryGradient),
+      child: SafeArea(
+        bottom: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 28),
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Row(children: [
+              Expanded(
+                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  const Text('Publisher Dashboard', style: TextStyle(color: Colors.white70, fontSize: 13, fontWeight: FontWeight.w500)),
+                  const SizedBox(height: 2),
+                  const Text('Installs Bank', style: TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.w800, letterSpacing: -0.5)),
+                ]),
+              ),
+              GestureDetector(
+                onTap: _load,
+                child: Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(color: Colors.white.withAlpha(30), borderRadius: BorderRadius.circular(10)),
+                  child: const Icon(Icons.refresh_rounded, color: Colors.white, size: 20),
+                ),
+              ),
+            ]),
+            const SizedBox(height: 20),
+            Row(children: [
+              Expanded(
+                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  const Text('Clicks Today', style: TextStyle(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.w500)),
+                  const SizedBox(height: 4),
+                  Text(_fmtNum(clicksToday), style: const TextStyle(color: Colors.white, fontSize: 36, fontWeight: FontWeight.w900, letterSpacing: -1.5)),
+                ]),
+              ),
+              if (accountStatus == 'pending')
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(color: Colors.white.withAlpha(25), borderRadius: BorderRadius.circular(20), border: Border.all(color: Colors.white.withAlpha(60))),
+                  child: const Text('Pending Review', style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w600)),
+                )
+              else if (showEarnings)
+                Container(
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(color: Colors.white.withAlpha(20), borderRadius: BorderRadius.circular(12)),
+                  child: Column(children: [
+                    const Text('Earnings Today', style: TextStyle(color: Colors.white70, fontSize: 10, fontWeight: FontWeight.w500)),
+                    const SizedBox(height: 2),
+                    Text('\$${_toDouble(stats['earnings_today']).toStringAsFixed(4)}', style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w800)),
+                  ]),
+                ),
+            ]),
+          ]),
         ),
-      ]),
+      ),
     );
   }
 
-  Widget _buildBadge(Map? badge) {
-    if (badge == null) return const SizedBox.shrink();
-    final colorHex = badge['color'] as String;
-    final color = Color(int.parse(colorHex.replaceFirst('#', '0xFF')));
+  Widget _liveRow(Map? badge) {
+    return Row(children: [
+      if (badge != null) ...[
+        _buildBadge(badge),
+        const SizedBox(width: 10),
+      ],
+      _buildLiveCounter(),
+    ]);
+  }
+
+  Widget _buildBadge(Map badge) {
+    final colorHex = badge['color'] as String? ?? '#6b7280';
+    Color color;
+    try {
+      color = Color(int.parse(colorHex.replaceFirst('#', '0xFF')));
+    } catch (_) {
+      color = AppTheme.textSecondary;
+    }
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
       decoration: BoxDecoration(
-        color: color.withAlpha(25),
+        color: color.withAlpha(20),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: color.withAlpha(60)),
       ),
       child: Row(mainAxisSize: MainAxisSize.min, children: [
         Container(width: 7, height: 7, decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
         const SizedBox(width: 6),
-        Text(badge['label'], style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: color)),
+        Text(badge['label']?.toString() ?? '', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: color)),
       ]),
     );
   }
@@ -204,6 +235,7 @@ class _DashboardScreenState extends State<DashboardScreen> with AutomaticKeepAli
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: AppTheme.border),
+        boxShadow: AppTheme.cardShadow,
       ),
       child: Row(mainAxisSize: MainAxisSize.min, children: [
         Container(width: 7, height: 7, decoration: const BoxDecoration(color: AppTheme.primary, shape: BoxShape.circle)),
@@ -218,67 +250,159 @@ class _DashboardScreenState extends State<DashboardScreen> with AutomaticKeepAli
 
   Widget _statsGrid(Map stats, bool showEarnings) {
     final items = <Widget>[
-      StatCard(label: 'Clicks Today', value: _fmt(stats['clicks_today'])),
-      StatCard(label: 'This Week', value: _fmt(stats['clicks_this_week'])),
-      StatCard(label: 'This Month', value: _fmt(stats['clicks_this_month'])),
+      StatCard(
+        label: 'This Week',
+        value: _fmt(stats['clicks_this_week']),
+        icon: Icons.calendar_week_outlined,
+        gradient: AppTheme.blueGradient,
+        valueColor: AppTheme.info,
+      ),
+      StatCard(
+        label: 'This Month',
+        value: _fmt(stats['clicks_this_month']),
+        icon: Icons.calendar_month_outlined,
+        gradient: AppTheme.purpleGradient,
+        valueColor: AppTheme.purple,
+      ),
     ];
     if (showEarnings) {
-      items.add(StatCard(label: 'Earnings Today', value: '\$${(stats['earnings_today'] ?? 0).toStringAsFixed(4)}', valueColor: AppTheme.primary));
-      items.add(StatCard(label: 'Balance', value: '\$${(stats['balance'] ?? 0).toStringAsFixed(2)}', valueColor: AppTheme.primary, borderColor: AppTheme.primary));
+      items.add(StatCard(
+        label: 'Balance',
+        value: '\$${_toDouble(stats['balance']).toStringAsFixed(2)}',
+        icon: Icons.account_balance_wallet_rounded,
+        gradient: AppTheme.primaryGradient,
+        valueColor: AppTheme.primary,
+      ));
+      items.add(StatCard(
+        label: 'Pending',
+        value: '\$${_toDouble(stats['pending_balance']).toStringAsFixed(2)}',
+        icon: Icons.hourglass_bottom_rounded,
+        gradient: AppTheme.orangeGradient,
+        valueColor: AppTheme.warning,
+      ));
     }
     return GridView.count(
       crossAxisCount: 2,
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
-      crossAxisSpacing: 10,
-      mainAxisSpacing: 10,
-      childAspectRatio: 1.7,
+      crossAxisSpacing: 12,
+      mainAxisSpacing: 12,
+      childAspectRatio: 1.6,
       children: items,
     );
   }
 
-  Widget _buildChart(List<Map> chart, bool showEarnings) {
-    if (chart.isEmpty) return const Center(child: Text('No data'));
-    final spots = chart.asMap().entries.map((e) => FlSpot(e.key.toDouble(), (e.value['clicks'] as num).toDouble())).toList();
+  Widget _buildChart(List<Map<String, dynamic>> chart) {
+    if (chart.isEmpty) return const Center(child: Text('No data yet', style: TextStyle(color: AppTheme.textSecondary)));
+    final spots = chart.asMap().entries.map((e) => FlSpot(e.key.toDouble(), _toDouble(e.value['clicks']))).toList();
     return LineChart(LineChartData(
       lineBarsData: [
         LineChartBarData(
           spots: spots,
           isCurved: true,
           color: AppTheme.primary,
-          barWidth: 2.5,
+          barWidth: 3,
           dotData: const FlDotData(show: false),
-          belowBarData: BarAreaData(show: true, color: AppTheme.primary.withAlpha(25)),
+          belowBarData: BarAreaData(
+            show: true,
+            gradient: LinearGradient(
+              colors: [AppTheme.primary.withAlpha(60), AppTheme.primary.withAlpha(0)],
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+            ),
+          ),
         ),
       ],
       titlesData: FlTitlesData(
         bottomTitles: AxisTitles(sideTitles: SideTitles(showTitles: true, interval: 2, getTitlesWidget: (v, _) {
           final idx = v.toInt();
           if (idx < 0 || idx >= chart.length) return const SizedBox.shrink();
-          return Text(chart[idx]['date'].toString().split(' ').last, style: const TextStyle(fontSize: 10, color: AppTheme.textSecondary));
+          return Padding(
+            padding: const EdgeInsets.only(top: 4),
+            child: Text(chart[idx]['date']?.toString() ?? '', style: const TextStyle(fontSize: 10, color: AppTheme.textSecondary)),
+          );
         })),
         leftTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
         topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
         rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
       ),
-      gridData: FlGridData(show: true, drawVerticalLine: false, getDrawingHorizontalLine: (_) => const FlLine(color: Color(0xFFF3F4F6), strokeWidth: 1)),
+      gridData: FlGridData(
+        show: true,
+        drawVerticalLine: false,
+        getDrawingHorizontalLine: (_) => const FlLine(color: Color(0xFFEEF2F7), strokeWidth: 1),
+      ),
       borderData: FlBorderData(show: false),
     ));
   }
 
-  Widget _countryRow(Map c, bool showEarnings) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+  Widget _countryRow(Map<String, dynamic> c, bool showEarnings) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 11),
+      decoration: const BoxDecoration(border: Border(bottom: BorderSide(color: AppTheme.border, width: 0.5))),
       child: Row(children: [
-        Expanded(child: Text(c['country'] ?? '', style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14))),
-        Text(_fmt(c['clicks']), style: const TextStyle(fontWeight: FontWeight.w700)),
+        Expanded(
+          child: Text(
+            c['country']?.toString() ?? '',
+            style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14, color: AppTheme.textPrimary),
+          ),
+        ),
+        Text(_fmt(c['clicks']), style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14)),
         if (showEarnings && c['earnings'] != null) ...[
           const SizedBox(width: 12),
-          Text('\$${(c['earnings'] as num).toStringAsFixed(4)}', style: const TextStyle(color: AppTheme.primary, fontSize: 13)),
+          Text('\$${_toDouble(c['earnings']).toStringAsFixed(4)}', style: const TextStyle(color: AppTheme.primary, fontSize: 13, fontWeight: FontWeight.w600)),
         ]
       ]),
     );
   }
 
-  String _fmt(dynamic v) => v == null ? '0' : (v as num).toInt().toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]},');
+  Widget _contractCard(Map? contract) {
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppTheme.border),
+        boxShadow: AppTheme.cardShadow,
+      ),
+      child: Row(children: [
+        Container(
+          width: 44,
+          height: 44,
+          decoration: BoxDecoration(gradient: AppTheme.primaryGradient, borderRadius: BorderRadius.circular(12)),
+          child: const Icon(Icons.description_rounded, color: Colors.white, size: 22),
+        ),
+        const SizedBox(width: 14),
+        Expanded(
+          child: contract != null
+              ? Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  const Text('Active Contract', style: TextStyle(fontSize: 12, color: AppTheme.textSecondary, fontWeight: FontWeight.w500)),
+                  const SizedBox(height: 3),
+                  Text(
+                    contract['type'] == 'per_click'
+                        ? '\$${contract['rate']} per 1,000 clicks'
+                        : '\$${contract['rate']}/day fixed',
+                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: AppTheme.primary),
+                  ),
+                ])
+              : Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  const Text('No Contract Yet', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: AppTheme.textPrimary)),
+                  const SizedBox(height: 2),
+                  const Text('Contact support to set up your contract', style: TextStyle(fontSize: 12, color: AppTheme.textSecondary)),
+                ]),
+        ),
+        const Icon(Icons.chevron_right_rounded, color: AppTheme.textSecondary),
+      ]),
+    );
+  }
+
+  String _fmt(dynamic v) {
+    if (v == null) return '0';
+    final n = num.tryParse(v.toString()) ?? 0;
+    return n.toInt().toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]},');
+  }
+
+  String _fmtNum(int n) => n.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]},');
+
+  int _toInt(dynamic v) => v == null ? 0 : (num.tryParse(v.toString()) ?? 0).toInt();
+  double _toDouble(dynamic v) => v == null ? 0.0 : (num.tryParse(v.toString()) ?? 0).toDouble();
 }

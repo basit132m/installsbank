@@ -23,7 +23,7 @@ class _SplashScreenState extends State<SplashScreen> {
     final auth = context.read<AuthProvider>();
     await auth.checkAuth();
     if (!mounted) return;
-    await Future.delayed(const Duration(milliseconds: 1200));
+    await Future.delayed(const Duration(milliseconds: 1400));
     if (!mounted) return;
     Navigator.pushReplacement(
       context,
@@ -36,40 +36,50 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.primary,
-      body: Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Logo from website
-            Container(
-              width: 110,
-              height: 110,
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(24),
-                boxShadow: [BoxShadow(color: Colors.black.withAlpha(40), blurRadius: 20, offset: const Offset(0, 8))],
-              ),
-              padding: const EdgeInsets.all(12),
-              child: Image.network(
-                'https://installsbank.com/images/installs-bank.webp',
-                fit: BoxFit.contain,
-                errorBuilder: (_, __, ___) => const Center(
-                  child: Text('IB', style: TextStyle(fontSize: 36, fontWeight: FontWeight.w800, color: AppTheme.primary)),
+      body: Container(
+        decoration: const BoxDecoration(gradient: AppTheme.primaryGradient),
+        child: SafeArea(
+          child: Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Logo
+                Container(
+                  width: 110,
+                  height: 110,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(28),
+                    boxShadow: [BoxShadow(color: Colors.black.withAlpha(40), blurRadius: 30, offset: const Offset(0, 12))],
+                  ),
+                  padding: const EdgeInsets.all(12),
+                  child: Image.network(
+                    'https://installsbank.com/images/installs-bank.webp',
+                    fit: BoxFit.contain,
+                    errorBuilder: (_, __, ___) => const Center(
+                      child: Text('IB', style: TextStyle(fontSize: 36, fontWeight: FontWeight.w900, color: AppTheme.primary)),
+                    ),
+                  ),
                 ),
-              ),
+                const SizedBox(height: 24),
+                const Text(
+                  'Installs Bank',
+                  style: TextStyle(fontSize: 28, fontWeight: FontWeight.w900, color: Colors.white, letterSpacing: -0.8),
+                ),
+                const SizedBox(height: 6),
+                const Text(
+                  'Publisher Dashboard',
+                  style: TextStyle(fontSize: 14, color: Colors.white70, fontWeight: FontWeight.w500, letterSpacing: 0.3),
+                ),
+                const SizedBox(height: 60),
+                const SizedBox(
+                  width: 26,
+                  height: 26,
+                  child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.5),
+                ),
+              ],
             ),
-            const SizedBox(height: 24),
-            const Text('Installs Bank', style: TextStyle(fontSize: 26, fontWeight: FontWeight.w800, color: Colors.white, letterSpacing: -0.5)),
-            const SizedBox(height: 6),
-            const Text('Publisher Dashboard', style: TextStyle(fontSize: 14, color: Colors.white70, fontWeight: FontWeight.w500)),
-            const SizedBox(height: 48),
-            const SizedBox(
-              width: 24,
-              height: 24,
-              child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.5),
-            ),
-          ],
+          ),
         ),
       ),
     );

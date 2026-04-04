@@ -19,8 +19,8 @@ class DashboardController extends Controller
 
         $stats = [
             'clicks_today'      => $todayEarning?->valid_clicks ?? 0,
-            'clicks_this_week'  => DailyEarning::where('user_id', $user->id)->whereBetween('date', [now()->startOfWeek(), now()])->sum('valid_clicks'),
-            'clicks_this_month' => DailyEarning::where('user_id', $user->id)->whereMonth('date', now()->month)->whereYear('date', now()->year)->sum('valid_clicks'),
+            'clicks_this_week'  => (int) DailyEarning::where('user_id', $user->id)->whereBetween('date', [now()->startOfWeek(), now()])->sum('valid_clicks'),
+            'clicks_this_month' => (int) DailyEarning::where('user_id', $user->id)->whereMonth('date', now()->month)->whereYear('date', now()->year)->sum('valid_clicks'),
             'earnings_today'    => $showEarnings ? (float) ($todayEarning?->earnings ?? 0) : null,
             'balance'           => $showEarnings ? (float) ($profile?->balance ?? 0) : null,
             'pending_balance'   => $showEarnings ? (float) ($profile?->pending_balance ?? 0) : null,
