@@ -139,6 +139,13 @@ Route::prefix('publisher')->name('publisher.')->middleware(['auth', 'role:publis
     // Live stats JSON endpoint for real-time click counter
     Route::get('/live-stats', [LiveStatsController::class, 'index'])->name('live-stats');
 
+    // Profile
+    Route::get('/profile', [Publisher\ProfileController::class, 'show'])->name('profile');
+    Route::post('/profile', [Publisher\ProfileController::class, 'update'])->name('profile.update');
+    Route::post('/profile/password', [Publisher\ProfileController::class, 'updatePassword'])->name('profile.password');
+    Route::post('/profile/avatar', [Publisher\ProfileController::class, 'updateAvatar'])->name('profile.avatar');
+    Route::post('/profile/avatar/remove', [Publisher\ProfileController::class, 'removeAvatar'])->name('profile.avatar.remove');
+
     Route::get('/support', [Publisher\SupportController::class, 'index'])->name('support.index');
     Route::get('/support/create', [Publisher\SupportController::class, 'create'])->name('support.create');
     Route::post('/support', [Publisher\SupportController::class, 'store'])->name('support.store');

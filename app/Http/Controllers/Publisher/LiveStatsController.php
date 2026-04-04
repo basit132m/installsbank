@@ -42,10 +42,9 @@ class LiveStatsController extends Controller
         };
 
         return response()->json([
-            'clicks_today'   => $clicksToday,
+            'clicks_today'     => $clicksToday,
             'clicks_last_hour' => $clicksLastHour,
-            'fraud_rate'     => $fraudRate,
-            'badge'          => $badge,
+            'badge'            => $badge,
         ]);
     }
 }

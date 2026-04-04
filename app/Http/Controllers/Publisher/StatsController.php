@@ -65,7 +65,6 @@ class StatsController extends Controller
                 'name'    => $link->name ?: 'Unnamed Link',
                 'code'    => $link->unique_code,
                 'valid'   => (clone $base)->where('is_counted', true)->count(),
-                'fraud'   => (clone $base)->where('is_fraud', true)->count(),
                 'earnings'=> $showEarnings ? (clone $base)->where('is_counted', true)->sum('click_value') : null,
                 'active'  => $link->is_active,
             ];

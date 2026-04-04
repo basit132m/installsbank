@@ -14,7 +14,7 @@
 <div class="stats-grid mb-6">
     <div class="stat-card">
         <div class="stat-value">{{ number_format($totals['clicks']) }}</div>
-        <div class="stat-label">Total Valid Clicks</div>
+        <div class="stat-label">Total Unique Clicks</div>
     </div>
     @if($totals['earnings'] !== null)
     <div class="stat-card">
@@ -38,7 +38,7 @@
             <thead>
                 <tr>
                     <th>Date</th>
-                    <th>Valid Clicks</th>
+                    <th>Unique Clicks</th>
                     @if($showEarnings)<th>Earnings</th>@endif
                 </tr>
             </thead>
@@ -68,15 +68,12 @@
                 <tr>
                     <th>Link Name</th>
                     <th>Status</th>
-                    <th>Valid Clicks</th>
-                    <th>Fraud Clicks</th>
-                    <th>Fraud Rate</th>
+                    <th>Unique Clicks</th>
                     @if($showEarnings)<th>Earnings</th>@endif
                 </tr>
             </thead>
             <tbody>
                 @foreach($linkStats as $ls)
-                @php $total = $ls['valid'] + $ls['fraud']; $rate = $total > 0 ? round($ls['fraud'] / $total * 100, 1) : 0; @endphp
                 <tr>
                     <td>
                         <div style="font-weight:600;font-size:13px;">{{ $ls['name'] }}</div>
@@ -84,10 +81,6 @@
                     </td>
                     <td><span class="badge {{ $ls['active'] ? 'badge-success' : 'badge-danger' }}">{{ $ls['active'] ? 'Active' : 'Inactive' }}</span></td>
                     <td><strong>{{ number_format($ls['valid']) }}</strong></td>
-                    <td style="color:#ef4444;">{{ number_format($ls['fraud']) }}</td>
-                    <td>
-                        <span style="font-size:12px;font-weight:600;color:{{ $rate < 10 ? '#01BF63' : ($rate < 25 ? '#f59e0b' : '#ef4444') }};">{{ $rate }}%</span>
-                    </td>
                     @if($showEarnings)<td style="color:#01BF63;">${{ number_format($ls['earnings'], 4) }}</td>@endif
                 </tr>
                 @endforeach
