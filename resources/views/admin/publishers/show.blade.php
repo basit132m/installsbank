@@ -125,14 +125,17 @@
             @csrf
             <div class="form-group">
                 <label class="form-label">Contract Type</label>
-                <select name="type" class="form-control form-select">
+                <select name="type" class="form-control form-select" id="contractType" onchange="toggleRate()">
                     <option value="per_click">Per 1,000 Unique Clicks</option>
                     <option value="fixed">Fixed Daily Rate</option>
                 </select>
             </div>
-            <div class="form-group">
-                <label class="form-label">Rate (USD)</label>
-                <input type="number" name="rate" class="form-control" placeholder="0.0000" step="0.0001" min="0.0001" required>
+            <div class="form-group" id="rateGroup" style="display:none;">
+                <label class="form-label">Fixed Daily Rate (USD)</label>
+                <input type="number" name="rate" id="rateInput" class="form-control" placeholder="0.0000" step="0.0001" min="0.0001">
+            </div>
+            <div id="perClickNote" style="background:#e6faf2;border-radius:8px;padding:12px;font-size:13px;color:#065f46;margin-bottom:12px;">
+                ✓ Rate calculated automatically from country rates set in the Rates panel. No manual rate needed.
             </div>
             <div class="form-group">
                 <label class="form-label">Note (optional)</label>
@@ -140,6 +143,15 @@
             </div>
             <button type="submit" class="btn btn-primary" style="width:100%;">Send Contract Offer</button>
         </form>
+        <script>
+        function toggleRate() {
+            const type = document.getElementById('contractType').value;
+            document.getElementById('rateGroup').style.display = type === 'fixed' ? 'block' : 'none';
+            document.getElementById('perClickNote').style.display = type === 'per_click' ? 'block' : 'none';
+            document.getElementById('rateInput').required = type === 'fixed';
+        }
+        toggleRate();
+        </script>
         @endif
     </div>
 </div>

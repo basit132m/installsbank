@@ -291,8 +291,8 @@
             </div>
             <div class="hero-stats">
                 <div>
-                    <div class="hero-stat-value">$0.50+</div>
-                    <div class="hero-stat-label">Per 1K Clicks (US)</div>
+                    <div class="hero-stat-value">$0.04</div>
+                    <div class="hero-stat-label">Per Click (US)</div>
                 </div>
                 <div>
                     <div class="hero-stat-value">48h</div>
@@ -408,23 +408,23 @@
         <div class="rates-table-wrap">
             <table class="rates-table">
                 <thead>
-                    <tr><th>Tier</th><th>Countries</th><th>Rate per 1,000 Clicks</th></tr>
+                    <tr><th>Tier</th><th>Countries</th><th>Rate per Click</th></tr>
                 </thead>
                 <tbody>
                     <tr>
                         <td><span style="background:#e6faf2;color:#065f46;padding:4px 14px;border-radius:12px;font-size:13px;font-weight:700;">Tier 1</span></td>
                         <td style="color:#374151;">US, UK, CA, AU, DE, FR, NL, SE, NO, DK</td>
-                        <td class="rate-val" style="font-size:18px;">$40 <span style="font-size:13px;color:#9ca3af;font-weight:500;">/ 1,000 clicks</span></td>
+                        <td class="rate-val" style="font-size:18px;">$0.04 <span style="font-size:13px;color:#9ca3af;font-weight:500;">per click</span></td>
                     </tr>
                     <tr>
                         <td><span style="background:#dbeafe;color:#1e40af;padding:4px 14px;border-radius:12px;font-size:13px;font-weight:700;">Tier 2</span></td>
                         <td style="color:#374151;">ES, IT, PT, PL, CZ, HU, RO, GR, TR, AE</td>
-                        <td class="rate-val" style="font-size:18px;">$30 <span style="font-size:13px;color:#9ca3af;font-weight:500;">/ 1,000 clicks</span></td>
+                        <td class="rate-val" style="font-size:18px;">$0.03 <span style="font-size:13px;color:#9ca3af;font-weight:500;">per click</span></td>
                     </tr>
                     <tr>
                         <td><span style="background:#f3f4f6;color:#6b7280;padding:4px 14px;border-radius:12px;font-size:13px;font-weight:700;">Tier 3</span></td>
                         <td style="color:#374151;">All other countries</td>
-                        <td class="rate-val" style="font-size:18px;">$20 <span style="font-size:13px;color:#9ca3af;font-weight:500;">/ 1,000 clicks</span></td>
+                        <td class="rate-val" style="font-size:18px;">$0.02 <span style="font-size:13px;color:#9ca3af;font-weight:500;">per click</span></td>
                     </tr>
                 </tbody>
             </table>

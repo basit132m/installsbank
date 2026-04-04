@@ -147,14 +147,11 @@
                     <td style="font-size:13px;">
                         @if($w->status === 'paid')
                             @if($w->receipt_hash)
-                                <span style="font-family:monospace;color:#01BF63;" title="{{ $w->receipt_hash }}">
-                                    {{ substr($w->receipt_hash, 0, 16) }}...
+                                <div style="font-size:11px;color:#6b7280;margin-bottom:2px;">Transaction ID:</div>
+                                <span style="font-family:monospace;font-size:12px;color:#01BF63;" title="{{ $w->receipt_hash }}">
+                                    {{ substr($w->receipt_hash, 0, 20) }}...
                                 </span>
-                            @endif
-                            @if($w->receipt_note)
-                                <div style="color:#6b7280;font-size:12px;margin-top:2px;">{{ $w->receipt_note }}</div>
-                            @endif
-                            @if(!$w->receipt_hash && !$w->receipt_note)
+                            @else
                                 <span style="color:#9ca3af;">—</span>
                             @endif
                         @elseif($w->status === 'rejected' && $w->admin_note)

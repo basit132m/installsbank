@@ -22,16 +22,20 @@ class ContractController extends Controller
     {
         $data = $request->validate([
             'type' => 'required|in:per_click,fixed',
-            'rate' => 'required|numeric|min:0.0001',
+            'rate' => 'nullable|numeric|min:0.0001',
             'admin_note' => 'nullable|string|max:500',
         ]);
+
+        if ($data['type'] === 'fixed' && empty($data['rate'])) {
+            return back()->withErrors(['rate' => 'Rate is required for fixed daily contracts.']);
+        }
 
         $profile = $user->publisherProfile;
 
         Contract::create([
             'user_id' => $user->id,
             'type' => $data['type'],
-            'rate' => $data['rate'],
+            'rate' => $data['type'] === 'per_click' ? 0 : $data['rate'],
             'status' => 'pending',
             'test_total_clicks' => $profile->test_total_clicks,
             'test_started_at' => $profile->test_started_at,

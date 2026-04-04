@@ -25,12 +25,12 @@ class RoleMiddleware
             abort(403, 'Access denied.');
         }
 
-        if ($user->status !== 'active') {
+        if ($user->status === 'suspended') {
             if ($request->expectsJson()) {
-                return response()->json(['message' => 'Your account is not active. Please contact support.'], 403);
+                return response()->json(['message' => 'Your account has been suspended. Please contact support.'], 403);
             }
             auth()->logout();
-            return redirect()->route('login')->with('error', 'Your account is not active. Please contact support.');
+            return redirect()->route('login')->with('error', 'Your account has been suspended. Please contact support.');
         }
 
         return $next($request);

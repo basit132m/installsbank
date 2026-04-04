@@ -79,7 +79,7 @@
                         <div style="font-size:12px;color:#6b7280;">
                             <div>Paid {{ $w->processed_at?->format('M d, Y') }}</div>
                             @if($w->receipt_hash)
-                                <div style="font-family:monospace;margin-top:2px;color:#01BF63;" title="{{ $w->receipt_hash }}">TxHash: {{ substr($w->receipt_hash, 0, 12) }}...</div>
+                                <div style="font-family:monospace;margin-top:2px;color:#01BF63;" title="{{ $w->receipt_hash }}">TX ID: {{ substr($w->receipt_hash, 0, 16) }}...</div>
                             @endif
                         </div>
                         @else
@@ -109,13 +109,9 @@
         <form method="POST" action="{{ route('admin.withdrawals.approve', $w) }}">
             @csrf
             <div class="form-group">
-                <label class="form-label">Transaction Hash (optional)</label>
-                <input type="text" name="receipt_hash" class="form-control" placeholder="e.g. 0x1a2b3c...">
-                <div style="font-size:12px;color:#9ca3af;margin-top:4px;">Paste the blockchain tx hash. Publisher will see this as receipt.</div>
-            </div>
-            <div class="form-group">
-                <label class="form-label">Receipt Note (optional)</label>
-                <textarea name="receipt_note" class="form-control" rows="2" placeholder="Any message to the publisher..."></textarea>
+                <label class="form-label">Transaction ID (optional)</label>
+                <input type="text" name="receipt_hash" class="form-control" placeholder="Paste blockchain transaction ID...">
+                <div style="font-size:12px;color:#9ca3af;margin-top:4px;">Publisher will see this transaction ID as payment proof.</div>
             </div>
             <div style="display:flex;gap:8px;margin-top:8px;">
                 <button type="submit" class="btn btn-success">Mark as Paid</button>

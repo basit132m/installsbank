@@ -19,8 +19,7 @@
         <div style="flex:1;">
             <div style="font-size:16px;font-weight:700;color:#92400e;margin-bottom:6px;">Account Pending Approval</div>
             <p style="font-size:14px;color:#78350f;line-height:1.6;margin-bottom:12px;">
-                Our team is reviewing your application. This usually takes <strong>1–3 business days</strong>.
-                You will gain full access to the dashboard, ad codes, and earnings once approved.
+                Your request is under review and will be sorted out ASAP. Please visit us again to see the status of your request.
             </p>
             <div style="background:#fffbeb;border-radius:8px;padding:14px;font-size:13px;color:#78350f;line-height:1.8;">
                 <strong>What happens next:</strong>
