@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\TrackingLink;
 use App\Services\ClickTrackingService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Jenssegers\Agent\Agent;
 
 class TrackingController extends Controller
@@ -25,7 +26,15 @@ class TrackingController extends Controller
         $os = $agent->platform() ?: 'Unknown';
         $redirectUrl = $link->resolveUrlForOs($os);
 
-        // Process click async-like (quick response)
+        // Rate limiter: same IP hitting the same link within 5 seconds is noise
+        // (page auto-reload, prefetch, crawlers). Redirect silently without recording.
+        $ip = $request->ip();
+        $rateLimitKey = "rl_{$link->id}_{$ip}";
+        if (!Cache::add($rateLimitKey, 1, 5)) {
+            return redirect()->away($redirectUrl);
+        }
+
+        // Process click
         try {
             $this->trackingService->processClick($link, $request);
         } catch (\Exception $e) {
