@@ -253,14 +253,14 @@ class _DashboardScreenState extends State<DashboardScreen> with AutomaticKeepAli
       StatCard(
         label: 'This Week',
         value: _fmt(stats['clicks_this_week']),
-        icon: Icons.calendar_week_outlined,
+        icon: Icons.date_range_outlined,
         gradient: AppTheme.blueGradient,
         valueColor: AppTheme.info,
       ),
       StatCard(
         label: 'This Month',
         value: _fmt(stats['clicks_this_month']),
-        icon: Icons.calendar_month_outlined,
+        icon: Icons.calendar_today_outlined,
         gradient: AppTheme.purpleGradient,
         valueColor: AppTheme.purple,
       ),
