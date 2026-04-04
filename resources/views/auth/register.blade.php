@@ -81,9 +81,15 @@
                     <label class="form-label">Website (Optional)</label>
                     <input type="url" name="website" class="form-control" value="{{ old('website') }}" placeholder="https://yoursite.com">
                 </div>
-                <div class="form-group">
-                    <label class="form-label">Phone (Optional)</label>
-                    <input type="text" name="phone" class="form-control" value="{{ old('phone') }}" placeholder="+1 234 567 8900">
+                <div class="grid-2">
+                    <div class="form-group">
+                        <label class="form-label">WhatsApp (Optional)</label>
+                        <input type="text" name="phone" class="form-control" value="{{ old('phone') }}" placeholder="+1 234 567 8900">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Telegram (Optional)</label>
+                        <input type="text" name="telegram" class="form-control" value="{{ old('telegram') }}" placeholder="@username">
+                    </div>
                 </div>
                 <button type="submit" class="btn-submit">Create Account</button>
             </form>

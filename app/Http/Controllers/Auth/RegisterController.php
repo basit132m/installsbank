@@ -28,6 +28,7 @@ class RegisterController extends Controller
             'password' => 'required|min:8|confirmed',
             'website' => 'nullable|url',
             'phone' => 'nullable|string|max:20',
+            'telegram' => 'nullable|string|max:100',
         ]);
 
         $user = User::create([
@@ -38,6 +39,7 @@ class RegisterController extends Controller
             'status' => 'pending',
             'website' => $data['website'] ?? null,
             'phone' => $data['phone'] ?? null,
+            'telegram' => $data['telegram'] ?? null,
         ]);
 
         PublisherProfile::create(['user_id' => $user->id]);
