@@ -146,12 +146,12 @@
         .footer-copy { font-size: 13px; }
 
         /* APP SECTION */
-        .app-section { padding: 100px 5%; background: #fff; }
+        .app-section { padding: 100px 5%; background: linear-gradient(160deg, #f0fdf7 0%, #ffffff 60%); }
         .app-inner { display: flex; align-items: center; gap: 72px; max-width: 1200px; margin: 0 auto; }
         .app-content { flex: 1; }
         .app-image-wrap { flex: 1; display: flex; justify-content: center; }
-        .app-image-wrap img { max-width: 340px; width: 100%; border-radius: 24px; box-shadow: 0 32px 80px rgba(0,0,0,0.14); }
-        @media (max-width: 900px) { .app-inner { flex-direction: column-reverse; } .app-image-wrap img { max-width: 260px; } }
+        .app-image-wrap img { max-width: 340px; width: 100%; background: transparent; }
+        @media (max-width: 900px) { .app-inner { flex-direction: column-reverse; } .app-image-wrap img { max-width: 240px; } }
         .app-badges { display: flex; gap: 10px; flex-wrap: wrap; margin: 24px 0 32px; }
         .app-badge { display: inline-flex; align-items: center; gap: 7px; padding: 8px 16px; border-radius: 20px; font-size: 13px; font-weight: 600; }
         .badge-safe { background: #e6faf2; color: #065f46; border: 1px solid #a7f3d0; }
@@ -171,9 +171,63 @@
         .contact-id { font-size: 14px; color: #6b7280; font-weight: 500; }
         .contact-action { margin-top: 14px; padding: 9px 20px; border-radius: 8px; font-size: 13px; font-weight: 700; display: inline-block; }
 
+        /* HAMBURGER */
+        .hamburger { display: none; flex-direction: column; justify-content: center; gap: 5px; cursor: pointer; padding: 6px; background: none; border: none; z-index: 1001; }
+        .hamburger span { display: block; width: 24px; height: 2.5px; background: #111827; border-radius: 3px; transition: all 0.3s; }
+        .hamburger.open span:nth-child(1) { transform: translateY(7.5px) rotate(45deg); }
+        .hamburger.open span:nth-child(2) { opacity: 0; }
+        .hamburger.open span:nth-child(3) { transform: translateY(-7.5px) rotate(-45deg); }
+
+        .mobile-menu {
+            display: none;
+            position: fixed; top: 70px; left: 0; right: 0;
+            background: white;
+            border-bottom: 1px solid #f3f4f6;
+            z-index: 998;
+            padding: 8px 5% 20px;
+            box-shadow: 0 12px 32px rgba(0,0,0,0.1);
+        }
+        .mobile-menu.open { display: block; }
+        .mobile-menu a { display: block; padding: 13px 0; font-size: 15px; font-weight: 600; color: #374151; text-decoration: none; border-bottom: 1px solid #f9fafb; }
+        .mobile-menu a:last-child { border-bottom: none; }
+        .mobile-menu .mob-cta { margin-top: 12px; display: flex; flex-direction: column; gap: 8px; }
+        .mobile-menu .mob-cta a { border: none; text-align: center; border-radius: 10px; padding: 13px; }
+        .mobile-menu .mob-btn-login { background: #f9fafb; border: 1.5px solid #e5e7eb !important; color: #374151; }
+        .mobile-menu .mob-btn-signup { background: var(--primary); color: white; }
+
         @media (max-width: 768px) {
             .nav-links { display: none; }
+            .nav-cta { display: none; }
+            .hamburger { display: flex; }
+
+            /* Hero */
+            .hero { padding: 90px 5% 60px; min-height: auto; }
+            .hero-inner { flex-direction: column; gap: 32px; }
+            .hero-content { max-width: 100%; }
+            .hero-image { display: flex !important; justify-content: center; width: 100%; }
+            .hero-image img { max-width: 280px; }
+            h1 { font-size: 36px; }
+            .hero-desc { font-size: 16px; }
+            .hero-stats { gap: 24px; }
+            .hero-stat-value { font-size: 22px; }
+
+            /* Sections */
+            .section { padding: 60px 5%; }
+            .app-section { padding: 60px 5%; }
+            .contact-section { padding: 60px 5%; }
+
+            /* Footer */
+            .footer-grid { grid-template-columns: 1fr 1fr; gap: 32px; }
+
+            /* App inner */
+            .app-inner { gap: 40px; }
+        }
+
+        @media (max-width: 480px) {
+            h1 { font-size: 30px; }
+            .hero-image img { max-width: 220px; }
             .footer-grid { grid-template-columns: 1fr; }
+            .btn-hero { padding: 13px 22px; font-size: 15px; }
         }
     </style>
 </head>
@@ -182,6 +236,7 @@
     <nav>
         <a href="{{ route('home') }}" class="nav-brand">
             <img src="https://installsbank.com/images/logo.webp" alt="Installs Bank" onerror="this.style.display='none'">
+            <span class="nav-brand-text">Installs Bank</span>
         </a>
         <div class="nav-links">
             <a href="#features">Features</a>
@@ -194,7 +249,33 @@
             <a href="{{ route('login') }}" class="btn-login">Sign In</a>
             <a href="{{ route('register') }}" class="btn-signup">Join Now</a>
         </div>
+        <button class="hamburger" id="hamburger" aria-label="Menu" onclick="toggleMenu()">
+            <span></span><span></span><span></span>
+        </button>
     </nav>
+
+    <!-- Mobile Menu -->
+    <div class="mobile-menu" id="mobileMenu">
+        <a href="#features" onclick="closeMenu()">Features</a>
+        <a href="#how-it-works" onclick="closeMenu()">How It Works</a>
+        <a href="#rates" onclick="closeMenu()">Rates</a>
+        <a href="#mobile-app" onclick="closeMenu()">Mobile App</a>
+        <a href="#contact" onclick="closeMenu()">Contact</a>
+        <div class="mob-cta">
+            <a href="{{ route('login') }}" class="mob-btn-login">Sign In</a>
+            <a href="{{ route('register') }}" class="mob-btn-signup">Join Now — Free</a>
+        </div>
+    </div>
+    <script>
+        function toggleMenu() {
+            document.getElementById('hamburger').classList.toggle('open');
+            document.getElementById('mobileMenu').classList.toggle('open');
+        }
+        function closeMenu() {
+            document.getElementById('hamburger').classList.remove('open');
+            document.getElementById('mobileMenu').classList.remove('open');
+        }
+    </script>
 
     <!-- Hero -->
     <section class="hero">
