@@ -8,9 +8,7 @@ use Illuminate\Support\Facades\Cache;
 
 class FraudDetectionService
 {
-    private const DUPLICATE_IP_WINDOW = 6 * 3600;
-    private const TRAFFIC_SPIKE_THRESHOLD = 3;
-    private const SPIKE_CHECK_HOURS = 24;
+    private const DUPLICATE_WINDOW = 24 * 3600; // 24-hour dedup window
 
     // Known VPN provider names (matched against ASN org name)
     private const VPN_KEYWORDS = [
@@ -44,8 +42,8 @@ class FraudDetectionService
     {
         $result = ['is_fraud' => false, 'fraud_reason' => null, 'is_vpn' => false, 'is_proxy' => false];
 
-        // 1. Duplicate IP check within 6 hours
-        if ($this->isDuplicateIp($clickData['tracking_link_id'], $clickData['ip_address'])) {
+        // 1. Duplicate session check (24h window using fingerprint = IP+UA+language)
+        if ($this->isDuplicateSession($clickData['tracking_link_id'], $clickData['fingerprint'])) {
             $result['is_fraud'] = true;
             $result['fraud_reason'] = 'duplicate_ip';
             $this->logFraudAlert($clickData, 'duplicate_ip');
@@ -69,7 +67,7 @@ class FraudDetectionService
 
         if ($result['is_fraud']) return $result;
 
-        // 3. Bot/empty UA detection
+        // 3. Bot / empty UA detection
         if ($this->isBot($clickData['user_agent'] ?? '')) {
             $result['is_fraud'] = true;
             $result['fraud_reason'] = 'bot_detected';
@@ -77,26 +75,25 @@ class FraudDetectionService
             return $result;
         }
 
-        // 4. Traffic spike detection
-        if ($this->isTrafficSpike($clickData['tracking_link_id'], $clickData['user_id'])) {
-            $result['is_fraud'] = true;
-            $result['fraud_reason'] = 'traffic_spike';
-            $this->logFraudAlert($clickData, 'traffic_spike');
-            return $result;
-        }
-
         return $result;
     }
 
-    private function isDuplicateIp(int $linkId, string $ip): bool
+    private function isDuplicateSession(int $linkId, string $fingerprint): bool
     {
-        $key = "click_{$linkId}_{$ip}";
-        if (Cache::has($key)) return true;
-        Cache::put($key, 1, self::DUPLICATE_IP_WINDOW);
+        // Fingerprint = hash of IP + UserAgent + Accept-Language + Accept-Encoding
+        // This correctly deduplicates the same browser session while allowing
+        // different users behind the same NAT/shared IP to each earn once.
+        $cacheKey = "click_fp_{$linkId}_{$fingerprint}";
 
+        if (Cache::has($cacheKey)) return true;
+
+        // Write to cache immediately (atomic on file cache via temp+rename)
+        Cache::put($cacheKey, 1, self::DUPLICATE_WINDOW);
+
+        // DB fallback: covers cases where cache was cleared or multiple servers
         return Click::where('tracking_link_id', $linkId)
-            ->where('ip_address', $ip)
-            ->where('created_at', '>=', now()->subSeconds(self::DUPLICATE_IP_WINDOW))
+            ->where('fingerprint', $fingerprint)
+            ->where('created_at', '>=', now()->subSeconds(self::DUPLICATE_WINDOW))
             ->exists();
     }
 
@@ -163,26 +160,6 @@ class FraudDetectionService
             if (str_contains($uaLower, $pattern)) return true;
         }
         return false;
-    }
-
-    private function isTrafficSpike(int $linkId, int $publisherId): bool
-    {
-        $key = "spike_check_{$publisherId}";
-        return Cache::remember($key, 300, function () use ($linkId, $publisherId) {
-            $currentHourClicks = Click::where('user_id', $publisherId)
-                ->where('created_at', '>=', now()->subHour())
-                ->count();
-
-            $avgHourlyClicks = Click::where('user_id', $publisherId)
-                ->where('created_at', '>=', now()->subHours(self::SPIKE_CHECK_HOURS))
-                ->where('created_at', '<', now()->subHour())
-                ->count() / (self::SPIKE_CHECK_HOURS - 1);
-
-            if ($avgHourlyClicks > 10 && $currentHourClicks > ($avgHourlyClicks * self::TRAFFIC_SPIKE_THRESHOLD)) {
-                return true;
-            }
-            return false;
-        });
     }
 
     private function logFraudAlert(array $clickData, string $type): void
