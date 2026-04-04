@@ -134,7 +134,7 @@
             color: #9ca3af;
             padding: 56px 5% 32px;
         }
-        .footer-grid { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 48px; margin-bottom: 48px; }
+        .footer-grid { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 48px; margin-bottom: 48px; }
         .footer-brand { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
         .footer-brand img { height: 30px; filter: brightness(0) invert(1); }
         .footer-brand-text { font-size: 16px; font-weight: 800; color: white; }
@@ -144,6 +144,32 @@
         .footer-link:hover { color: var(--primary); }
         .footer-bottom { border-top: 1px solid #1f2937; padding-top: 24px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; }
         .footer-copy { font-size: 13px; }
+
+        /* APP SECTION */
+        .app-section { padding: 100px 5%; background: #fff; }
+        .app-inner { display: flex; align-items: center; gap: 72px; max-width: 1200px; margin: 0 auto; }
+        .app-content { flex: 1; }
+        .app-image-wrap { flex: 1; display: flex; justify-content: center; }
+        .app-image-wrap img { max-width: 340px; width: 100%; border-radius: 24px; box-shadow: 0 32px 80px rgba(0,0,0,0.14); }
+        @media (max-width: 900px) { .app-inner { flex-direction: column-reverse; } .app-image-wrap img { max-width: 260px; } }
+        .app-badges { display: flex; gap: 10px; flex-wrap: wrap; margin: 24px 0 32px; }
+        .app-badge { display: inline-flex; align-items: center; gap: 7px; padding: 8px 16px; border-radius: 20px; font-size: 13px; font-weight: 600; }
+        .badge-safe { background: #e6faf2; color: #065f46; border: 1px solid #a7f3d0; }
+        .badge-android { background: #dbeafe; color: #1e40af; border: 1px solid #bfdbfe; }
+        .badge-first { background: #fef3c7; color: #92400e; border: 1px solid #fcd34d; }
+        .btn-download { display: inline-flex; align-items: center; gap: 10px; background: #111827; color: white; padding: 14px 28px; border-radius: 12px; font-size: 15px; font-weight: 700; text-decoration: none; transition: all 0.2s; }
+        .btn-download:hover { background: #1f2937; transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.18); }
+        .btn-download svg { flex-shrink: 0; }
+
+        /* CONTACT SECTION */
+        .contact-section { padding: 80px 5%; background: #f9fafb; }
+        .contact-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 20px; margin-top: 44px; }
+        .contact-card { background: white; border-radius: 16px; padding: 28px; border: 1px solid #f3f4f6; text-align: center; transition: all 0.2s; text-decoration: none; color: inherit; display: block; }
+        .contact-card:hover { transform: translateY(-4px); box-shadow: 0 12px 40px rgba(0,0,0,0.08); }
+        .contact-icon { width: 60px; height: 60px; border-radius: 16px; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px; }
+        .contact-name { font-size: 16px; font-weight: 700; margin-bottom: 6px; }
+        .contact-id { font-size: 14px; color: #6b7280; font-weight: 500; }
+        .contact-action { margin-top: 14px; padding: 9px 20px; border-radius: 8px; font-size: 13px; font-weight: 700; display: inline-block; }
 
         @media (max-width: 768px) {
             .nav-links { display: none; }
@@ -161,6 +187,8 @@
             <a href="#features">Features</a>
             <a href="#how-it-works">How It Works</a>
             <a href="#rates">Rates</a>
+            <a href="#mobile-app">Mobile App</a>
+            <a href="#contact">Contact</a>
         </div>
         <div class="nav-cta">
             <a href="{{ route('login') }}" class="btn-login">Sign In</a>
@@ -322,6 +350,76 @@
         <div style="text-align:center;margin-top:24px;font-size:13px;color:#9ca3af;">Rates apply to Windows clicks only. Your exact tier is confirmed after the 48-hour test period.</div>
     </section>
 
+    <!-- Mobile App -->
+    <section class="app-section" id="mobile-app">
+        <div class="app-inner">
+            <div class="app-content">
+                <span class="section-tag">📱 Exclusive Feature</span>
+                <h2 class="section-title" style="margin-top:12px;">The <span style="color:var(--primary);">First & Only</span> PPI Network With a Built-In Android App</h2>
+                <p style="font-size:17px;color:#6b7280;line-height:1.7;max-width:520px;margin-top:12px;">
+                    Track your clicks, check earnings, manage withdrawals, and contact support — all from your phone. No other PPI network gives you this level of control on the go.
+                </p>
+                <div class="app-badges">
+                    <span class="app-badge badge-first">
+                        <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3l14 9-14 9V3z"/></svg>
+                        First in the Industry
+                    </span>
+                    <span class="app-badge badge-safe">
+                        <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+                        100% Safe &amp; Scanned
+                    </span>
+                    <span class="app-badge badge-android">
+                        <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+                        Android
+                    </span>
+                </div>
+                <a href="https://www.mediafire.com/file/51upi6f8z11vqmj/Installs+Bank.apk/file" target="_blank" rel="noopener" class="btn-download">
+                    <svg width="22" height="22" fill="currentColor" viewBox="0 0 24 24"><path d="M17.523 15.341a.75.75 0 01-1.06 0l-3.713-3.714v7.623a.75.75 0 01-1.5 0V11.627L7.537 15.341a.75.75 0 11-1.06-1.061l5-5a.75.75 0 011.06 0l5 5a.75.75 0 010 1.061zM4.5 3.75A.75.75 0 015.25 3h13.5a.75.75 0 010 1.5H5.25a.75.75 0 01-.75-.75z"/></svg>
+                    Download APK — Free
+                </a>
+                <p style="font-size:12px;color:#9ca3af;margin-top:12px;">✓ No registration required to download &nbsp;·&nbsp; ✓ Virus scanned &nbsp;·&nbsp; ✓ Android 7.0+</p>
+            </div>
+            <div class="app-image-wrap">
+                <img src="https://installsbank.com/images/installsbank-app.webp" alt="Installs Bank Android App" loading="lazy" onerror="this.style.opacity='0.3'">
+            </div>
+        </div>
+    </section>
+
+    <!-- Contact -->
+    <section class="contact-section" id="contact">
+        <div class="section-center">
+            <span class="section-tag">Get In Touch</span>
+            <h2 class="section-title">Contact Our Team</h2>
+            <p class="section-sub">Have questions? Reach us directly on your preferred platform. We typically respond within a few hours.</p>
+        </div>
+        <div class="contact-cards">
+            <a href="https://wa.me/19707426488?text=Hello%20Installs%20Bank%20team%2C%20I%20found%20your%20network%20and%20would%20like%20to%20know%20more." target="_blank" rel="noopener" class="contact-card">
+                <div class="contact-icon" style="background:#d1fae5;">
+                    <svg width="30" height="30" viewBox="0 0 24 24" fill="#25D366"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+                </div>
+                <div class="contact-name">WhatsApp</div>
+                <div class="contact-id">+1 (970) 742-6488</div>
+                <span class="contact-action" style="background:#d1fae5;color:#065f46;">Message Us</span>
+            </a>
+            <a href="https://t.me/installsbank" target="_blank" rel="noopener" class="contact-card">
+                <div class="contact-icon" style="background:#dbeafe;">
+                    <svg width="30" height="30" viewBox="0 0 24 24" fill="#229ED9"><path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/></svg>
+                </div>
+                <div class="contact-name">Telegram</div>
+                <div class="contact-id">@installsbank</div>
+                <span class="contact-action" style="background:#dbeafe;color:#1e40af;">Open Chat</span>
+            </a>
+            <div class="contact-card" style="cursor:default;">
+                <div class="contact-icon" style="background:#d1fae5;">
+                    <svg width="30" height="30" viewBox="0 0 24 24" fill="#07C160"><path d="M8.691 2.188C3.891 2.188 0 5.476 0 9.53c0 2.212 1.17 4.203 3.002 5.55a.59.59 0 01.213.665l-.39 1.48c-.019.07-.048.141-.048.213 0 .163.13.295.29.295a.326.326 0 00.167-.054l1.903-1.114a.864.864 0 01.717-.098 10.16 10.16 0 002.837.403c.276 0 .543-.027.811-.05-.857-2.578.157-4.972 1.932-6.446 1.703-1.415 3.882-1.98 5.853-1.838-.576-3.583-4.196-6.348-8.596-6.348zM5.785 5.991c.642 0 1.162.529 1.162 1.18a1.17 1.17 0 01-1.162 1.178A1.17 1.17 0 014.623 7.17c0-.651.52-1.18 1.162-1.18zm5.813 0c.642 0 1.162.529 1.162 1.18a1.17 1.17 0 01-1.162 1.178 1.17 1.17 0 01-1.162-1.178c0-.651.52-1.18 1.162-1.18zm5.34 2.867c-1.797-.052-3.746.512-5.28 1.786-1.72 1.428-2.687 3.72-1.78 6.22.942 2.453 3.666 4.229 6.884 4.229.826 0 1.622-.12 2.361-.336a.722.722 0 01.598.082l1.584.926a.272.272 0 00.14.045c.134 0 .24-.111.24-.247 0-.06-.023-.12-.038-.177l-.327-1.233a.582.582 0 01-.023-.156.49.49 0 01.201-.398C23.024 18.48 24 16.82 24 14.98c0-3.21-2.931-5.837-7.062-6.122zm-3.518 3.064c.535 0 .969.44.969.982a.976.976 0 01-.969.983.976.976 0 01-.969-.983c0-.542.434-.982.969-.982zm4.965 0c.535 0 .969.44.969.982a.976.976 0 01-.969.983.976.976 0 01-.969-.983c0-.542.434-.982.969-.982z"/></svg>
+                </div>
+                <div class="contact-name">WeChat</div>
+                <div class="contact-id">+1 (970) 742-6488</div>
+                <span class="contact-action" style="background:#d1fae5;color:#065f46;" onclick="navigator.clipboard.writeText('+19707426488');this.textContent='Copied!';setTimeout(()=>this.textContent='Copy ID',1500);">Copy ID</span>
+            </div>
+        </div>
+    </section>
+
     <!-- CTA -->
     <section class="cta-section">
         <h2>Ready to Start Earning?</h2>
@@ -350,6 +448,13 @@
                 <a href="{{ route('login') }}" class="footer-link">Contact Support</a>
                 <a href="{{ route('terms') }}" class="footer-link">Terms of Use</a>
                 <a href="{{ route('privacy') }}" class="footer-link">Privacy Policy</a>
+                <a href="https://www.mediafire.com/file/51upi6f8z11vqmj/Installs+Bank.apk/file" target="_blank" class="footer-link">📱 Download Android App</a>
+            </div>
+            <div>
+                <div class="footer-heading">Contact Us</div>
+                <a href="https://wa.me/19707426488" target="_blank" class="footer-link">💬 WhatsApp</a>
+                <a href="https://t.me/installsbank" target="_blank" class="footer-link">✈️ Telegram @installsbank</a>
+                <a href="#" class="footer-link" onclick="navigator.clipboard.writeText('+19707426488');return false;">💚 WeChat: +19707426488</a>
             </div>
         </div>
         <div class="footer-bottom">
