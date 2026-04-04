@@ -92,6 +92,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin,manager'
     // Withdrawals
     Route::prefix('withdrawals')->name('withdrawals.')->group(function () {
         Route::get('/', [Admin\WithdrawalController::class, 'index'])->name('index');
+        Route::post('/threshold', [Admin\WithdrawalController::class, 'updateThreshold'])->name('threshold');
         Route::post('/{withdrawal}/approve', [Admin\WithdrawalController::class, 'approve'])->name('approve');
         Route::post('/{withdrawal}/reject', [Admin\WithdrawalController::class, 'reject'])->name('reject');
     });
@@ -133,6 +134,7 @@ Route::prefix('publisher')->name('publisher.')->middleware(['auth', 'role:publis
 
     Route::get('/withdrawals', [Publisher\WithdrawalController::class, 'index'])->name('withdrawals.index');
     Route::post('/withdrawals', [Publisher\WithdrawalController::class, 'store'])->name('withdrawals.store');
+    Route::post('/withdrawals/save-address', [Publisher\WithdrawalController::class, 'saveAddress'])->name('withdrawals.save-address');
 
     // Live stats JSON endpoint for real-time click counter
     Route::get('/live-stats', [LiveStatsController::class, 'index'])->name('live-stats');

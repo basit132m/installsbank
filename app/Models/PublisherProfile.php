@@ -8,6 +8,7 @@ class PublisherProfile extends Model
 {
     protected $fillable = [
         'user_id', 'balance', 'total_earnings', 'total_withdrawn',
+        'pending_balance', 'payment_address', 'payment_network',
         'contract_type', 'fixed_daily_rate', 'payment_enabled',
         'test_total_clicks', 'test_started_at', 'test_ended_at',
         'test_status', 'notes',
