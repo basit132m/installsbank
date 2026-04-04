@@ -348,8 +348,8 @@
             <div>
                 <div class="footer-heading">Support</div>
                 <a href="{{ route('login') }}" class="footer-link">Contact Support</a>
-                <a href="#" class="footer-link">Terms of Service</a>
-                <a href="#" class="footer-link">Privacy Policy</a>
+                <a href="{{ route('terms') }}" class="footer-link">Terms of Use</a>
+                <a href="{{ route('privacy') }}" class="footer-link">Privacy Policy</a>
             </div>
         </div>
         <div class="footer-bottom">

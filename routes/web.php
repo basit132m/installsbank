@@ -10,6 +10,8 @@ use App\Http\Controllers\Publisher\LiveStatsController;
 
 // Public pages
 Route::get('/', fn() => view('public.home'))->name('home');
+Route::get('/privacy-policy', fn() => view('public.privacy'))->name('privacy');
+Route::get('/terms-of-use', fn() => view('public.terms'))->name('terms');
 
 // Click tracking
 Route::get('/track/{code}', [TrackingController::class, 'track'])->name('track');
