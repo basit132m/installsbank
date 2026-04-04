@@ -59,6 +59,13 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin,manager'
         Route::post('/{contract}/expire', [Admin\ContractController::class, 'expire'])->name('expire');
     });
 
+    // Settings (admin only)
+    Route::prefix('settings')->name('settings.')->middleware('role:admin')->group(function () {
+        Route::get('/', [Admin\SettingsController::class, 'index'])->name('index');
+        Route::put('/', [Admin\SettingsController::class, 'update'])->name('update');
+        Route::post('/test-email', [Admin\SettingsController::class, 'testEmail'])->name('test-email');
+    });
+
     // Managers (admin only)
     Route::prefix('managers')->name('managers.')->middleware('role:admin')->group(function () {
         Route::get('/', [Admin\ManagerController::class, 'index'])->name('index');

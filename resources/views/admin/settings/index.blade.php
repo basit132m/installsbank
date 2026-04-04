@@ -1,0 +1,234 @@
+@extends('layouts.admin')
+@section('title', 'Settings')
+@section('page-title', 'Settings')
+
+@section('content')
+<style>
+    .settings-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    @media(max-width:768px){ .settings-grid { grid-template-columns: 1fr; } }
+    .settings-section { background: white; border-radius: 12px; padding: 28px; border: 1px solid #e5e7eb; box-shadow: 0 1px 6px rgba(0,0,0,0.04); }
+    .section-header { display: flex; align-items: center; gap: 12px; margin-bottom: 24px; padding-bottom: 16px; border-bottom: 1px solid #f3f4f6; }
+    .section-icon { width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .section-title { font-size: 16px; font-weight: 700; color: #111827; }
+    .section-subtitle { font-size: 12px; color: #6b7280; margin-top: 2px; }
+    .form-group { margin-bottom: 16px; }
+    .form-label { display: block; font-size: 13px; font-weight: 600; color: #374151; margin-bottom: 6px; }
+    .form-label .optional { font-weight: 400; color: #9ca3af; font-size: 11px; margin-left: 4px; }
+    .form-control { width: 100%; padding: 10px 13px; border: 1.5px solid #e5e7eb; border-radius: 8px; font-size: 14px; font-family: inherit; outline: none; transition: all 0.15s; color: #111827; background: white; }
+    .form-control:focus { border-color: #01BF63; box-shadow: 0 0 0 3px rgba(1,191,99,0.1); }
+    select.form-control { cursor: pointer; }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .btn { padding: 10px 20px; border-radius: 8px; font-size: 14px; font-weight: 600; border: none; cursor: pointer; font-family: inherit; transition: all 0.15s; display: inline-flex; align-items: center; gap: 8px; }
+    .btn-primary { background: #01BF63; color: white; }
+    .btn-primary:hover { background: #00a354; }
+    .btn-outline { background: white; color: #374151; border: 1.5px solid #e5e7eb; }
+    .btn-outline:hover { border-color: #01BF63; color: #01BF63; }
+    .btn-test { background: #dbeafe; color: #1d4ed8; }
+    .btn-test:hover { background: #bfdbfe; }
+    .alert { padding: 12px 16px; border-radius: 8px; font-size: 13px; margin-bottom: 20px; display: flex; align-items: flex-start; gap: 10px; }
+    .alert-success { background: #d1fae5; color: #065f46; border: 1px solid #a7f3d0; }
+    .alert-danger  { background: #fee2e2; color: #991b1b; border: 1px solid #fca5a5; }
+    .hint { font-size: 12px; color: #9ca3af; margin-top: 5px; }
+    .test-row { display: flex; gap: 10px; align-items: flex-end; }
+    .test-row .form-group { flex: 1; margin-bottom: 0; }
+    .status-badge { display: inline-flex; align-items: center; gap: 5px; padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 600; }
+    .badge-log { background: #fef3c7; color: #92400e; }
+    .badge-smtp { background: #d1fae5; color: #065f46; }
+    .full-width { grid-column: 1 / -1; }
+</style>
+
+@if(session('success'))
+    <div class="alert alert-success">
+        <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+        {{ session('success') }}
+    </div>
+@endif
+@if($errors->any())
+    <div class="alert alert-danger">
+        <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        {{ $errors->first() }}
+    </div>
+@endif
+
+<!-- Email / SMTP Settings -->
+<div class="settings-section" style="margin-bottom:24px;">
+    <div class="section-header">
+        <div class="section-icon" style="background:#dbeafe;">
+            <svg width="20" height="20" fill="none" stroke="#3b82f6" viewBox="0 0 24 24" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+            </svg>
+        </div>
+        <div>
+            <div class="section-title">Email / SMTP Settings</div>
+            <div class="section-subtitle">Configure outgoing mail for password resets and notifications</div>
+        </div>
+        <div style="margin-left:auto;">
+            @if($settings['MAIL_MAILER'] === 'smtp')
+                <span class="status-badge badge-smtp">
+                    <svg width="8" height="8" viewBox="0 0 8 8"><circle cx="4" cy="4" r="4" fill="#01BF63"/></svg>
+                    SMTP Active
+                </span>
+            @else
+                <span class="status-badge badge-log">
+                    <svg width="8" height="8" viewBox="0 0 8 8"><circle cx="4" cy="4" r="4" fill="#f59e0b"/></svg>
+                    Log Mode (no real emails)
+                </span>
+            @endif
+        </div>
+    </div>
+
+    <form method="POST" action="{{ route('admin.settings.update') }}">
+        @csrf
+        @method('PUT')
+
+        <div class="form-row">
+            <div class="form-group">
+                <label class="form-label">Mail Driver</label>
+                <select name="MAIL_MAILER" class="form-control" id="mailerSelect" onchange="toggleSmtpFields()">
+                    <option value="smtp"    {{ $settings['MAIL_MAILER'] === 'smtp'    ? 'selected' : '' }}>SMTP</option>
+                    <option value="sendmail"{{ $settings['MAIL_MAILER'] === 'sendmail'? 'selected' : '' }}>Sendmail</option>
+                    <option value="log"     {{ $settings['MAIL_MAILER'] === 'log'     ? 'selected' : '' }}>Log (testing only)</option>
+                </select>
+                <div class="hint">Use "SMTP" for real email delivery.</div>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Encryption</label>
+                <select name="MAIL_ENCRYPTION" class="form-control">
+                    <option value="tls"      {{ $settings['MAIL_ENCRYPTION'] === 'tls'      ? 'selected' : '' }}>TLS (port 587 — recommended)</option>
+                    <option value="ssl"      {{ $settings['MAIL_ENCRYPTION'] === 'ssl'      ? 'selected' : '' }}>SSL (port 465)</option>
+                    <option value="starttls" {{ $settings['MAIL_ENCRYPTION'] === 'starttls' ? 'selected' : '' }}>STARTTLS</option>
+                    <option value=""         {{ $settings['MAIL_ENCRYPTION'] === ''         ? 'selected' : '' }}>None</option>
+                </select>
+            </div>
+        </div>
+
+        <div id="smtpFields">
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label">SMTP Host</label>
+                    <input type="text" name="MAIL_HOST" class="form-control" value="{{ $settings['MAIL_HOST'] }}" placeholder="mail.installsbank.com">
+                    <div class="hint">Your hosting SMTP server address.</div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">SMTP Port</label>
+                    <input type="number" name="MAIL_PORT" class="form-control" value="{{ $settings['MAIL_PORT'] ?: 587 }}" placeholder="587">
+                    <div class="hint">587 for TLS, 465 for SSL.</div>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label">SMTP Username</label>
+                    <input type="text" name="MAIL_USERNAME" class="form-control" value="{{ $settings['MAIL_USERNAME'] }}" placeholder="contact@installsbank.com">
+                    <div class="hint">Usually your full email address.</div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">SMTP Password</label>
+                    <input type="password" name="MAIL_PASSWORD" class="form-control" value="{{ $settings['MAIL_PASSWORD'] }}" placeholder="••••••••••">
+                    <div class="hint">Your email account password.</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label class="form-label">From Email Address</label>
+                <input type="email" name="MAIL_FROM_ADDRESS" class="form-control" value="{{ $settings['MAIL_FROM_ADDRESS'] ?: 'contact@installsbank.com' }}" placeholder="contact@installsbank.com" required>
+                <div class="hint">Emails will appear sent from this address.</div>
+            </div>
+            <div class="form-group">
+                <label class="form-label">From Name</label>
+                <input type="text" name="MAIL_FROM_NAME" class="form-control" value="{{ $settings['MAIL_FROM_NAME'] ?: 'Installs Bank' }}" placeholder="Installs Bank" required>
+            </div>
+        </div>
+
+        <div style="display:flex;gap:12px;align-items:center;margin-top:8px;">
+            <button type="submit" class="btn btn-primary">
+                <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                Save Email Settings
+            </button>
+        </div>
+    </form>
+</div>
+
+<!-- Test Email -->
+<div class="settings-section" style="margin-bottom:24px;">
+    <div class="section-header">
+        <div class="section-icon" style="background:#ede9fe;">
+            <svg width="20" height="20" fill="none" stroke="#7c3aed" viewBox="0 0 24 24" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+        </div>
+        <div>
+            <div class="section-title">Send Test Email</div>
+            <div class="section-subtitle">Verify your SMTP settings are working correctly</div>
+        </div>
+    </div>
+
+    <form method="POST" action="{{ route('admin.settings.test-email') }}">
+        @csrf
+        <div class="test-row">
+            <div class="form-group">
+                <label class="form-label">Send test to</label>
+                <input type="email" name="test_email" class="form-control" placeholder="your@email.com" value="{{ auth()->user()->email }}">
+            </div>
+            <button type="submit" class="btn btn-test" style="margin-bottom:0;white-space:nowrap;">
+                <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg>
+                Send Test Email
+            </button>
+        </div>
+    </form>
+</div>
+
+<!-- App Settings -->
+<div class="settings-section">
+    <div class="section-header">
+        <div class="section-icon" style="background:#f0fdf4;">
+            <svg width="20" height="20" fill="none" stroke="#01BF63" viewBox="0 0 24 24" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+            </svg>
+        </div>
+        <div>
+            <div class="section-title">Application Settings</div>
+            <div class="section-subtitle">Basic app name and URL configuration</div>
+        </div>
+    </div>
+
+    <form method="POST" action="{{ route('admin.settings.update') }}">
+        @csrf
+        @method('PUT')
+
+        {{-- Pass mail fields as hidden so validation doesn't strip them --}}
+        <input type="hidden" name="MAIL_MAILER"       value="{{ $settings['MAIL_MAILER'] }}">
+        <input type="hidden" name="MAIL_FROM_ADDRESS" value="{{ $settings['MAIL_FROM_ADDRESS'] }}">
+        <input type="hidden" name="MAIL_FROM_NAME"    value="{{ $settings['MAIL_FROM_NAME'] }}">
+
+        <div class="form-row">
+            <div class="form-group">
+                <label class="form-label">Application Name</label>
+                <input type="text" name="APP_NAME" class="form-control" value="{{ $settings['APP_NAME'] }}" placeholder="Installs Bank">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Application URL</label>
+                <input type="text" name="APP_URL" class="form-control" value="{{ $settings['APP_URL'] }}" placeholder="https://installsbank.com">
+            </div>
+        </div>
+
+        <button type="submit" class="btn btn-primary">
+            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+            Save App Settings
+        </button>
+    </form>
+</div>
+
+<script>
+function toggleSmtpFields() {
+    var mailer = document.getElementById('mailerSelect').value;
+    var fields = document.getElementById('smtpFields');
+    fields.style.display = (mailer === 'smtp') ? 'block' : 'none';
+}
+// Run on load
+toggleSmtpFields();
+</script>
+@endsection
