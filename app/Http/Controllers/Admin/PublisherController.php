@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\ClickDivider;
 use App\Models\Click;
 use App\Models\PublisherProfile;
+use App\Models\PublisherTag;
 use App\Models\TrackingLink;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -33,7 +34,7 @@ class PublisherController extends Controller
 
     public function show(User $user)
     {
-        $user->load(['publisherProfile', 'trackingLinks', 'contracts', 'clickDivider']);
+        $user->load(['publisherProfile', 'trackingLinks', 'contracts', 'clickDivider', 'publisherTags']);
 
         $clickStats = [
             'today' => Click::where('user_id', $user->id)->whereDate('created_at', today())->where('is_counted', true)->count(),
@@ -181,6 +182,56 @@ class PublisherController extends Controller
             'user', 'period', 'summary', 'daily',
             'fraudByType', 'topCountries', 'osByType', 'deviceTypes', 'recentClicks'
         ));
+    }
+
+    public function updateFraudSettings(Request $request, User $user)
+    {
+        $data = $request->validate([
+            'fraud_country_mismatch'    => 'boolean',
+            'fraud_suspicious_referrer' => 'boolean',
+            'fraud_headless_browser'    => 'boolean',
+            'allowed_countries'         => 'nullable|string',
+        ]);
+
+        // Parse comma-separated country codes into an array (or null for all)
+        $countries = null;
+        if (!empty($data['allowed_countries'])) {
+            $countries = array_values(array_filter(
+                array_map('trim', explode(',', strtoupper($data['allowed_countries'])))
+            ));
+            if (empty($countries)) $countries = null;
+        }
+
+        $user->publisherProfile->update([
+            'fraud_country_mismatch'    => $request->boolean('fraud_country_mismatch'),
+            'fraud_suspicious_referrer' => $request->boolean('fraud_suspicious_referrer'),
+            'fraud_headless_browser'    => $request->boolean('fraud_headless_browser'),
+            'allowed_countries'         => $countries,
+        ]);
+
+        return back()->with('success', 'Fraud detection settings updated.');
+    }
+
+    public function addTag(Request $request, User $user)
+    {
+        $data = $request->validate([
+            'tag'   => 'required|string|max:50',
+            'color' => 'required|in:green,blue,red,amber,gray,purple',
+        ]);
+
+        PublisherTag::firstOrCreate(
+            ['user_id' => $user->id, 'tag' => trim($data['tag'])],
+            ['color' => $data['color']]
+        );
+
+        return back()->with('success', 'Tag added.');
+    }
+
+    public function removeTag(Request $request, User $user)
+    {
+        $request->validate(['tag' => 'required|string']);
+        PublisherTag::where('user_id', $user->id)->where('tag', $request->tag)->delete();
+        return back()->with('success', 'Tag removed.');
     }
 
     public function generateAdCode(User $user)

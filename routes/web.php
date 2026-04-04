@@ -6,6 +6,7 @@ use App\Http\Controllers\TrackingController;
 use App\Http\Controllers\Admin;
 use App\Http\Controllers\Publisher;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Publisher\LiveStatsController;
 
 // Public pages
 Route::get('/', fn() => view('public.home'))->name('home');
@@ -35,6 +36,9 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin,manager'
         Route::post('/{user}/divider', [Admin\PublisherController::class, 'updateDivider'])->name('update-divider');
         Route::post('/{user}/test-results', [Admin\PublisherController::class, 'updateTestResults'])->name('test-results');
         Route::post('/{user}/payment-status', [Admin\PublisherController::class, 'updatePaymentStatus'])->name('payment-status');
+        Route::post('/{user}/fraud-settings', [Admin\PublisherController::class, 'updateFraudSettings'])->name('fraud-settings');
+        Route::post('/{user}/tags', [Admin\PublisherController::class, 'addTag'])->name('tags.add');
+        Route::delete('/{user}/tags', [Admin\PublisherController::class, 'removeTag'])->name('tags.remove');
     });
 
     // Contracts
@@ -126,6 +130,9 @@ Route::prefix('publisher')->name('publisher.')->middleware(['auth', 'role:publis
 
     Route::get('/withdrawals', [Publisher\WithdrawalController::class, 'index'])->name('withdrawals.index');
     Route::post('/withdrawals', [Publisher\WithdrawalController::class, 'store'])->name('withdrawals.store');
+
+    // Live stats JSON endpoint for real-time click counter
+    Route::get('/live-stats', [LiveStatsController::class, 'index'])->name('live-stats');
 
     Route::get('/support', [Publisher\SupportController::class, 'index'])->name('support.index');
     Route::get('/support/create', [Publisher\SupportController::class, 'create'])->name('support.create');

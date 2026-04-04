@@ -101,6 +101,11 @@ class User extends Authenticatable
         return $this->hasMany(FraudAlert::class);
     }
 
+    public function publisherTags()
+    {
+        return $this->hasMany(PublisherTag::class);
+    }
+
     public function testPeriods()
     {
         return $this->hasMany(TestPeriod::class);

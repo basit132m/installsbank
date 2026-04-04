@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Click;
 use App\Models\CountryRate;
 use App\Models\DailyEarning;
+use App\Models\TrackingLink;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 
@@ -56,6 +57,20 @@ class StatsController extends Controller
         // Countries that have no rate set yet — to show N/A in stats
         $unratedCountries = CountryRate::where('needs_rate_update', true)->pluck('country_code')->toArray();
 
-        return view('publisher.stats', compact('dailyStats', 'totals', 'countryAgg', 'period', 'profile', 'unratedCountries', 'showEarnings'));
+        // Per-link breakdown for the selected period
+        $linkStats = TrackingLink::where('user_id', $user->id)->get()->map(function ($link) use ($startDate, $showEarnings) {
+            $base = Click::where('tracking_link_id', $link->id)
+                ->where('created_at', '>=', $startDate->startOfDay());
+            return [
+                'name'    => $link->name ?: 'Unnamed Link',
+                'code'    => $link->unique_code,
+                'valid'   => (clone $base)->where('is_counted', true)->count(),
+                'fraud'   => (clone $base)->where('is_fraud', true)->count(),
+                'earnings'=> $showEarnings ? (clone $base)->where('is_counted', true)->sum('click_value') : null,
+                'active'  => $link->is_active,
+            ];
+        })->sortByDesc('valid')->values();
+
+        return view('publisher.stats', compact('dailyStats', 'totals', 'countryAgg', 'period', 'profile', 'unratedCountries', 'showEarnings', 'linkStats'));
     }
 }

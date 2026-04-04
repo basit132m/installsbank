@@ -156,6 +156,90 @@
     </div>
 </div>
 
+<!-- Publisher Tags -->
+<div class="card mb-6">
+    <div class="card-title mb-3">Publisher Tags</div>
+    <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px;">
+        @forelse($user->publisherTags as $tag)
+        @php
+            $tagColors = ['green'=>'#01BF63','blue'=>'#3b82f6','red'=>'#ef4444','amber'=>'#f59e0b','gray'=>'#6b7280','purple'=>'#8b5cf6'];
+            $tc = $tagColors[$tag->color] ?? '#6b7280';
+        @endphp
+        <span style="display:inline-flex;align-items:center;gap:6px;background:{{ $tc }}1a;color:{{ $tc }};border:1px solid {{ $tc }}40;padding:4px 12px;border-radius:20px;font-size:13px;font-weight:600;">
+            {{ $tag->tag }}
+            <form method="POST" action="{{ route('admin.publishers.tags.remove', $user) }}" style="display:inline;">
+                @csrf @method('DELETE')
+                <input type="hidden" name="tag" value="{{ $tag->tag }}">
+                <button type="submit" style="background:none;border:none;cursor:pointer;color:{{ $tc }};font-size:14px;line-height:1;padding:0;">×</button>
+            </form>
+        </span>
+        @empty
+        <span style="color:#9ca3af;font-size:13px;">No tags yet</span>
+        @endforelse
+    </div>
+    <form method="POST" action="{{ route('admin.publishers.tags.add', $user) }}" style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;">
+        @csrf
+        <div class="form-group" style="margin:0;flex:1;min-width:150px;">
+            <label class="form-label">Tag Name</label>
+            <input type="text" name="tag" class="form-control" placeholder="e.g. Trusted, VIP, Review" maxlength="50" required>
+        </div>
+        <div class="form-group" style="margin:0;">
+            <label class="form-label">Color</label>
+            <select name="color" class="form-control form-select">
+                <option value="green">Green</option>
+                <option value="blue">Blue</option>
+                <option value="amber">Amber</option>
+                <option value="red">Red</option>
+                <option value="purple">Purple</option>
+                <option value="gray">Gray</option>
+            </select>
+        </div>
+        <button type="submit" class="btn btn-primary">Add Tag</button>
+    </form>
+</div>
+
+<!-- Fraud Detection Settings -->
+<div class="card mb-6">
+    <div class="card-title mb-1">Fraud Detection Settings</div>
+    <div class="card-subtitle mb-4" style="font-size:12px;">These checks only apply to this publisher. Enable only what is needed to avoid false positives.</div>
+    <form method="POST" action="{{ route('admin.publishers.fraud-settings', $user) }}">
+        @csrf
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px;">
+            <div>
+                <div class="toggle-wrap mb-3">
+                    <label class="toggle"><input type="checkbox" name="fraud_headless_browser" value="1" {{ $user->publisherProfile?->fraud_headless_browser ? 'checked' : '' }}><span class="toggle-slider"></span></label>
+                    <div>
+                        <span style="font-size:13px;font-weight:600;">Headless Browser Detection</span>
+                        <div style="font-size:11px;color:#9ca3af;">Blocks automation tools (Selenium, Puppeteer, PhantomJS)</div>
+                    </div>
+                </div>
+                <div class="toggle-wrap mb-3">
+                    <label class="toggle"><input type="checkbox" name="fraud_country_mismatch" value="1" {{ $user->publisherProfile?->fraud_country_mismatch ? 'checked' : '' }}><span class="toggle-slider"></span></label>
+                    <div>
+                        <span style="font-size:13px;font-weight:600;">Country Mismatch Detection</span>
+                        <div style="font-size:11px;color:#9ca3af;">Flags clicks where IP country doesn't match browser language</div>
+                    </div>
+                </div>
+                <div class="toggle-wrap">
+                    <label class="toggle"><input type="checkbox" name="fraud_suspicious_referrer" value="1" {{ $user->publisherProfile?->fraud_suspicious_referrer ? 'checked' : '' }}><span class="toggle-slider"></span></label>
+                    <div>
+                        <span style="font-size:13px;font-weight:600;">Suspicious Referrer Detection</span>
+                        <div style="font-size:11px;color:#9ca3af;">Blocks traffic from known exchanges, PTC, and bot farms</div>
+                    </div>
+                </div>
+            </div>
+            <div>
+                <label class="form-label">Country Whitelist (comma-separated codes)</label>
+                <input type="text" name="allowed_countries" class="form-control" style="margin-bottom:6px;"
+                    value="{{ $user->publisherProfile?->allowed_countries ? implode(', ', $user->publisherProfile->allowed_countries) : '' }}"
+                    placeholder="e.g. ID, PK, US — leave empty to allow all">
+                <div style="font-size:11px;color:#9ca3af;">Only clicks from these countries will be accepted. Leave blank to allow all countries.</div>
+            </div>
+        </div>
+        <button type="submit" class="btn btn-primary">Save Fraud Settings</button>
+    </form>
+</div>
+
 <!-- Tracking Links -->
 <div class="card">
     <div class="flex-between mb-4">

@@ -128,6 +128,38 @@
     </div>
 </div>
 
+<!-- Revenue Overview -->
+<div class="card mb-6">
+    <div class="card-title mb-4">Revenue Overview</div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:16px;">
+        <div style="background:#e6faf2;border-radius:12px;padding:16px;">
+            <div style="font-size:11px;color:#047857;font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;">Paid Today</div>
+            <div style="font-size:22px;font-weight:800;color:#01BF63;">${{ number_format($revenue['paid_today'], 4) }}</div>
+            <div style="font-size:11px;color:#6b7280;margin-top:2px;">Publisher earnings</div>
+        </div>
+        <div style="background:#dbeafe;border-radius:12px;padding:16px;">
+            <div style="font-size:11px;color:#1d4ed8;font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;">Paid This Month</div>
+            <div style="font-size:22px;font-weight:800;color:#3b82f6;">${{ number_format($revenue['paid_this_month'], 2) }}</div>
+            <div style="font-size:11px;color:#6b7280;margin-top:2px;">Publisher earnings</div>
+        </div>
+        <div style="background:#fef3c7;border-radius:12px;padding:16px;">
+            <div style="font-size:11px;color:#92400e;font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;">Pending Payouts</div>
+            <div style="font-size:22px;font-weight:800;color:#f59e0b;">${{ number_format($revenue['pending_payouts'], 2) }}</div>
+            <div style="font-size:11px;color:#6b7280;margin-top:2px;">Unpaid balances</div>
+        </div>
+        <div style="background:#f0fdf4;border-radius:12px;padding:16px;">
+            <div style="font-size:11px;color:#166534;font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;">All-Time Paid Out</div>
+            <div style="font-size:22px;font-weight:800;color:#16a34a;">${{ number_format($revenue['paid_all_time'], 2) }}</div>
+            <div style="font-size:11px;color:#6b7280;margin-top:2px;">Total to publishers</div>
+        </div>
+        <div style="background:#f5f3ff;border-radius:12px;padding:16px;">
+            <div style="font-size:11px;color:#5b21b6;font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;">Withdrawn</div>
+            <div style="font-size:22px;font-weight:800;color:#7c3aed;">${{ number_format($revenue['withdrawn_total'], 2) }}</div>
+            <div style="font-size:11px;color:#6b7280;margin-top:2px;">Confirmed payments</div>
+        </div>
+    </div>
+</div>
+
 <!-- Recent Registrations -->
 <div class="card">
     <div class="flex-between mb-4">

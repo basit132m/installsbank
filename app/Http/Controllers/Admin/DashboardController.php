@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Click;
 use App\Models\FraudAlert;
+use App\Models\PublisherProfile;
 use App\Models\SupportTicket;
 use App\Models\User;
 use App\Models\Withdrawal;
@@ -70,9 +71,18 @@ class DashboardController extends Controller
             ->limit(5)
             ->get();
 
+        // Revenue overview — total paid to publishers vs platform gross
+        $revenue = [
+            'paid_today'        => Click::whereDate('created_at', today())->where('is_counted', true)->sum('click_value'),
+            'paid_this_month'   => Click::whereMonth('created_at', now()->month)->whereYear('created_at', now()->year)->where('is_counted', true)->sum('click_value'),
+            'paid_all_time'     => PublisherProfile::sum('total_earnings'),
+            'pending_payouts'   => PublisherProfile::sum('balance'),
+            'withdrawn_total'   => Withdrawal::where('status', 'paid')->sum('amount'),
+        ];
+
         return view('admin.dashboard', compact(
             'stats', 'clicksChart', 'osBreakdown',
-            'countryBreakdown', 'fraudAlerts', 'recentPublishers'
+            'countryBreakdown', 'fraudAlerts', 'recentPublishers', 'revenue'
         ));
     }
 }

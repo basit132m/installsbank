@@ -34,6 +34,21 @@
 </div>
 @endif
 
+<!-- Performance Badge + Live Counter -->
+<div style="display:flex;gap:12px;margin-bottom:20px;flex-wrap:wrap;align-items:center;">
+    <div id="liveBadge" style="display:inline-flex;align-items:center;gap:8px;padding:8px 16px;border-radius:20px;font-size:13px;font-weight:700;background:#f3f4f6;color:#6b7280;">
+        <span class="live-dot" style="background:#6b7280;"></span>
+        <span id="badgeLabel">Loading...</span>
+    </div>
+    <div style="display:inline-flex;align-items:center;gap:8px;background:#f9fafb;border:1px solid #e5e7eb;padding:8px 16px;border-radius:20px;">
+        <span class="live-dot"></span>
+        <span style="font-size:13px;color:#6b7280;">Live:</span>
+        <span id="liveClickCount" style="font-size:15px;font-weight:800;color:#111827;">—</span>
+        <span style="font-size:12px;color:#9ca3af;">clicks today</span>
+        <span style="font-size:11px;color:#9ca3af;margin-left:4px;">(<span id="liveLastHour">—</span> last hour)</span>
+    </div>
+</div>
+
 <!-- Stats -->
 <div class="stats-grid">
     <div class="stat-card">
@@ -146,6 +161,27 @@
 
 @push('scripts')
 <script>
+// Real-time click counter + badge — polls every 30 seconds
+function fetchLiveStats() {
+    fetch('{{ route('publisher.live-stats') }}')
+        .then(r => r.json())
+        .then(data => {
+            document.getElementById('liveClickCount').textContent = data.clicks_today.toLocaleString();
+            document.getElementById('liveLastHour').textContent = data.clicks_last_hour;
+
+            const badge = document.getElementById('liveBadge');
+            const label = document.getElementById('badgeLabel');
+            label.textContent = data.badge.label;
+            badge.style.background = data.badge.color + '1a';
+            badge.style.color = data.badge.color;
+            badge.style.border = '1px solid ' + data.badge.color + '40';
+            badge.querySelector('.live-dot').style.background = data.badge.color;
+        })
+        .catch(() => {});
+}
+fetchLiveStats();
+setInterval(fetchLiveStats, 30000);
+
 const data = @json($clicksChart);
 new ApexCharts(document.getElementById('pubClickChart'), {
     series: [

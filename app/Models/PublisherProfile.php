@@ -11,12 +11,18 @@ class PublisherProfile extends Model
         'contract_type', 'fixed_daily_rate', 'payment_enabled',
         'test_total_clicks', 'test_started_at', 'test_ended_at',
         'test_status', 'notes',
+        'fraud_country_mismatch', 'fraud_suspicious_referrer',
+        'fraud_headless_browser', 'allowed_countries',
     ];
 
     protected $casts = [
-        'test_started_at' => 'datetime',
-        'test_ended_at' => 'datetime',
-        'payment_enabled' => 'boolean',
+        'test_started_at'          => 'datetime',
+        'test_ended_at'            => 'datetime',
+        'payment_enabled'          => 'boolean',
+        'fraud_country_mismatch'   => 'boolean',
+        'fraud_suspicious_referrer'=> 'boolean',
+        'fraud_headless_browser'   => 'boolean',
+        'allowed_countries'        => 'array',
     ];
 
     public function user()

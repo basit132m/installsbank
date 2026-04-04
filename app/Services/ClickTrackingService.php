@@ -49,13 +49,22 @@ class ClickTrackingService
             'headers' => $request->headers->all(),
         ];
 
-        $fraudResult = $this->fraud->check($clickData);
+        // Build per-publisher fraud settings for conditional checks
+        $profile = $link->user?->publisherProfile;
+        $fraudSettings = [
+            'country_mismatch'    => (bool) ($profile?->fraud_country_mismatch ?? false),
+            'suspicious_referrer' => (bool) ($profile?->fraud_suspicious_referrer ?? false),
+            'headless_browser'    => (bool) ($profile?->fraud_headless_browser ?? false),
+            'allowed_countries'   => $profile?->allowed_countries ?: null,
+        ];
+
+        $fraudResult = $this->fraud->check($clickData, $fraudSettings);
 
         $clickValue = 0;
         $isCounted = !$fraudResult['is_fraud'];
 
         // Fixed rate publishers are paid externally — no per-click earnings
-        $isFixedRate = $link->user?->publisherProfile?->isFixedRate() ?? false;
+        $isFixedRate = $profile?->isFixedRate() ?? false;
 
         // Only Windows clicks earn money — other devices tracked but earn $0
         // Fixed rate publishers: clicks are tracked but click_value stays 0
