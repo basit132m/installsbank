@@ -3,11 +3,41 @@
 @section('page-title', 'My Dashboard')
 
 @section('content')
+@if(session('registered'))
+<div style="background:#e6faf2;border:1px solid #a7f3d0;border-radius:12px;padding:20px 24px;margin-bottom:24px;">
+    <div style="font-size:16px;font-weight:700;color:#065f46;margin-bottom:8px;">Account Created Successfully!</div>
+    <p style="font-size:14px;color:#065f46;margin-bottom:0;">Welcome to Installs Bank. Your application has been submitted and is now under review.</p>
+</div>
+@endif
+
 @if(auth()->user()->status === 'pending')
-    <div class="alert alert-warning" style="margin-bottom:24px;">
-        <svg width="18" height="18" fill="currentColor" viewBox="0 0 20 20" style="flex-shrink:0;"><path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>
-        Your account is <strong>pending approval</strong>. Our team will review your application and activate your account soon.
+<div style="background:#fff7ed;border:1px solid #fed7aa;border-radius:12px;padding:24px;margin-bottom:24px;">
+    <div style="display:flex;gap:14px;align-items:flex-start;">
+        <div style="width:44px;height:44px;background:#fef3c7;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+            <svg width="22" height="22" fill="none" stroke="#f59e0b" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        </div>
+        <div style="flex:1;">
+            <div style="font-size:16px;font-weight:700;color:#92400e;margin-bottom:6px;">Account Pending Approval</div>
+            <p style="font-size:14px;color:#78350f;line-height:1.6;margin-bottom:12px;">
+                Our team is reviewing your application. This usually takes <strong>1–3 business days</strong>.
+                You will gain full access to the dashboard, ad codes, and earnings once approved.
+            </p>
+            <div style="background:#fffbeb;border-radius:8px;padding:14px;font-size:13px;color:#78350f;line-height:1.8;">
+                <strong>What happens next:</strong>
+                <ol style="padding-left:18px;margin-top:6px;">
+                    <li>Our team verifies your website meets the <strong>500+ daily visitors</strong> requirement</li>
+                    <li>If approved, you'll run a <strong>48-hour test period</strong> so we can evaluate traffic quality</li>
+                    <li>A custom rate contract is then offered based on your test results</li>
+                    <li>Once accepted, your ad code goes live and you start earning</li>
+                </ol>
+            </div>
+            <div style="margin-top:12px;font-size:13px;color:#92400e;">
+                <strong>Please come back and check this page in a few days</strong> to see your approval status.
+                You can also reach us via <a href="{{ route('publisher.support.create') }}" style="color:#01BF63;font-weight:600;">Support</a> if you have questions.
+            </div>
+        </div>
     </div>
+</div>
 @endif
 
 @if($pendingContract)

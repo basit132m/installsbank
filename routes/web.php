@@ -39,6 +39,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin,manager'
         Route::post('/{user}/fraud-settings', [Admin\PublisherController::class, 'updateFraudSettings'])->name('fraud-settings');
         Route::post('/{user}/tags', [Admin\PublisherController::class, 'addTag'])->name('tags.add');
         Route::delete('/{user}/tags', [Admin\PublisherController::class, 'removeTag'])->name('tags.remove');
+        Route::delete('/{user}', [Admin\PublisherController::class, 'destroy'])->name('destroy');
     });
 
     // Contracts

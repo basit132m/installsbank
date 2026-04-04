@@ -43,7 +43,10 @@ class RegisterController extends Controller
         PublisherProfile::create(['user_id' => $user->id]);
         ClickDivider::create(['user_id' => $user->id, 'divider_value' => 1, 'is_enabled' => false]);
 
-        return redirect()->route('login')
-            ->with('success', 'Account created! Please wait for admin approval before logging in.');
+        // Auto-login so publisher lands on dashboard with pending message
+        Auth::login($user);
+
+        return redirect()->route('publisher.dashboard')
+            ->with('registered', true);
     }
 }

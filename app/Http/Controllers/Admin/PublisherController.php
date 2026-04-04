@@ -5,10 +5,14 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\ClickDivider;
 use App\Models\Click;
+use App\Models\Contract;
+use App\Models\DailyEarning;
+use App\Models\FraudAlert;
 use App\Models\PublisherProfile;
 use App\Models\PublisherTag;
 use App\Models\TrackingLink;
 use App\Models\User;
+use App\Models\Withdrawal;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 
@@ -210,6 +214,34 @@ class PublisherController extends Controller
         ]);
 
         return back()->with('success', 'Fraud detection settings updated.');
+    }
+
+    public function destroy(User $user)
+    {
+        if (!$user->isPublisher()) {
+            return back()->with('error', 'Can only delete publisher accounts.');
+        }
+
+        // Cascade delete all related data
+        Click::where('user_id', $user->id)->delete();
+        FraudAlert::where('user_id', $user->id)->delete();
+        DailyEarning::where('user_id', $user->id)->delete();
+        Withdrawal::where('user_id', $user->id)->delete();
+
+        // Delete tracking links and their related clicks (already done above, but clean)
+        TrackingLink::where('user_id', $user->id)->delete();
+
+        // Delete profile and settings
+        PublisherProfile::where('user_id', $user->id)->delete();
+        ClickDivider::where('user_id', $user->id)->delete();
+        PublisherTag::where('user_id', $user->id)->delete();
+        Contract::where('user_id', $user->id)->delete();
+
+        $name = $user->name;
+        $user->delete();
+
+        return redirect()->route('admin.publishers.index')
+            ->with('success', "Publisher \"{$name}\" and all related data have been permanently deleted.");
     }
 
     public function addTag(Request $request, User $user)

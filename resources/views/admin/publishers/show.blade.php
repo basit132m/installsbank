@@ -3,7 +3,7 @@
 @section('page-title', $user->name)
 
 @section('content')
-<div style="display:flex;gap:8px;align-items:center;margin-bottom:20px;">
+<div style="display:flex;gap:8px;align-items:center;margin-bottom:20px;flex-wrap:wrap;">
     <a href="{{ route('admin.publishers.index') }}" class="btn btn-ghost btn-sm">← Back</a>
     <a href="{{ route('admin.publishers.stats', $user) }}" class="btn btn-ghost btn-sm" style="color:#3b82f6;border-color:#3b82f6;">📊 Detailed Stats</a>
     <span class="badge {{ $user->status === 'active' ? 'badge-success' : ($user->status === 'pending' ? 'badge-warning' : 'badge-danger') }}">{{ ucfirst($user->status) }}</span>
@@ -12,6 +12,11 @@
     @elseif($user->status === 'active')
         <form method="POST" action="{{ route('admin.publishers.suspend', $user) }}" style="display:inline;" onsubmit="return confirm('Suspend this publisher?')">@csrf<button class="btn btn-danger btn-sm">Suspend</button></form>
     @endif
+    <form method="POST" action="{{ route('admin.publishers.destroy', $user) }}" style="display:inline;margin-left:auto;"
+          onsubmit="return confirm('DELETE {{ addslashes($user->name) }}?\n\nThis will permanently delete the publisher and ALL their data including clicks, earnings, tracking links, withdrawals, and fraud alerts.\n\nThis cannot be undone.')">
+        @csrf @method('DELETE')
+        <button class="btn btn-danger btn-sm">🗑 Delete Publisher</button>
+    </form>
 </div>
 
 <!-- Publisher Info + Quick Stats -->

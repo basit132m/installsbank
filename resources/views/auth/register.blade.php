@@ -42,7 +42,15 @@
             <p class="card-sub">Join our network and start earning</p>
 
             <div class="info-box">
-                <strong>Note:</strong> Your account will be reviewed by our team. After approval, you'll start a 48-hour test period to determine your rates.
+                <strong>⚠️ Requirements before applying:</strong>
+                <ul style="margin-top:8px;padding-left:18px;line-height:1.8;">
+                    <li>Your website must have <strong>at least 500 unique visitors per day</strong></li>
+                    <li>Traffic must be real — no bots, paid traffic exchanges, or click farms</li>
+                    <li>Websites with adult, illegal, or pirated content are not accepted</li>
+                </ul>
+                <div style="margin-top:10px;padding-top:10px;border-top:1px solid #a7f3d0;font-size:12px;">
+                    If your site does not meet these requirements, please do not apply — your account will be rejected.
+                </div>
             </div>
 
             @if($errors->any())

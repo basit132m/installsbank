@@ -6,6 +6,7 @@
     <title>Installs Bank — Premium PPI Network | Earn With Every Click</title>
     <link rel="icon" type="image/x-icon" href="/images/favicon.ico">
     <meta name="description" content="Installs Bank is a premium Pay-Per-Install network offering the highest rates per click. Join thousands of publishers earning passive income daily.">
+    <meta name="google-site-verification" content="1s2kQvkZBXZ-CDaAo9Q0LTIH03rruuCToC8IzhTpQrk" />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <style>
         :root { --primary: #01BF63; --primary-dark: #00a354; }
