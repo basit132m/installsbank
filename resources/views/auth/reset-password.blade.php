@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login — Installs Bank</title>
+    <title>Reset Password — Installs Bank</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -22,18 +22,12 @@
         .form-control:focus { border-color: #01BF63; box-shadow: 0 0 0 3px rgba(1,191,99,0.1); }
         .btn-submit { width: 100%; padding: 12px; background: #01BF63; color: white; border: none; border-radius: 10px; font-size: 15px; font-weight: 700; cursor: pointer; font-family: inherit; transition: background 0.15s; }
         .btn-submit:hover { background: #00a354; }
-        .form-footer { text-align: center; margin-top: 20px; font-size: 14px; color: #6b7280; }
-        .form-footer a { color: #01BF63; font-weight: 600; text-decoration: none; }
-        .remember-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-        .check-label { display: flex; align-items: center; gap: 6px; font-size: 13px; color: #374151; cursor: pointer; }
-        .check-label input[type=checkbox] { width: 16px; height: 16px; accent-color: #01BF63; }
         .alert { padding: 12px 14px; border-radius: 8px; font-size: 13px; margin-bottom: 18px; }
         .alert-danger { background: #fee2e2; color: #991b1b; border: 1px solid #fca5a5; }
-        .alert-success { background: #d1fae5; color: #065f46; border: 1px solid #a7f3d0; }
-        .divider { height: 1px; background: #f3f4f6; margin: 24px 0; }
         .back-link { text-align: center; margin-top: 20px; }
         .back-link a { color: #6b7280; font-size: 13px; text-decoration: none; display: inline-flex; align-items: center; gap: 4px; }
         .back-link a:hover { color: #111827; }
+        .icon-wrap { width: 56px; height: 56px; background: #e6faf2; border-radius: 14px; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; }
     </style>
 </head>
 <body>
@@ -44,44 +38,40 @@
             <div class="logo-sub">Premium Publisher Network</div>
         </div>
         <div class="card">
-            <h2 class="card-title">Welcome back</h2>
-            <p class="card-sub">Sign in to your account</p>
+            <div class="icon-wrap">
+                <svg width="26" height="26" fill="none" stroke="#01BF63" viewBox="0 0 24 24" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+                </svg>
+            </div>
+            <h2 class="card-title" style="text-align:center;">Set New Password</h2>
+            <p class="card-sub" style="text-align:center;">Choose a strong password for your account.</p>
 
-            @if(session('success'))
-                <div class="alert alert-success">{{ session('success') }}</div>
-            @endif
             @if($errors->any())
                 <div class="alert alert-danger">{{ $errors->first() }}</div>
             @endif
 
-            <form method="POST" action="{{ route('login') }}">
+            <form method="POST" action="{{ route('password.update') }}">
                 @csrf
+                <input type="hidden" name="token" value="{{ $token }}">
                 <div class="form-group">
                     <label class="form-label">Email Address</label>
-                    <input type="email" name="email" class="form-control" value="{{ old('email') }}" placeholder="you@example.com" required autofocus>
+                    <input type="email" name="email" class="form-control" value="{{ old('email', $email) }}" placeholder="you@example.com" required>
                 </div>
                 <div class="form-group">
-                    <label class="form-label">Password</label>
-                    <input type="password" name="password" class="form-control" placeholder="••••••••" required>
+                    <label class="form-label">New Password</label>
+                    <input type="password" name="password" class="form-control" placeholder="Min 8 characters" required autofocus>
                 </div>
-                <div class="remember-row">
-                    <label class="check-label">
-                        <input type="checkbox" name="remember"> Remember me
-                    </label>
-                    <a href="{{ route('password.request') }}" style="font-size:13px;color:#01BF63;font-weight:600;text-decoration:none;">Forgot password?</a>
+                <div class="form-group">
+                    <label class="form-label">Confirm New Password</label>
+                    <input type="password" name="password_confirmation" class="form-control" placeholder="Repeat password" required>
                 </div>
-                <button type="submit" class="btn-submit">Sign In</button>
+                <button type="submit" class="btn-submit">Reset Password</button>
             </form>
-
-            <div class="divider"></div>
-            <div class="form-footer">
-                Don't have an account? <a href="{{ route('register') }}">Register as Publisher</a>
-            </div>
         </div>
         <div class="back-link">
-            <a href="{{ route('home') }}">
+            <a href="{{ route('login') }}">
                 <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
-                Back to Home
+                Back to Sign In
             </a>
         </div>
     </div>
