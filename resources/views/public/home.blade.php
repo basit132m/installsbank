@@ -199,6 +199,7 @@
             .nav-links { display: none; }
             .nav-cta { display: none; }
             .hamburger { display: flex; }
+            .nav-brand-text { display: none; }
 
             /* Hero */
             .hero { padding: 90px 5% 60px; min-height: auto; }
