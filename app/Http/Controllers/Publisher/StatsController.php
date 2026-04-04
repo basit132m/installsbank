@@ -30,9 +30,12 @@ class StatsController extends Controller
             ->orderBy('date')
             ->get();
 
+        // Fixed rate publishers are paid externally — hide per-click earnings in UI
+        $showEarnings = $profile->payment_enabled && !$profile->isFixedRate();
+
         $totals = [
             'clicks' => $dailyStats->sum('valid_clicks'),
-            'earnings' => $profile->payment_enabled ? $dailyStats->sum('earnings') : null,
+            'earnings' => $showEarnings ? $dailyStats->sum('earnings') : null,
         ];
 
         // Country breakdown aggregated
@@ -42,7 +45,7 @@ class StatsController extends Controller
                 foreach ($day->country_breakdown as $code => $data) {
                     $countryAgg[$code] = $countryAgg[$code] ?? ['code' => $code, 'clicks' => 0, 'earnings' => 0];
                     $countryAgg[$code]['clicks'] += $data['clicks'] ?? 0;
-                    if ($profile->payment_enabled) {
+                    if ($showEarnings) {
                         $countryAgg[$code]['earnings'] += $data['earnings'] ?? 0;
                     }
                 }
@@ -53,6 +56,6 @@ class StatsController extends Controller
         // Countries that have no rate set yet — to show N/A in stats
         $unratedCountries = CountryRate::where('needs_rate_update', true)->pluck('country_code')->toArray();
 
-        return view('publisher.stats', compact('dailyStats', 'totals', 'countryAgg', 'period', 'profile', 'unratedCountries'));
+        return view('publisher.stats', compact('dailyStats', 'totals', 'countryAgg', 'period', 'profile', 'unratedCountries', 'showEarnings'));
     }
 }

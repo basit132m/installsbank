@@ -23,4 +23,13 @@ class PublisherProfile extends Model
     {
         return $this->belongsTo(User::class);
     }
+
+    /**
+     * Fixed rate publishers are paid a fixed amount externally.
+     * Per-click earnings should not be tracked or displayed for them.
+     */
+    public function isFixedRate(): bool
+    {
+        return $this->contract_type !== null && $this->contract_type !== 'per_click';
+    }
 }

@@ -89,13 +89,13 @@
     <div class="card-title mb-4">Traffic by Country (Today)</div>
     <div class="table-wrap">
         <table>
-            <thead><tr><th>Country</th><th>Clicks</th>@if($profile->payment_enabled)<th>Earnings</th>@endif</tr></thead>
+            <thead><tr><th>Country</th><th>Clicks</th>@if($showEarnings)<th>Earnings</th>@endif</tr></thead>
             <tbody>
                 @foreach($countryBreakdown as $code => $data)
                 <tr>
                     <td>{{ $code }}</td>
                     <td><strong>{{ number_format($data['clicks']) }}</strong></td>
-                    @if($profile->payment_enabled)<td style="color:#01BF63;">${{ number_format($data['earnings'], 4) }}</td>@endif
+                    @if($showEarnings)<td style="color:#01BF63;">${{ number_format($data['earnings'], 4) }}</td>@endif
                 </tr>
                 @endforeach
             </tbody>
@@ -135,7 +135,7 @@
         <div style="display:flex;flex-direction:column;gap:8px;">
             <a href="{{ route('publisher.adcode') }}" class="btn btn-primary" style="justify-content:center;">Get Ad Code</a>
             <a href="{{ route('publisher.stats') }}" class="btn btn-ghost" style="justify-content:center;">View Detailed Stats</a>
-            @if($profile->payment_enabled)
+            @if($showEarnings)
                 <a href="{{ route('publisher.withdrawals.index') }}" class="btn btn-ghost" style="justify-content:center;">Request Withdrawal</a>
             @endif
             <a href="{{ route('publisher.support.create') }}" class="btn btn-ghost" style="justify-content:center;">Contact Support</a>
@@ -150,7 +150,7 @@ const data = @json($clicksChart);
 new ApexCharts(document.getElementById('pubClickChart'), {
     series: [
         { name: 'Clicks', data: data.map(d => d.clicks) },
-        @if($profile->payment_enabled)
+        @if($showEarnings)
         { name: 'Earnings ($)', data: data.map(d => d.earnings) }
         @endif
     ],

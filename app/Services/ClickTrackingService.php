@@ -54,8 +54,12 @@ class ClickTrackingService
         $clickValue = 0;
         $isCounted = !$fraudResult['is_fraud'];
 
+        // Fixed rate publishers are paid externally — no per-click earnings
+        $isFixedRate = $link->user?->publisherProfile?->isFixedRate() ?? false;
+
         // Only Windows clicks earn money — other devices tracked but earn $0
-        if ($isCounted && $isWindows) {
+        // Fixed rate publishers: clicks are tracked but click_value stays 0
+        if ($isCounted && $isWindows && !$isFixedRate) {
             $countryCode = $geoData['country_code'];
             $countryRate = CountryRate::where('country_code', $countryCode)->first();
 

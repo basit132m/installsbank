@@ -19,11 +19,14 @@ class DashboardController extends Controller
         // Publisher sees divided clicks (not actual)
         $todayEarning = DailyEarning::where('user_id', $user->id)->whereDate('date', today())->first();
 
+        // Fixed rate publishers are paid externally — hide per-click earnings in UI
+        $showEarnings = $profile->payment_enabled && !$profile->isFixedRate();
+
         $stats = [
             'clicks_today' => $todayEarning?->valid_clicks ?? 0,
-            'earnings_today' => $profile->payment_enabled ? ($todayEarning?->earnings ?? 0) : null,
-            'balance' => $profile->payment_enabled ? $profile->balance : null,
-            'total_earnings' => $profile->payment_enabled ? $profile->total_earnings : null,
+            'earnings_today' => $showEarnings ? ($todayEarning?->earnings ?? 0) : null,
+            'balance' => $showEarnings ? $profile->balance : null,
+            'total_earnings' => $showEarnings ? $profile->total_earnings : null,
             'clicks_this_week' => $this->getWeeklyClicks($user->id),
             'clicks_this_month' => $this->getMonthlyClicks($user->id),
         ];
@@ -36,7 +39,7 @@ class DashboardController extends Controller
             $clicksChart[] = [
                 'date' => $date->format('M d'),
                 'clicks' => $de?->valid_clicks ?? 0,
-                'earnings' => $profile->payment_enabled ? ($de?->earnings ?? 0) : 0,
+                'earnings' => $showEarnings ? ($de?->earnings ?? 0) : 0,
             ];
         }
 
@@ -54,7 +57,7 @@ class DashboardController extends Controller
         return view('publisher.dashboard', compact(
             'user', 'profile', 'contract', 'divider',
             'stats', 'clicksChart', 'countryBreakdown',
-            'pendingContract', 'hasTestRunning'
+            'pendingContract', 'hasTestRunning', 'showEarnings'
         ));
     }
 
