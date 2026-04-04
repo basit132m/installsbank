@@ -187,6 +187,58 @@
     </div>
 </div>
 
+<!-- App Download Banner -->
+<div style="margin-top:24px;background:linear-gradient(135deg,#0f172a 0%,#064e35 60%,#01BF63 100%);border-radius:16px;padding:28px 32px;display:flex;align-items:center;gap:24px;flex-wrap:wrap;overflow:hidden;position:relative;">
+    <!-- Background decoration -->
+    <div style="position:absolute;right:-30px;top:-30px;width:180px;height:180px;background:rgba(255,255,255,0.04);border-radius:50%;"></div>
+    <div style="position:absolute;right:80px;bottom:-50px;width:130px;height:130px;background:rgba(255,255,255,0.03);border-radius:50%;"></div>
+
+    <!-- Phone icon -->
+    <div style="width:64px;height:64px;background:rgba(255,255,255,0.12);border-radius:16px;display:flex;align-items:center;justify-content:center;flex-shrink:0;border:1px solid rgba(255,255,255,0.15);">
+        <svg width="32" height="32" fill="none" stroke="white" viewBox="0 0 24 24" stroke-width="1.8">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+        </svg>
+    </div>
+
+    <!-- Text -->
+    <div style="flex:1;min-width:200px;">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">
+            <span style="font-size:18px;font-weight:800;color:white;">Installs Bank Android App</span>
+            <span style="background:#01BF63;color:white;font-size:11px;font-weight:700;padding:2px 10px;border-radius:20px;">NEW</span>
+        </div>
+        <p style="font-size:14px;color:rgba(255,255,255,0.75);margin:0;line-height:1.6;">
+            Monitor your earnings, view live click stats, and manage your account on the go — right from your Android device.
+        </p>
+        <div style="display:flex;gap:16px;margin-top:12px;flex-wrap:wrap;">
+            <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:rgba(255,255,255,0.6);">
+                <svg width="14" height="14" fill="none" stroke="#01BF63" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+                Live click counter
+            </div>
+            <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:rgba(255,255,255,0.6);">
+                <svg width="14" height="14" fill="none" stroke="#01BF63" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+                Earnings dashboard
+            </div>
+            <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:rgba(255,255,255,0.6);">
+                <svg width="14" height="14" fill="none" stroke="#01BF63" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+                Withdrawal requests
+            </div>
+        </div>
+    </div>
+
+    <!-- Download button -->
+    <a href="https://www.dropbox.com/scl/fi/ao70vpaoeij74a5sjwowd/Installs-Bank.apk?rlkey=te90jvdgavwnmxztans140qbn&st=jzo9jg56&dl=1"
+       style="display:inline-flex;align-items:center;gap:10px;background:white;color:#0f172a;padding:13px 22px;border-radius:12px;font-size:14px;font-weight:700;text-decoration:none;flex-shrink:0;transition:all 0.2s;box-shadow:0 4px 16px rgba(0,0,0,0.2);"
+       onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 8px 24px rgba(0,0,0,0.3)'"
+       onmouseout="this.style.transform='';this.style.boxShadow='0 4px 16px rgba(0,0,0,0.2)'">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="#3DDC84">
+            <path d="M17.523 15.341a.75.75 0 00-.61-.313H14.25V3a.75.75 0 00-.75-.75h-3a.75.75 0 00-.75.75v12.028H7.087a.75.75 0 00-.537 1.275l4.913 5.04a.75.75 0 001.074 0l4.913-5.04a.75.75 0 00.073-.962z"/>
+            <path d="M19.5 21H4.5a.75.75 0 000 1.5h15a.75.75 0 000-1.5z"/>
+        </svg>
+        Download APK
+        <span style="background:#e6faf2;color:#065f46;font-size:11px;padding:2px 7px;border-radius:6px;font-weight:600;">Android</span>
+    </a>
+</div>
+
 <!-- Contact Team -->
 <div class="card" style="margin-top:24px;">
     <div class="card-title mb-1">Contact Installs Bank Team</div>
