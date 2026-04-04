@@ -28,7 +28,7 @@
         }
         .nav-brand { display: flex; align-items: center; gap: 10px; text-decoration: none; }
         .nav-brand img { height: 34px; }
-        .nav-brand-text { font-size: 18px; font-weight: 800; color: #111827; }
+        .nav-brand-text { display: none; }
         .nav-links { display: flex; align-items: center; gap: 32px; }
         .nav-links a { color: #6b7280; text-decoration: none; font-size: 14px; font-weight: 500; transition: color 0.15s; }
         .nav-links a:hover { color: #111827; }
