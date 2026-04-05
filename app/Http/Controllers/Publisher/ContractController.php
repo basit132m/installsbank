@@ -18,10 +18,18 @@ class ContractController extends Controller
         $contract->update(['status' => 'accepted', 'responded_at' => now()]);
 
         // Update publisher profile
-        auth()->user()->publisherProfile->update([
-            'contract_type' => $contract->type,
+        $profileData = [
+            'contract_type'    => $contract->type,
             'fixed_daily_rate' => $contract->type === 'fixed' ? $contract->rate : null,
-        ]);
+        ];
+
+        // Fixed-rate publishers get payment_enabled automatically —
+        // their balance is managed by the daily credit command, not per-click earnings.
+        if ($contract->type === 'fixed') {
+            $profileData['payment_enabled'] = true;
+        }
+
+        auth()->user()->publisherProfile->update($profileData);
 
         return back()->with('success', 'Contract accepted! Your ad is now live.');
     }

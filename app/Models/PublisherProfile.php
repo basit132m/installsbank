@@ -9,7 +9,7 @@ class PublisherProfile extends Model
     protected $fillable = [
         'user_id', 'balance', 'total_earnings', 'total_withdrawn',
         'pending_balance', 'payment_address', 'payment_network',
-        'contract_type', 'fixed_daily_rate', 'payment_enabled',
+        'contract_type', 'fixed_daily_rate', 'last_fixed_credit_date', 'payment_enabled',
         'test_total_clicks', 'test_started_at', 'test_ended_at',
         'test_status', 'notes',
         'fraud_country_mismatch', 'fraud_suspicious_referrer',
@@ -17,6 +17,7 @@ class PublisherProfile extends Model
     ];
 
     protected $casts = [
+        'last_fixed_credit_date'   => 'date',
         'test_started_at'          => 'datetime',
         'test_ended_at'            => 'datetime',
         'payment_enabled'          => 'boolean',
