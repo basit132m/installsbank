@@ -242,7 +242,7 @@
         <div class="nav-links">
             <a href="#features">Features</a>
             <a href="#how-it-works">How It Works</a>
-            <a href="#rates">Rates</a>
+            <a href="{{ route('rates') }}">Rates</a>
             <a href="#mobile-app">Mobile App</a>
             <a href="#contact">Contact</a>
         </div>
@@ -259,7 +259,7 @@
     <div class="mobile-menu" id="mobileMenu">
         <a href="#features" onclick="closeMenu()">Features</a>
         <a href="#how-it-works" onclick="closeMenu()">How It Works</a>
-        <a href="#rates" onclick="closeMenu()">Rates</a>
+        <a href="{{ route('rates') }}" onclick="closeMenu()">Rates</a>
         <a href="#mobile-app" onclick="closeMenu()">Mobile App</a>
         <a href="#contact" onclick="closeMenu()">Contact</a>
         <div class="mob-cta">
@@ -523,7 +523,7 @@
                 <a href="{{ route('register') }}" class="footer-link">Register</a>
                 <a href="{{ route('login') }}" class="footer-link">Login</a>
                 <a href="#how-it-works" class="footer-link">How It Works</a>
-                <a href="#rates" class="footer-link">Rates</a>
+                <a href="{{ route('rates') }}" class="footer-link">Rates</a>
             </div>
             <div>
                 <div class="footer-heading">Support</div>

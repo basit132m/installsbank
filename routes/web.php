@@ -9,9 +9,11 @@ use App\Http\Controllers\Admin;
 use App\Http\Controllers\Publisher;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Publisher\LiveStatsController;
+use App\Http\Controllers\Public\RatesController;
 
 // Public pages
 Route::get('/', fn() => view('public.home'))->name('home');
+Route::get('/rates', [RatesController::class, 'index'])->name('rates');
 Route::get('/privacy-policy', fn() => view('public.privacy'))->name('privacy');
 Route::get('/terms-of-use', fn() => view('public.terms'))->name('terms');
 
