@@ -71,54 +71,24 @@
     @if($website->isApproved() && $website->trackingLink)
     @php $link = $website->trackingLink; @endphp
     <div style="margin-top:16px;padding-top:16px;border-top:1px solid #f3f4f6;">
-        <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap;">
-            <div style="font-size:13px;font-weight:700;color:#374151;">Your Ad Code for this website</div>
-            <div style="background:#e6faf2;padding:3px 10px;border-radius:12px;font-size:11px;color:#065f46;font-weight:600;">
-                {{ number_format($link->unique_clicks) }} valid clicks · {{ number_format($link->total_clicks) }} total
+        <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:12px;">
+            <div style="background:#e6faf2;padding:5px 12px;border-radius:12px;font-size:12px;color:#065f46;font-weight:600;">
+                ✓ {{ number_format($link->unique_clicks) }} valid clicks
+            </div>
+            <div style="font-size:12px;color:#9ca3af;">
+                Tracking code: <span style="font-family:monospace;color:#374151;font-weight:600;">{{ $link->unique_code }}</span>
+                — only counts clicks from <strong>{{ $website->domain }}</strong>
             </div>
         </div>
-        <div style="background:#1e1e2e;border-radius:10px;padding:16px;font-family:monospace;font-size:12px;color:#a3e635;line-height:1.8;position:relative;overflow-x:auto;">
-            <button onclick="copyCode{{ $website->id }}()" style="position:absolute;top:10px;right:10px;background:#374151;color:#d1fae5;border:none;padding:4px 12px;border-radius:6px;font-size:11px;cursor:pointer;font-family:sans-serif;">Copy</button>
-            <div id="adcode-{{ $website->id }}">
-&lt;!-- Installs Bank Ad Code | {{ $website->domain }} --&gt;<br>
-&lt;script&gt;<br>
-&nbsp;&nbsp;(function() {<br>
-&nbsp;&nbsp;&nbsp;&nbsp;var s = document.createElement('script');<br>
-&nbsp;&nbsp;&nbsp;&nbsp;s.src = '{{ url('/track/' . $link->unique_code) }}?js=1';<br>
-&nbsp;&nbsp;&nbsp;&nbsp;s.async = true;<br>
-&nbsp;&nbsp;&nbsp;&nbsp;document.head.appendChild(s);<br>
-&nbsp;&nbsp;})();<br>
-&lt;/script&gt;<br>
-&lt;a href="{{ $link->tracking_url }}" id="ib-btn-{{ $link->unique_code }}" target="_blank"&gt;<br>
-&nbsp;&nbsp;&lt;img src="{{ asset('images/download-btn.png') }}" alt="Download" style="max-width:200px;"&gt;<br>
-&lt;/a&gt;
+        <div style="background:#eff6ff;border:1.5px solid #93c5fd;border-radius:10px;padding:14px 18px;display:flex;gap:14px;align-items:center;flex-wrap:wrap;">
+            <div style="flex:1;min-width:200px;">
+                <div style="font-size:13px;font-weight:700;color:#1e40af;margin-bottom:4px;">Get your embed code from the Ad Code section</div>
+                <div style="font-size:12px;color:#1e3a8a;line-height:1.6;">
+                    Go to <strong>Ad Code</strong> in the sidebar → select tracking link <strong style="font-family:monospace;">{{ $link->name ?: $link->unique_code }}</strong> → choose a button style → copy the generated code.
+                </div>
             </div>
+            <a href="{{ route('publisher.adcode') }}" class="btn btn-primary btn-sm" style="flex-shrink:0;">Go to Ad Code →</a>
         </div>
-        <div style="margin-top:8px;font-size:11px;color:#9ca3af;">
-            Tracking link: <span style="font-family:monospace;color:#374151;">{{ $link->tracking_url }}</span> — clicks only counted from <strong>{{ $website->domain }}</strong>
-        </div>
-        <script>
-        function copyCode{{ $website->id }}() {
-            const raw = `<!-- Installs Bank Ad Code | {{ $website->domain }} -->
-<script>
-  (function() {
-    var s = document.createElement('script');
-    s.src = '{{ url('/track/' . $link->unique_code) }}?js=1';
-    s.async = true;
-    document.head.appendChild(s);
-  })();
-<\/script>
-<a href="{{ $link->tracking_url }}" id="ib-btn-{{ $link->unique_code }}" target="_blank">
-  <img src="{{ asset('images/download-btn.png') }}" alt="Download" style="max-width:200px;">
-</a>`;
-            navigator.clipboard.writeText(raw).then(function() {
-                var btn = event.currentTarget;
-                btn.textContent = 'Copied!';
-                btn.style.background = '#01BF63';
-                setTimeout(function(){ btn.textContent = 'Copy'; btn.style.background = '#374151'; }, 2000);
-            });
-        }
-        </script>
     </div>
     @endif
 </div>
