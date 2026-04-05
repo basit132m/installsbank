@@ -54,6 +54,13 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin,manager'
         Route::delete('/{user}', [Admin\PublisherController::class, 'destroy'])->name('destroy');
     });
 
+    // Publisher website requests
+    Route::prefix('publisher-websites')->name('publisher-websites.')->group(function () {
+        Route::get('/', [Admin\PublisherWebsiteController::class, 'index'])->name('index');
+        Route::post('/{publisherWebsite}/approve', [Admin\PublisherWebsiteController::class, 'approve'])->name('approve');
+        Route::post('/{publisherWebsite}/reject', [Admin\PublisherWebsiteController::class, 'reject'])->name('reject');
+    });
+
     // Contracts
     Route::prefix('contracts')->name('contracts.')->group(function () {
         Route::get('/', [Admin\ContractController::class, 'index'])->name('index');
@@ -163,6 +170,10 @@ Route::prefix('publisher')->name('publisher.')->middleware(['auth', 'role:publis
     Route::post('/profile/password', [Publisher\ProfileController::class, 'updatePassword'])->name('profile.password');
     Route::post('/profile/avatar', [Publisher\ProfileController::class, 'updateAvatar'])->name('profile.avatar');
     Route::post('/profile/avatar/remove', [Publisher\ProfileController::class, 'removeAvatar'])->name('profile.avatar.remove');
+
+    // Publisher websites (multi-site)
+    Route::get('/websites', [Publisher\WebsiteController::class, 'index'])->name('websites.index');
+    Route::post('/websites', [Publisher\WebsiteController::class, 'store'])->name('websites.store');
 
     Route::get('/support', [Publisher\SupportController::class, 'index'])->name('support.index');
     Route::get('/support/create', [Publisher\SupportController::class, 'create'])->name('support.create');

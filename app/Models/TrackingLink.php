@@ -11,6 +11,7 @@ class TrackingLink extends Model
         'user_id', 'tracking_domain_id', 'name', 'original_url', 'unique_code',
         'url_windows', 'url_android', 'url_mac', 'url_other',
         'is_active', 'total_clicks', 'unique_clicks', 'fraud_clicks', 'last_click_at',
+        'allowed_domain',
     ];
 
     protected $casts = [

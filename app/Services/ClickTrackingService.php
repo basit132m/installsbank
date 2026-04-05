@@ -60,6 +60,18 @@ class ClickTrackingService
 
         $fraudResult = $this->fraud->check($clickData, $fraudSettings);
 
+        // Domain restriction: if tracking link has an allowed_domain, referrer must match
+        if (!$fraudResult['is_fraud'] && $link->allowed_domain) {
+            $referrerHost = strtolower(parse_url($clickData['referrer'] ?? '', PHP_URL_HOST) ?? '');
+            $referrerHost = preg_replace('/^www\./', '', $referrerHost);
+            $allowedHost  = strtolower(preg_replace('/^www\./', '', $link->allowed_domain));
+
+            if ($referrerHost !== $allowedHost) {
+                $fraudResult['is_fraud']    = true;
+                $fraudResult['fraud_reason'] = 'domain_mismatch';
+            }
+        }
+
         $clickValue = 0;
         $isCounted = !$fraudResult['is_fraud'];
 

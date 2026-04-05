@@ -310,6 +310,37 @@
     <div style="text-align:center;padding:24px;color:#9ca3af;">No tracking links yet</div>
     @endforelse
 </div>
+
+<!-- Publisher Websites -->
+@php $publisherWebsites = $user->publisherWebsites ?? \App\Models\PublisherWebsite::where('user_id',$user->id)->with('trackingLink')->latest()->get(); @endphp
+<div class="card mt-6">
+    <div class="flex-between mb-4">
+        <div>
+            <div class="card-title">Submitted Websites</div>
+            <div class="card-subtitle">Websites this publisher has registered for separate ad codes</div>
+        </div>
+        <a href="{{ route('admin.publisher-websites.index') }}" class="btn btn-ghost btn-sm">View All Requests →</a>
+    </div>
+    @forelse($publisherWebsites as $website)
+    <div style="display:flex;align-items:center;gap:14px;padding:12px 0;border-bottom:1px solid #f3f4f6;flex-wrap:wrap;">
+        <div style="flex:1;min-width:180px;">
+            <div style="font-size:13px;font-weight:600;">{{ $website->domain }}</div>
+            <div style="font-size:11px;color:#9ca3af;">Submitted {{ $website->created_at->format('M d, Y') }}</div>
+        </div>
+        <span class="badge {{ $website->status === 'approved' ? 'badge-success' : ($website->status === 'rejected' ? 'badge-danger' : 'badge-warning') }}">
+            {{ ucfirst($website->status) }}
+        </span>
+        @if($website->trackingLink)
+        <div style="font-size:11px;font-family:monospace;color:#6b7280;">{{ $website->trackingLink->unique_clicks }} valid clicks</div>
+        @endif
+        @if($website->isPending())
+        <a href="{{ route('admin.publisher-websites.index') }}" class="btn btn-primary btn-sm">Review</a>
+        @endif
+    </div>
+    @empty
+    <div style="text-align:center;padding:24px;color:#9ca3af;">No website submissions yet</div>
+    @endforelse
+</div>
 @endsection
 
 @push('scripts')

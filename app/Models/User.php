@@ -64,6 +64,11 @@ class User extends Authenticatable
         return $this->hasMany(TrackingLink::class);
     }
 
+    public function publisherWebsites()
+    {
+        return $this->hasMany(PublisherWebsite::class);
+    }
+
     public function clicks()
     {
         return $this->hasMany(Click::class);
