@@ -205,56 +205,28 @@
 <!-- Country Breakdown -->
 @if($countryBreakdown && $countryBreakdown->count() > 0)
 @php
+    $sortedBreakdown = $countryBreakdown->sortByDesc('clicks');
+    $totalBreakdownClicks = $countryBreakdown->sum('clicks');
     $countryNames = \App\Models\CountryRate::whereIn('country_code', $countryBreakdown->keys()->toArray())
         ->pluck('country_name', 'country_code');
 @endphp
 <div class="card mb-6">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
         <div>
             <div class="card-title">Traffic by Country</div>
-            <div style="font-size:12px;color:#9ca3af;margin-top:2px;">Today's click breakdown</div>
+            <div style="font-size:12px;color:#9ca3af;margin-top:2px;">{{ $countryBreakdown->count() }} {{ Str::plural('country', $countryBreakdown->count()) }} · {{ number_format($totalBreakdownClicks) }} clicks today</div>
         </div>
-        <span style="background:#e6faf2;color:#065f46;font-size:12px;font-weight:700;padding:4px 12px;border-radius:20px;">
-            {{ $countryBreakdown->count() }} {{ Str::plural('country', $countryBreakdown->count()) }}
-        </span>
     </div>
-    <div style="display:flex;flex-direction:column;gap:10px;">
-        @foreach($countryBreakdown->sortByDesc('clicks') as $code => $data)
-        @php
-            $countryName = $countryNames[$code] ?? $code;
-            $flagCode = strtolower($code);
-            $maxClicks = $countryBreakdown->max('clicks');
-            $pct = $maxClicks > 0 ? round(($data['clicks'] / $maxClicks) * 100) : 0;
-        @endphp
-        <div style="display:flex;align-items:center;gap:12px;padding:12px 14px;background:#f9fafb;border-radius:10px;border:1px solid #f3f4f6;">
-            <!-- Flag -->
-            <img src="https://flagcdn.com/24x18/{{ $flagCode }}.png"
-                 alt="{{ $countryName }}"
-                 style="width:28px;height:21px;border-radius:3px;object-fit:cover;box-shadow:0 1px 3px rgba(0,0,0,0.12);flex-shrink:0;"
-                 onerror="this.style.display='none';this.nextElementSibling.style.display='inline'">
-            <span style="display:none;font-size:18px;">🌍</span>
-
-            <!-- Country info + bar -->
-            <div style="flex:1;min-width:0;">
-                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px;">
-                    <div>
-                        <span style="font-size:14px;font-weight:700;color:#111827;">{{ $countryName }}</span>
-                        <span style="font-size:11px;color:#9ca3af;margin-left:6px;font-weight:600;">{{ strtoupper($code) }}</span>
-                    </div>
-                    <div style="display:flex;align-items:center;gap:12px;">
-                        <span style="font-size:14px;font-weight:800;color:#111827;">{{ number_format($data['clicks']) }}
-                            <span style="font-size:11px;font-weight:500;color:#9ca3af;">clicks</span>
-                        </span>
-                        @if($showEarnings)
-                        <span style="font-size:13px;font-weight:700;color:#01BF63;">${{ number_format($data['earnings'], 4) }}</span>
-                        @endif
-                    </div>
-                </div>
-                <!-- Progress bar -->
-                <div style="height:4px;background:#e5e7eb;border-radius:4px;overflow:hidden;">
-                    <div style="height:100%;width:{{ $pct }}%;background:linear-gradient(90deg,#01BF63,#00a354);border-radius:4px;transition:width 0.4s;"></div>
-                </div>
-            </div>
+    <div style="display:flex;flex-wrap:wrap;gap:14px;padding:20px;background:#f9fafb;border-radius:12px;border:1px solid #f3f4f6;">
+        @foreach($sortedBreakdown as $code => $data)
+        <div style="display:flex;flex-direction:column;align-items:center;gap:5px;width:66px;">
+            <img src="https://flagcdn.com/48x36/{{ strtolower($code) }}.png"
+                 alt="{{ $countryNames[$code] ?? $code }}"
+                 title="{{ $countryNames[$code] ?? $code }}"
+                 style="width:48px;height:36px;border-radius:5px;object-fit:cover;box-shadow:0 1px 6px rgba(0,0,0,0.15);flex-shrink:0;"
+                 onerror="this.style.display='none'">
+            <span style="font-size:11px;font-weight:800;color:#111827;line-height:1;text-align:center;">{{ number_format($data['clicks']) }}</span>
+            <span style="font-size:9px;color:#9ca3af;font-weight:600;line-height:1;">{{ strtoupper($code) }}</span>
         </div>
         @endforeach
     </div>
