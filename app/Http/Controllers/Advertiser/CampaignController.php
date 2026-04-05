@@ -90,12 +90,35 @@ class CampaignController extends Controller
         ));
     }
 
+    public function approveContract(Campaign $campaign)
+    {
+        $this->authorize_campaign($campaign);
+        if ($campaign->status !== 'pending_approval') {
+            return back()->with('error', 'No contract pending approval.');
+        }
+        $campaign->update(['status' => 'pending_payment']);
+        return back()->with('success', 'Contract approved! Please submit your advance payment to activate the campaign.');
+    }
+
+    public function rejectContract(Request $request, Campaign $campaign)
+    {
+        $this->authorize_campaign($campaign);
+        if ($campaign->status !== 'pending_approval') {
+            return back()->with('error', 'No contract pending approval.');
+        }
+        $campaign->update([
+            'status'     => 'draft',
+            'admin_note' => ($campaign->admin_note ? $campaign->admin_note . "\n" : '') . 'Advertiser rejected contract: ' . ($request->reason ?? 'No reason given'),
+        ]);
+        return back()->with('success', 'Contract rejected. Admin will be notified to review the rates.');
+    }
+
     public function submitPayment(Request $request, Campaign $campaign)
     {
         $this->authorize_campaign($campaign);
 
-        if (!in_array($campaign->status, ['draft', 'pending_payment'])) {
-            return back()->with('error', 'Payment cannot be submitted for this campaign status.');
+        if ($campaign->status !== 'pending_payment') {
+            return back()->with('error', 'Payment can only be submitted after approving the contract.');
         }
 
         $data = $request->validate([

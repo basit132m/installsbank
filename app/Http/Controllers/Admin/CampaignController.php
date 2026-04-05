@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\AdvertiserCountryRate;
 use App\Models\Campaign;
 use App\Models\CampaignPayment;
 use App\Models\TrackingLink;
@@ -29,7 +30,21 @@ class CampaignController extends Controller
     {
         $campaign->load('user.advertiserProfile', 'payments', 'trackingLinks');
         $payments = $campaign->payments()->with('confirmedBy')->latest()->get();
-        return view('admin.campaigns.show', compact('campaign', 'payments'));
+        $masterRates = AdvertiserCountryRate::where('is_active', true)->orderBy('country_name')->get();
+        $availableLinks = TrackingLink::whereNull('campaign_id')->get();
+        return view('admin.campaigns.show', compact('campaign', 'payments', 'masterRates', 'availableLinks'));
+    }
+
+    public function sendContract(Campaign $campaign)
+    {
+        if (!in_array($campaign->status, ['draft', 'pending_approval'])) {
+            return back()->with('error', 'Contract can only be sent for draft campaigns.');
+        }
+        if (!$campaign->total_value || !$campaign->target_clicks) {
+            return back()->with('error', 'Please set rates and target clicks before sending the contract.');
+        }
+        $campaign->update(['status' => 'pending_approval']);
+        return back()->with('success', 'Contract sent to advertiser for approval.');
     }
 
     public function setRates(Request $request, Campaign $campaign)

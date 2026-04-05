@@ -97,8 +97,18 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin,manager'
         Route::post('/{campaign}/pause', [Admin\CampaignController::class, 'pause'])->name('pause');
         Route::post('/{campaign}/resume', [Admin\CampaignController::class, 'resume'])->name('resume');
         Route::post('/{campaign}/cancel', [Admin\CampaignController::class, 'cancel'])->name('cancel');
+        Route::post('/{campaign}/send-contract', [Admin\CampaignController::class, 'sendContract'])->name('send-contract');
         Route::post('/payments/{payment}/confirm', [Admin\CampaignController::class, 'confirmPayment'])->name('payments.confirm');
         Route::post('/payments/{payment}/reject', [Admin\CampaignController::class, 'rejectPayment'])->name('payments.reject');
+    });
+
+    // Advertiser country rates
+    Route::prefix('advertiser-rates')->name('advertiser-rates.')->group(function () {
+        Route::get('/', [Admin\AdvertiserRateController::class, 'index'])->name('index');
+        Route::post('/', [Admin\AdvertiserRateController::class, 'store'])->name('store');
+        Route::put('/{advertiserRate}', [Admin\AdvertiserRateController::class, 'update'])->name('update');
+        Route::delete('/{advertiserRate}', [Admin\AdvertiserRateController::class, 'destroy'])->name('destroy');
+        Route::get('/json', [Admin\AdvertiserRateController::class, 'json'])->name('json');
     });
 
     // Announcements (admin only)
@@ -195,6 +205,8 @@ Route::prefix('advertiser')->name('advertiser.')->middleware(['auth', 'role:adve
         Route::post('/', [Advertiser\CampaignController::class, 'store'])->name('store');
         Route::get('/{campaign}', [Advertiser\CampaignController::class, 'show'])->name('show');
         Route::post('/{campaign}/payment', [Advertiser\CampaignController::class, 'submitPayment'])->name('payment');
+        Route::post('/{campaign}/approve-contract', [Advertiser\CampaignController::class, 'approveContract'])->name('approve-contract');
+        Route::post('/{campaign}/reject-contract', [Advertiser\CampaignController::class, 'rejectContract'])->name('reject-contract');
     });
 
     // Profile
