@@ -180,6 +180,7 @@
 }
 @media(max-width:700px){
     .country-grid { grid-template-columns: 1fr !important; }
+    .charts-row { grid-template-columns: 1fr !important; }
 }
 </style>
 
@@ -247,25 +248,34 @@
             <div style="font-size:12px;color:#9ca3af;margin-top:2px;">{{ $countryBreakdown->count() }} {{ Str::plural('country', $countryBreakdown->count()) }} · {{ number_format($totalBreakdownClicks) }} clicks today</div>
         </div>
     </div>
-    <div style="display:grid;grid-template-columns:280px 1fr;gap:20px;align-items:center;" class="country-grid">
-        <!-- Pie chart -->
-        <div>
-            <div id="countryPieChart"></div>
+    <div style="display:flex;flex-wrap:wrap;gap:14px;padding:16px;background:#ffffff;border-radius:12px;border:1px solid #f3f4f6;">
+        @foreach($sortedBreakdown as $code => $data)
+        <div style="display:flex;flex-direction:column;align-items:center;gap:5px;width:66px;">
+            <img src="https://flagcdn.com/48x36/{{ strtolower($code) }}.png"
+                 alt="{{ $countryNames[$code] ?? $code }}"
+                 title="{{ $countryNames[$code] ?? $code }}"
+                 style="width:48px;height:36px;border-radius:5px;object-fit:cover;box-shadow:0 1px 6px rgba(0,0,0,0.15);flex-shrink:0;"
+                 onerror="this.style.display='none'">
+            <span style="font-size:11px;font-weight:800;color:#111827;line-height:1;text-align:center;">{{ number_format($data['clicks']) }}</span>
+            <span style="font-size:9px;color:#9ca3af;font-weight:600;line-height:1;">{{ strtoupper($code) }}</span>
         </div>
-        <!-- Flag grid -->
-        <div style="display:flex;flex-wrap:wrap;gap:14px;padding:16px;background:#ffffff;border-radius:12px;border:1px solid #f3f4f6;">
-            @foreach($sortedBreakdown as $code => $data)
-            <div style="display:flex;flex-direction:column;align-items:center;gap:5px;width:66px;">
-                <img src="https://flagcdn.com/48x36/{{ strtolower($code) }}.png"
-                     alt="{{ $countryNames[$code] ?? $code }}"
-                     title="{{ $countryNames[$code] ?? $code }}"
-                     style="width:48px;height:36px;border-radius:5px;object-fit:cover;box-shadow:0 1px 6px rgba(0,0,0,0.15);flex-shrink:0;"
-                     onerror="this.style.display='none'">
-                <span style="font-size:11px;font-weight:800;color:#111827;line-height:1;text-align:center;">{{ number_format($data['clicks']) }}</span>
-                <span style="font-size:9px;color:#9ca3af;font-weight:600;line-height:1;">{{ strtoupper($code) }}</span>
-            </div>
-            @endforeach
-        </div>
+        @endforeach
+    </div>
+</div>
+
+<!-- Country + OS Pie Charts -->
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:24px;" class="charts-row">
+    <!-- Country donut -->
+    <div class="card">
+        <div class="card-title mb-1">Clicks by Country</div>
+        <div style="font-size:12px;color:#9ca3af;margin-bottom:4px;">Today · valid clicks only</div>
+        <div id="countryPieChart"></div>
+    </div>
+    <!-- OS donut -->
+    <div class="card">
+        <div class="card-title mb-1">Clicks by OS</div>
+        <div style="font-size:12px;color:#9ca3af;margin-bottom:4px;">Today · valid clicks only</div>
+        <div id="osPieChart"></div>
     </div>
 </div>
 @endif
@@ -396,51 +406,54 @@ new ApexCharts(document.getElementById('pubClickChart'), {
     grid: { borderColor: '#f3f4f6' }
 }).render();
 
+@php
+    $donutOpts = function($id, $labels, $values, $colors) {
+        return compact('id','labels','values','colors');
+    };
+@endphp
 @if($countryBreakdown && $countryBreakdown->count() > 0)
 @php
     $pieLabels = [];
     $pieValues = [];
     foreach ($sortedBreakdown->take(8) as $code => $data) {
         $pieLabels[] = $countryNames[$code] ?? strtoupper($code);
-        $pieValues[] = $data['clicks'];
+        $pieValues[] = (int) $data['clicks'];
     }
-    // Group remainder as "Others"
     if ($sortedBreakdown->count() > 8) {
-        $othersClicks = $sortedBreakdown->slice(8)->sum('clicks');
         $pieLabels[] = 'Others';
-        $pieValues[] = $othersClicks;
+        $pieValues[] = (int) $sortedBreakdown->slice(8)->sum('clicks');
     }
 @endphp
 new ApexCharts(document.getElementById('countryPieChart'), {
     series: @json($pieValues),
     labels: @json($pieLabels),
-    chart: { type: 'donut', height: 260, toolbar: { show: false } },
+    chart: { type: 'donut', height: 280, toolbar: { show: false } },
     colors: ['#01BF63','#3b82f6','#f59e0b','#ef4444','#8b5cf6','#06b6d4','#f97316','#ec4899','#9ca3af'],
-    plotOptions: {
-        pie: {
-            donut: {
-                size: '62%',
-                labels: {
-                    show: true,
-                    total: {
-                        show: true,
-                        label: 'Total',
-                        fontSize: '13px',
-                        fontWeight: 700,
-                        color: '#374151',
-                        formatter: function(w) {
-                            return w.globals.seriesTotals.reduce((a,b) => a+b, 0).toLocaleString();
-                        }
-                    }
-                }
-            }
-        }
-    },
+    plotOptions: { pie: { donut: { size: '60%', labels: { show: true, total: { show: true, label: 'Total', fontSize: '13px', fontWeight: 700, color: '#374151', formatter: w => w.globals.seriesTotals.reduce((a,b)=>a+b,0).toLocaleString() } } } } },
     dataLabels: { enabled: false },
-    legend: { show: false },
-    tooltip: {
-        y: { formatter: val => val.toLocaleString() + ' clicks' }
+    legend: { position: 'bottom', fontSize: '12px' },
+    tooltip: { y: { formatter: val => val.toLocaleString() + ' clicks' } }
+}).render();
+@endif
+
+@if($osBreakdown && $osBreakdown->count() > 0)
+@php
+    $osLabels = [];
+    $osValues = [];
+    foreach ($osBreakdown as $os => $data) {
+        $osLabels[] = $os ?: 'Unknown';
+        $osValues[] = (int) (is_array($data) ? $data['clicks'] : $data);
     }
+@endphp
+new ApexCharts(document.getElementById('osPieChart'), {
+    series: @json($osValues),
+    labels: @json($osLabels),
+    chart: { type: 'donut', height: 280, toolbar: { show: false } },
+    colors: ['#3b82f6','#01BF63','#f59e0b','#8b5cf6','#ef4444','#06b6d4','#9ca3af'],
+    plotOptions: { pie: { donut: { size: '60%', labels: { show: true, total: { show: true, label: 'Total', fontSize: '13px', fontWeight: 700, color: '#374151', formatter: w => w.globals.seriesTotals.reduce((a,b)=>a+b,0).toLocaleString() } } } } },
+    dataLabels: { enabled: false },
+    legend: { position: 'bottom', fontSize: '12px' },
+    tooltip: { y: { formatter: val => val.toLocaleString() + ' clicks' } }
 }).render();
 @endif
 </script>

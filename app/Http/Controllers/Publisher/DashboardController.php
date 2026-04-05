@@ -52,13 +52,19 @@ class DashboardController extends Controller
                 ->take(10);
         }
 
+        // OS breakdown today
+        $osBreakdown = null;
+        if ($todayEarning && $todayEarning->os_breakdown) {
+            $osBreakdown = collect($todayEarning->os_breakdown)->sortByDesc('clicks');
+        }
+
         $pendingContract = $user->contracts()->where('status', 'pending')->latest()->first();
         $hasTestRunning = $profile->test_status === 'running';
         $announcements = Announcement::where('is_active', true)->latest()->get();
 
         return view('publisher.dashboard', compact(
             'user', 'profile', 'contract', 'divider',
-            'stats', 'clicksChart', 'countryBreakdown',
+            'stats', 'clicksChart', 'countryBreakdown', 'osBreakdown',
             'pendingContract', 'hasTestRunning', 'showEarnings',
             'announcements'
         ));

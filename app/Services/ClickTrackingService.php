@@ -121,13 +121,13 @@ class ClickTrackingService
 
         // Update daily earnings if counted
         if ($isCounted) {
-            $this->updateDailyEarnings($link->user_id, $isWindows, $geoData['country_code'], $clickValue, $link->user_id);
+            $this->updateDailyEarnings($link->user_id, $isWindows, $os, $geoData['country_code'], $clickValue, $link->user_id);
         }
 
         return $click;
     }
 
-    private function updateDailyEarnings(int $publisherId, bool $isWindows, string $countryCode, float $clickValue, int $userId): void
+    private function updateDailyEarnings(int $publisherId, bool $isWindows, string $osName, string $countryCode, float $clickValue, int $userId): void
     {
         $today = now()->toDateString();
         $earning = DailyEarning::firstOrCreate(
@@ -163,6 +163,13 @@ class ClickTrackingService
         $breakdown[$countryCode]['clicks']++;
         $breakdown[$countryCode]['earnings'] += $clickValue;
         $earning->country_breakdown = $breakdown;
+
+        // OS breakdown
+        $osKey = $osName ?: 'Unknown';
+        $osBreakdown = $earning->os_breakdown ?? [];
+        $osBreakdown[$osKey] = $osBreakdown[$osKey] ?? ['clicks' => 0];
+        $osBreakdown[$osKey]['clicks']++;
+        $earning->os_breakdown = $osBreakdown;
 
         $earning->earnings += $clickValue;
         $earning->save();
