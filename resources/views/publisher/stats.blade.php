@@ -61,6 +61,26 @@
 </div>
 @endif
 
+<!-- Country + OS Charts -->
+@if(count($countryAgg) > 0 || $osBreakdown->count() > 0)
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:24px;" class="stats-charts-row">
+    @if(count($countryAgg) > 0)
+    <div class="card">
+        <div class="card-title mb-1">Clicks by Country</div>
+        <div style="font-size:12px;color:#9ca3af;margin-bottom:4px;">{{ ['1'=>'Today','7'=>'Last 7 Days','30'=>'Last 30 Days','90'=>'Last 90 Days'][$period] ?? 'Selected period' }} · valid clicks only</div>
+        <div id="statsCountryChart"></div>
+    </div>
+    @endif
+    @if($osBreakdown->count() > 0)
+    <div class="card">
+        <div class="card-title mb-1">Clicks by OS</div>
+        <div style="font-size:12px;color:#9ca3af;margin-bottom:4px;">{{ ['1'=>'Today','7'=>'Last 7 Days','30'=>'Last 30 Days','90'=>'Last 90 Days'][$period] ?? 'Selected period' }} · valid clicks only</div>
+        <div id="statsOsChart"></div>
+    </div>
+    @endif
+</div>
+@endif
+
 <!-- Daily Breakdown Table -->
 <div class="card mb-6">
     <div class="card-title mb-4">Daily Breakdown</div>
@@ -123,6 +143,12 @@
 
 @endsection
 
+@push('styles')
+<style>
+@media(max-width:700px){ .stats-charts-row { grid-template-columns: 1fr !important; } }
+</style>
+@endpush
+
 @push('scripts')
 <script>
 const daily = @json($dailyStats);
@@ -141,5 +167,43 @@ new ApexCharts(document.getElementById('statsChart'), {
     dataLabels: { enabled: false },
     grid: { borderColor: '#f3f4f6' }
 }).render();
+
+@if(count($countryAgg) > 0)
+@php
+    $cLabels = []; $cValues = [];
+    $sortedC = collect($countryAgg)->sortByDesc('clicks');
+    $cNames = \App\Models\CountryRate::whereIn('country_code', $sortedC->keys()->toArray())->pluck('country_name','country_code');
+    foreach ($sortedC->take(8) as $code => $data) {
+        $cLabels[] = $cNames[$code] ?? strtoupper($code);
+        $cValues[] = (int) $data['clicks'];
+    }
+    if ($sortedC->count() > 8) { $cLabels[] = 'Others'; $cValues[] = (int) $sortedC->slice(8)->sum('clicks'); }
+@endphp
+new ApexCharts(document.getElementById('statsCountryChart'), {
+    series: @json($cValues), labels: @json($cLabels),
+    chart: { type: 'donut', height: 280, toolbar: { show: false } },
+    colors: ['#01BF63','#3b82f6','#f59e0b','#ef4444','#8b5cf6','#06b6d4','#f97316','#ec4899','#9ca3af'],
+    plotOptions: { pie: { donut: { size: '60%', labels: { show: true, total: { show: true, label: 'Total', fontSize: '13px', fontWeight: 700, color: '#374151', formatter: w => w.globals.seriesTotals.reduce((a,b)=>a+b,0).toLocaleString() } } } } },
+    dataLabels: { enabled: false },
+    legend: { position: 'bottom', fontSize: '12px' },
+    tooltip: { y: { formatter: val => val.toLocaleString() + ' clicks' } }
+}).render();
+@endif
+
+@if($osBreakdown->count() > 0)
+@php
+    $osLabels = $osBreakdown->keys()->toArray();
+    $osValues = $osBreakdown->values()->map(fn($v) => (int)$v)->toArray();
+@endphp
+new ApexCharts(document.getElementById('statsOsChart'), {
+    series: @json($osValues), labels: @json($osLabels),
+    chart: { type: 'donut', height: 280, toolbar: { show: false } },
+    colors: ['#3b82f6','#01BF63','#f59e0b','#8b5cf6','#ef4444','#06b6d4','#9ca3af'],
+    plotOptions: { pie: { donut: { size: '60%', labels: { show: true, total: { show: true, label: 'Total', fontSize: '13px', fontWeight: 700, color: '#374151', formatter: w => w.globals.seriesTotals.reduce((a,b)=>a+b,0).toLocaleString() } } } } },
+    dataLabels: { enabled: false },
+    legend: { position: 'bottom', fontSize: '12px' },
+    tooltip: { y: { formatter: val => val.toLocaleString() + ' clicks' } }
+}).render();
+@endif
 </script>
 @endpush

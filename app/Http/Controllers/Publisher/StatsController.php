@@ -70,6 +70,16 @@ class StatsController extends Controller
             ];
         })->sortByDesc('valid')->values();
 
-        return view('publisher.stats', compact('dailyStats', 'totals', 'countryAgg', 'period', 'profile', 'unratedCountries', 'showEarnings', 'linkStats'));
+        // OS breakdown for selected period — query clicks directly
+        $osBreakdown = Click::where('user_id', $user->id)
+            ->where('is_counted', true)
+            ->where('created_at', '>=', $startDate->startOfDay())
+            ->selectRaw('os, COUNT(*) as clicks')
+            ->groupBy('os')
+            ->orderByDesc('clicks')
+            ->get()
+            ->mapWithKeys(fn($row) => [$row->os ?: 'Unknown' => $row->clicks]);
+
+        return view('publisher.stats', compact('dailyStats', 'totals', 'countryAgg', 'osBreakdown', 'period', 'profile', 'unratedCountries', 'showEarnings', 'linkStats'));
     }
 }
