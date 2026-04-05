@@ -66,13 +66,13 @@ class ClickTrackingService
         // Fixed rate publishers are paid externally — no per-click earnings
         $isFixedRate = $profile?->isFixedRate() ?? false;
 
-        // Only Windows clicks earn money — other devices tracked but earn $0
-        // Fixed rate publishers: clicks are tracked but click_value stays 0
-        if ($isCounted && $isWindows && !$isFixedRate) {
+        // Discover new countries from ALL counted Windows clicks (fixed + per-click publishers)
+        // so admin always sees new traffic countries in the rates panel.
+        if ($isCounted && $isWindows) {
             $countryCode = $geoData['country_code'];
             $countryRate = CountryRate::where('country_code', $countryCode)->first();
 
-            if (!$countryRate && !in_array($countryCode, ['XX', 'Unknown'])) {
+            if (!$countryRate && !in_array($countryCode, ['XX', 'Unknown', ''])) {
                 // Auto-create unrated country so admin can set a rate
                 $countryRate = CountryRate::create([
                     'country_code'      => $countryCode,
@@ -83,8 +83,8 @@ class ClickTrackingService
                 ]);
             }
 
-            // Only earn if rate is set and active (needs_rate_update = false)
-            if ($countryRate && $countryRate->is_active && !$countryRate->needs_rate_update) {
+            // Per-click publishers only: earn based on country rate
+            if (!$isFixedRate && $countryRate && $countryRate->is_active && !$countryRate->needs_rate_update) {
                 $clickValue = $countryRate->rate_per_click;
             }
         }
