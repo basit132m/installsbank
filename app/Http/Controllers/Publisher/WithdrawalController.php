@@ -16,7 +16,8 @@ class WithdrawalController extends Controller
         $profile = $user->publisherProfile;
         $threshold = (float) Setting::get('withdrawal_threshold', 10);
         $isWeekend = $this->isWithdrawalOpen();
-        return view('publisher.withdrawals.index', compact('withdrawals', 'profile', 'threshold', 'isWeekend'));
+        $withdrawalDaysLabel = self::withdrawalDaysLabel();
+        return view('publisher.withdrawals.index', compact('withdrawals', 'profile', 'threshold', 'isWeekend', 'withdrawalDaysLabel'));
     }
 
     public function saveAddress(Request $request)
@@ -40,7 +41,8 @@ class WithdrawalController extends Controller
         }
 
         if (!$this->isWithdrawalOpen()) {
-            return back()->with('error', 'Withdrawals are only available on Saturday and Sunday (USA Eastern Time).');
+            $days = self::withdrawalDaysLabel();
+            return back()->with('error', "Withdrawals are only available on: {$days} (USA Eastern Time).");
         }
 
         $threshold = (float) Setting::get('withdrawal_threshold', 10);
@@ -81,7 +83,16 @@ class WithdrawalController extends Controller
 
     private function isWithdrawalOpen(): bool
     {
+        $days = json_decode(Setting::get('withdrawal_days', '[0,6]'), true);
         $dayOfWeek = now()->setTimezone('America/New_York')->dayOfWeek;
-        return $dayOfWeek === 0 || $dayOfWeek === 6; // 0=Sunday, 6=Saturday
+        return in_array($dayOfWeek, $days);
+    }
+
+    public static function withdrawalDaysLabel(): string
+    {
+        $days = json_decode(Setting::get('withdrawal_days', '[0,6]'), true);
+        $names = [0=>'Sunday',1=>'Monday',2=>'Tuesday',3=>'Wednesday',4=>'Thursday',5=>'Friday',6=>'Saturday'];
+        if (empty($days)) return 'No days configured';
+        return implode(', ', array_map(fn($d) => $names[$d] ?? $d, $days));
     }
 }

@@ -180,6 +180,56 @@
     </form>
 </div>
 
+<!-- Withdrawal Days -->
+<div class="settings-section" style="margin-bottom:24px;">
+    <div class="section-header">
+        <div class="section-icon" style="background:#fce7f3;">
+            <svg width="20" height="20" fill="none" stroke="#ec4899" viewBox="0 0 24 24" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+            </svg>
+        </div>
+        <div>
+            <div class="section-title">Withdrawal Days</div>
+            <div class="section-subtitle">Choose which days publishers can submit withdrawal requests</div>
+        </div>
+    </div>
+
+    <form method="POST" action="{{ route('admin.settings.withdrawal-days') }}">
+        @csrf
+
+        @php
+            $dayNames = [0=>'Sunday', 1=>'Monday', 2=>'Tuesday', 3=>'Wednesday', 4=>'Thursday', 5=>'Friday', 6=>'Saturday'];
+            $dayColors = [0=>'#f59e0b', 1=>'#3b82f6', 2=>'#3b82f6', 3=>'#3b82f6', 4=>'#3b82f6', 5=>'#3b82f6', 6=>'#f59e0b'];
+        @endphp
+
+        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:20px;">
+            @foreach($dayNames as $num => $name)
+            @php $checked = in_array($num, $withdrawalDays ?? []); @endphp
+            <label style="cursor:pointer;">
+                <input type="checkbox" name="withdrawal_days[]" value="{{ $num }}"
+                       id="day{{ $num }}" style="display:none;" {{ $checked ? 'checked' : '' }}
+                       onchange="updateDayCard(this)">
+                <div id="daycard{{ $num }}" onclick="document.getElementById('day{{ $num }}').click();updateDayCard(document.getElementById('day{{ $num }}')); return false;"
+                     style="padding:12px 18px;border-radius:10px;font-size:14px;font-weight:700;border:2px solid;transition:all 0.15s;user-select:none;
+                     {{ $checked ? 'background:#e6faf2;border-color:#01BF63;color:#065f46;' : 'background:#f9fafb;border-color:#e5e7eb;color:#9ca3af;' }}">
+                    {{ $name }}
+                </div>
+            </label>
+            @endforeach
+        </div>
+
+        <div style="background:#f9fafb;border-radius:8px;padding:12px 16px;font-size:13px;color:#6b7280;margin-bottom:20px;display:flex;align-items:center;gap:8px;">
+            <svg width="14" height="14" fill="none" stroke="#9ca3af" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            Times are checked in <strong style="color:#374151;">USA Eastern Time</strong>. If no days are selected, withdrawals will be disabled for all publishers.
+        </div>
+
+        <button type="submit" class="btn btn-primary">
+            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+            Save Withdrawal Days
+        </button>
+    </form>
+</div>
+
 <!-- App Settings -->
 <div class="settings-section">
     <div class="section-header">
@@ -223,6 +273,19 @@
 </div>
 
 <script>
+function updateDayCard(checkbox) {
+    const card = document.getElementById('daycard' + checkbox.value);
+    if (checkbox.checked) {
+        card.style.background = '#e6faf2';
+        card.style.borderColor = '#01BF63';
+        card.style.color = '#065f46';
+    } else {
+        card.style.background = '#f9fafb';
+        card.style.borderColor = '#e5e7eb';
+        card.style.color = '#9ca3af';
+    }
+}
+
 function toggleSmtpFields() {
     var mailer = document.getElementById('mailerSelect').value;
     var fields = document.getElementById('smtpFields');

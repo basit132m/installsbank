@@ -69,15 +69,10 @@
         <div>
             <div class="card-title mb-1">Request Withdrawal</div>
             @if($isWeekend)
-                <div style="font-size:13px;color:#059669;font-weight:600;">✓ Withdrawals are open today (Weekend)</div>
+                <div style="font-size:13px;color:#059669;font-weight:600;">✓ Withdrawals are open today</div>
             @else
-                @php
-                    $nyNow = now()->setTimezone('America/New_York');
-                    $daysToSat = (6 - $nyNow->dayOfWeek + 7) % 7 ?: 7;
-                    $satDate = $nyNow->copy()->addDays($daysToSat)->format('M j');
-                @endphp
-                <div style="font-size:13px;color:#f59e0b;font-weight:600;">⏸ Withdrawals open on weekends only (Sat–Sun, USA Eastern Time)</div>
-                <div style="font-size:12px;color:#9ca3af;margin-top:2px;">Next window opens Saturday, {{ $satDate }}</div>
+                <div style="font-size:13px;color:#f59e0b;font-weight:600;">⏸ Withdrawals are currently closed</div>
+                <div style="font-size:12px;color:#9ca3af;margin-top:2px;">Available on: {{ $withdrawalDaysLabel }} (USA Eastern Time)</div>
             @endif
         </div>
         @if($isWeekend && $profile->balance >= $threshold && $profile->payment_address && !Withdrawal_pending($profile))

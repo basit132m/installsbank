@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Setting;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Mail;
@@ -29,7 +30,22 @@ class SettingsController extends Controller
         foreach (self::ALLOWED_KEYS as $key) {
             $settings[$key] = env($key, '');
         }
-        return view('admin.settings.index', compact('settings'));
+
+        $withdrawalDays = json_decode(Setting::get('withdrawal_days', '[0,6]'), true); // 0=Sun,6=Sat default
+
+        return view('admin.settings.index', compact('settings', 'withdrawalDays'));
+    }
+
+    public function updateWithdrawalDays(Request $request)
+    {
+        $days = $request->input('withdrawal_days', []);
+
+        // Validate: must be array of 0-6
+        $days = array_values(array_filter(array_map('intval', (array) $days), fn($d) => $d >= 0 && $d <= 6));
+
+        Setting::set('withdrawal_days', json_encode($days));
+
+        return back()->with('success', 'Withdrawal days updated successfully.');
     }
 
     public function update(Request $request)
