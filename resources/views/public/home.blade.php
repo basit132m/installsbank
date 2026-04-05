@@ -367,6 +367,41 @@
         </div>
     </section>
 
+    <!-- Mobile App -->
+    <section class="app-section" id="mobile-app">
+        <div class="app-inner">
+            <div class="app-content">
+                <span class="section-tag">📱 Exclusive Feature</span>
+                <h2 class="section-title" style="margin-top:12px;">The <span style="color:var(--primary);">First & Only</span> PPI Network With a Built-In Android App</h2>
+                <p style="font-size:17px;color:#6b7280;line-height:1.7;max-width:520px;margin-top:12px;">
+                    Track your clicks, check earnings, manage withdrawals, and contact support — all from your phone. No other PPI network gives you this level of control on the go.
+                </p>
+                <div class="app-badges">
+                    <span class="app-badge badge-first">
+                        <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3l14 9-14 9V3z"/></svg>
+                        First in the Industry
+                    </span>
+                    <span class="app-badge badge-safe">
+                        <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+                        100% Safe &amp; Scanned
+                    </span>
+                    <span class="app-badge badge-android">
+                        <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+                        Android
+                    </span>
+                </div>
+                <a href="https://www.dropbox.com/scl/fi/ao70vpaoeij74a5sjwowd/Installs-Bank.apk?rlkey=te90jvdgavwnmxztans140qbn&st=jzo9jg56&dl=1" target="_blank" rel="noopener" class="btn-download">
+                    <svg width="22" height="22" fill="currentColor" viewBox="0 0 24 24"><path d="M17.523 15.341a.75.75 0 01-1.06 0l-3.713-3.714v7.623a.75.75 0 01-1.5 0V11.627L7.537 15.341a.75.75 0 11-1.06-1.061l5-5a.75.75 0 011.06 0l5 5a.75.75 0 010 1.061zM4.5 3.75A.75.75 0 015.25 3h13.5a.75.75 0 010 1.5H5.25a.75.75 0 01-.75-.75z"/></svg>
+                    Download APK — Free
+                </a>
+                <p style="font-size:12px;color:#9ca3af;margin-top:12px;">✓ No registration required to download &nbsp;·&nbsp; ✓ Virus scanned &nbsp;·&nbsp; ✓ Android 7.0+</p>
+            </div>
+            <div class="app-image-wrap">
+                <img src="https://installsbank.com/images/installsbank-app.webp" alt="Installs Bank Android App" loading="lazy" onerror="this.style.opacity='0.3'">
+            </div>
+        </div>
+    </section>
+
     <!-- How It Works -->
     <section class="section" id="how-it-works">
         <div class="section-center">
@@ -432,40 +467,6 @@
         <div style="text-align:center;margin-top:24px;font-size:13px;color:#9ca3af;">Rates apply to Windows clicks only. Your exact tier is confirmed after the 48-hour test period.</div>
     </section>
 
-    <!-- Mobile App -->
-    <section class="app-section" id="mobile-app">
-        <div class="app-inner">
-            <div class="app-content">
-                <span class="section-tag">📱 Exclusive Feature</span>
-                <h2 class="section-title" style="margin-top:12px;">The <span style="color:var(--primary);">First & Only</span> PPI Network With a Built-In Android App</h2>
-                <p style="font-size:17px;color:#6b7280;line-height:1.7;max-width:520px;margin-top:12px;">
-                    Track your clicks, check earnings, manage withdrawals, and contact support — all from your phone. No other PPI network gives you this level of control on the go.
-                </p>
-                <div class="app-badges">
-                    <span class="app-badge badge-first">
-                        <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3l14 9-14 9V3z"/></svg>
-                        First in the Industry
-                    </span>
-                    <span class="app-badge badge-safe">
-                        <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
-                        100% Safe &amp; Scanned
-                    </span>
-                    <span class="app-badge badge-android">
-                        <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
-                        Android
-                    </span>
-                </div>
-                <a href="https://www.dropbox.com/scl/fi/ao70vpaoeij74a5sjwowd/Installs-Bank.apk?rlkey=te90jvdgavwnmxztans140qbn&st=jzo9jg56&dl=1" target="_blank" rel="noopener" class="btn-download">
-                    <svg width="22" height="22" fill="currentColor" viewBox="0 0 24 24"><path d="M17.523 15.341a.75.75 0 01-1.06 0l-3.713-3.714v7.623a.75.75 0 01-1.5 0V11.627L7.537 15.341a.75.75 0 11-1.06-1.061l5-5a.75.75 0 011.06 0l5 5a.75.75 0 010 1.061zM4.5 3.75A.75.75 0 015.25 3h13.5a.75.75 0 010 1.5H5.25a.75.75 0 01-.75-.75z"/></svg>
-                    Download APK — Free
-                </a>
-                <p style="font-size:12px;color:#9ca3af;margin-top:12px;">✓ No registration required to download &nbsp;·&nbsp; ✓ Virus scanned &nbsp;·&nbsp; ✓ Android 7.0+</p>
-            </div>
-            <div class="app-image-wrap">
-                <img src="https://installsbank.com/images/installsbank-app.webp" alt="Installs Bank Android App" loading="lazy" onerror="this.style.opacity='0.3'">
-            </div>
-        </div>
-    </section>
 
     <!-- Contact -->
     <section class="contact-section" id="contact">
