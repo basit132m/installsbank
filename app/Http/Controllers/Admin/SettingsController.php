@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Announcement;
 use App\Models\Setting;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
@@ -32,8 +33,9 @@ class SettingsController extends Controller
         }
 
         $withdrawalDays = json_decode(Setting::get('withdrawal_days', '[0,6]'), true); // 0=Sun,6=Sat default
+        $announcements = Announcement::with('creator')->latest()->get();
 
-        return view('admin.settings.index', compact('settings', 'withdrawalDays'));
+        return view('admin.settings.index', compact('settings', 'withdrawalDays', 'announcements'));
     }
 
     public function updateWithdrawalDays(Request $request)

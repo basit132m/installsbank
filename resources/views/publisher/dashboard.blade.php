@@ -39,6 +39,33 @@
 </div>
 @endif
 
+<!-- Announcements -->
+@if($announcements->isNotEmpty())
+@foreach($announcements as $ann)
+@php
+    $annStyles = [
+        'info'    => ['bg'=>'#eff6ff','border'=>'#93c5fd','text'=>'#1e40af','icon_bg'=>'#dbeafe','icon_color'=>'#2563eb'],
+        'warning' => ['bg'=>'#fffbeb','border'=>'#fcd34d','text'=>'#92400e','icon_bg'=>'#fef3c7','icon_color'=>'#d97706'],
+        'danger'  => ['bg'=>'#fff1f2','border'=>'#fca5a5','text'=>'#991b1b','icon_bg'=>'#fee2e2','icon_color'=>'#ef4444'],
+        'success' => ['bg'=>'#f0fdf4','border'=>'#86efac','text'=>'#166534','icon_bg'=>'#dcfce7','icon_color'=>'#16a34a'],
+    ];
+    $s = $annStyles[$ann->type] ?? $annStyles['info'];
+@endphp
+<div style="background:{{ $s['bg'] }};border:1.5px solid {{ $s['border'] }};border-radius:14px;padding:16px 20px;margin-bottom:14px;display:flex;gap:14px;align-items:flex-start;">
+    <div style="width:36px;height:36px;background:{{ $s['icon_bg'] }};border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;">
+        @if($ann->type === 'info')
+            <svg width="18" height="18" fill="none" stroke="{{ $s['icon_color'] }}" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        @elseif($ann->type === 'warning' || $ann->type === 'danger')
+            <svg width="18" height="18" fill="none" stroke="{{ $s['icon_color'] }}" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+        @else
+            <svg width="18" height="18" fill="none" stroke="{{ $s['icon_color'] }}" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        @endif
+    </div>
+    <div style="flex:1;font-size:14px;color:{{ $s['text'] }};line-height:1.7;">{!! nl2br(e($ann->message)) !!}</div>
+</div>
+@endforeach
+@endif
+
 <!-- App Download Banner -->
 <div style="margin-bottom:24px;background:linear-gradient(135deg,#0f172a 0%,#064e35 60%,#01BF63 100%);border-radius:16px;padding:28px 32px;display:flex;align-items:center;gap:24px;flex-wrap:wrap;overflow:hidden;position:relative;">
     <div style="position:absolute;right:-30px;top:-30px;width:180px;height:180px;background:rgba(255,255,255,0.04);border-radius:50%;"></div>

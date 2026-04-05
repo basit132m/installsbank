@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Publisher;
 
 use App\Http\Controllers\Controller;
+use App\Models\Announcement;
 use App\Models\Click;
 use App\Models\DailyEarning;
 use Carbon\Carbon;
@@ -53,11 +54,13 @@ class DashboardController extends Controller
 
         $pendingContract = $user->contracts()->where('status', 'pending')->latest()->first();
         $hasTestRunning = $profile->test_status === 'running';
+        $announcements = Announcement::where('is_active', true)->latest()->get();
 
         return view('publisher.dashboard', compact(
             'user', 'profile', 'contract', 'divider',
             'stats', 'clicksChart', 'countryBreakdown',
-            'pendingContract', 'hasTestRunning', 'showEarnings'
+            'pendingContract', 'hasTestRunning', 'showEarnings',
+            'announcements'
         ));
     }
 

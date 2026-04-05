@@ -132,11 +132,20 @@
                     <td><span class="badge badge-info">{{ $w->networkLabel() }}</span></td>
                     <td>
                         @if($w->status === 'paid')
-                            <span class="badge badge-success">Paid</span>
+                            <span style="display:inline-flex;align-items:center;gap:6px;background:#d1fae5;color:#065f46;font-size:12px;font-weight:700;padding:5px 12px;border-radius:20px;">
+                                <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+                                Paid
+                            </span>
                         @elseif($w->status === 'pending')
-                            <span class="badge badge-warning">Pending</span>
+                            <span style="display:inline-flex;align-items:center;gap:6px;background:#fef3c7;color:#92400e;font-size:12px;font-weight:700;padding:5px 12px;border-radius:20px;">
+                                <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                Pending
+                            </span>
                         @else
-                            <span class="badge badge-danger">Rejected</span>
+                            <span style="display:inline-flex;align-items:center;gap:6px;background:#fee2e2;color:#991b1b;font-size:12px;font-weight:700;padding:5px 12px;border-radius:20px;">
+                                <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+                                Rejected
+                            </span>
                         @endif
                     </td>
                     <td style="font-size:13px;">

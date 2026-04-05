@@ -76,6 +76,13 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin,manager'
         Route::post('/withdrawal-days', [Admin\SettingsController::class, 'updateWithdrawalDays'])->name('withdrawal-days');
     });
 
+    // Announcements (admin only)
+    Route::prefix('announcements')->name('announcements.')->middleware('role:admin')->group(function () {
+        Route::post('/', [Admin\AnnouncementController::class, 'store'])->name('store');
+        Route::post('/{announcement}/toggle', [Admin\AnnouncementController::class, 'toggle'])->name('toggle');
+        Route::delete('/{announcement}', [Admin\AnnouncementController::class, 'destroy'])->name('destroy');
+    });
+
     // Managers (admin only)
     Route::prefix('managers')->name('managers.')->middleware('role:admin')->group(function () {
         Route::get('/', [Admin\ManagerController::class, 'index'])->name('index');

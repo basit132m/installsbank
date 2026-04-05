@@ -272,6 +272,76 @@
     </form>
 </div>
 
+<!-- Announcements -->
+<div class="settings-section" style="margin-top:24px;">
+    <div class="section-header">
+        <div class="section-icon" style="background:#eff6ff;">
+            <svg width="20" height="20" fill="none" stroke="#2563eb" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z"/></svg>
+        </div>
+        <div>
+            <div class="section-title">Publisher Announcements</div>
+            <div class="section-subtitle">Shown on all publisher dashboards until hidden or deleted</div>
+        </div>
+    </div>
+
+    <!-- Post new announcement -->
+    <form method="POST" action="{{ route('admin.announcements.store') }}" style="margin-bottom:24px;">
+        @csrf
+        <div style="display:grid;grid-template-columns:140px 1fr auto;gap:12px;align-items:flex-start;">
+            <div>
+                <label class="form-label">Type</label>
+                <select name="type" class="form-control">
+                    <option value="info">ℹ Info</option>
+                    <option value="warning">⚠ Warning</option>
+                    <option value="danger">🚨 Danger</option>
+                    <option value="success">✓ Success</option>
+                </select>
+            </div>
+            <div>
+                <label class="form-label">Message</label>
+                <textarea name="message" class="form-control" rows="2" required placeholder="Write announcement text..."></textarea>
+            </div>
+            <div style="padding-top:22px;">
+                <button type="submit" class="btn btn-primary">Publish</button>
+            </div>
+        </div>
+    </form>
+
+    <!-- Existing announcements -->
+    @forelse($announcements as $ann)
+    @php
+        $typeColors = [
+            'info'    => ['bg'=>'#eff6ff','border'=>'#93c5fd','text'=>'#1e40af'],
+            'warning' => ['bg'=>'#fffbeb','border'=>'#fcd34d','text'=>'#92400e'],
+            'danger'  => ['bg'=>'#fff1f2','border'=>'#fca5a5','text'=>'#991b1b'],
+            'success' => ['bg'=>'#f0fdf4','border'=>'#86efac','text'=>'#166534'],
+        ];
+        $tc = $typeColors[$ann->type] ?? $typeColors['info'];
+    @endphp
+    <div style="display:flex;gap:12px;align-items:flex-start;padding:14px 16px;background:{{ $tc['bg'] }};border:1.5px solid {{ $tc['border'] }};border-radius:10px;margin-bottom:10px;{{ !$ann->is_active ? 'opacity:0.5;' : '' }}">
+        <div style="flex:1;font-size:13px;color:{{ $tc['text'] }};line-height:1.6;">
+            <span style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;margin-right:8px;">{{ $ann->type }}</span>
+            {!! nl2br(e($ann->message)) !!}
+            <div style="font-size:11px;color:#9ca3af;margin-top:4px;">{{ $ann->created_at->format('M d, Y H:i') }} · {{ $ann->creator->name }}</div>
+        </div>
+        <div style="display:flex;gap:8px;flex-shrink:0;">
+            <form method="POST" action="{{ route('admin.announcements.toggle', $ann) }}">
+                @csrf
+                <button type="submit" class="btn btn-outline" style="padding:5px 12px;font-size:12px;">
+                    {{ $ann->is_active ? 'Hide' : 'Show' }}
+                </button>
+            </form>
+            <form method="POST" action="{{ route('admin.announcements.destroy', $ann) }}" onsubmit="return confirm('Delete this announcement?')">
+                @csrf @method('DELETE')
+                <button type="submit" style="background:#fee2e2;color:#991b1b;border:none;padding:5px 12px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;">Delete</button>
+            </form>
+        </div>
+    </div>
+    @empty
+    <div style="text-align:center;padding:24px;color:#9ca3af;font-size:13px;">No announcements yet</div>
+    @endforelse
+</div>
+
 <script>
 function updateDayCard(checkbox) {
     const card = document.getElementById('daycard' + checkbox.value);
