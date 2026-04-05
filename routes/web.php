@@ -179,8 +179,8 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin,manager'
     });
 });
 
-// Advertiser registration
-Route::get('/register/advertiser', [AdvertiserRegisterController::class, 'showRegister'])->name('advertiser.register.show');
+// Advertiser registration (POST only; GET handled by unified /register page)
+Route::get('/register/advertiser', fn() => redirect()->route('register'))->name('advertiser.register.show');
 Route::post('/register/advertiser', [AdvertiserRegisterController::class, 'register'])->name('advertiser.register');
 
 // Advertiser panel
