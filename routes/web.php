@@ -10,6 +10,8 @@ use App\Http\Controllers\Publisher;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Publisher\LiveStatsController;
 use App\Http\Controllers\Public\RatesController;
+use App\Http\Controllers\Auth\AdvertiserRegisterController;
+use App\Http\Controllers\Advertiser;
 
 // Public pages
 Route::get('/', fn() => view('public.home'))->name('home');
@@ -74,6 +76,29 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin,manager'
         Route::put('/', [Admin\SettingsController::class, 'update'])->name('update');
         Route::post('/test-email', [Admin\SettingsController::class, 'testEmail'])->name('test-email');
         Route::post('/withdrawal-days', [Admin\SettingsController::class, 'updateWithdrawalDays'])->name('withdrawal-days');
+    });
+
+    // Advertisers
+    Route::prefix('advertisers')->name('advertisers.')->group(function () {
+        Route::get('/', [Admin\AdvertiserController::class, 'index'])->name('index');
+        Route::get('/{user}', [Admin\AdvertiserController::class, 'show'])->name('show');
+        Route::post('/{user}/suspend', [Admin\AdvertiserController::class, 'suspend'])->name('suspend');
+        Route::post('/{user}/activate', [Admin\AdvertiserController::class, 'activate'])->name('activate');
+    });
+
+    // Campaigns (advertiser campaigns)
+    Route::prefix('campaigns')->name('campaigns.')->group(function () {
+        Route::get('/', [Admin\CampaignController::class, 'index'])->name('index');
+        Route::get('/{campaign}', [Admin\CampaignController::class, 'show'])->name('show');
+        Route::post('/{campaign}/rates', [Admin\CampaignController::class, 'setRates'])->name('rates');
+        Route::post('/{campaign}/fallback-url', [Admin\CampaignController::class, 'setFallbackUrl'])->name('fallback-url');
+        Route::post('/{campaign}/assign-link', [Admin\CampaignController::class, 'assignLink'])->name('assign-link');
+        Route::post('/{campaign}/unassign-link', [Admin\CampaignController::class, 'unassignLink'])->name('unassign-link');
+        Route::post('/{campaign}/pause', [Admin\CampaignController::class, 'pause'])->name('pause');
+        Route::post('/{campaign}/resume', [Admin\CampaignController::class, 'resume'])->name('resume');
+        Route::post('/{campaign}/cancel', [Admin\CampaignController::class, 'cancel'])->name('cancel');
+        Route::post('/payments/{payment}/confirm', [Admin\CampaignController::class, 'confirmPayment'])->name('payments.confirm');
+        Route::post('/payments/{payment}/reject', [Admin\CampaignController::class, 'rejectPayment'])->name('payments.reject');
     });
 
     // Announcements (admin only)
@@ -152,6 +177,29 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin,manager'
         Route::post('/{supportTicket}/reply', [Admin\SupportController::class, 'reply'])->name('reply');
         Route::post('/{supportTicket}/close', [Admin\SupportController::class, 'close'])->name('close');
     });
+});
+
+// Advertiser registration
+Route::get('/register/advertiser', [AdvertiserRegisterController::class, 'showRegister'])->name('advertiser.register.show');
+Route::post('/register/advertiser', [AdvertiserRegisterController::class, 'register'])->name('advertiser.register');
+
+// Advertiser panel
+Route::prefix('advertiser')->name('advertiser.')->middleware(['auth', 'role:advertiser'])->group(function () {
+    Route::get('/dashboard', [Advertiser\DashboardController::class, 'index'])->name('dashboard');
+
+    // Campaigns
+    Route::prefix('campaigns')->name('campaigns.')->group(function () {
+        Route::get('/', [Advertiser\CampaignController::class, 'index'])->name('index');
+        Route::get('/create', [Advertiser\CampaignController::class, 'create'])->name('create');
+        Route::post('/', [Advertiser\CampaignController::class, 'store'])->name('store');
+        Route::get('/{campaign}', [Advertiser\CampaignController::class, 'show'])->name('show');
+        Route::post('/{campaign}/payment', [Advertiser\CampaignController::class, 'submitPayment'])->name('payment');
+    });
+
+    // Profile
+    Route::get('/profile', [Advertiser\ProfileController::class, 'show'])->name('profile');
+    Route::post('/profile', [Advertiser\ProfileController::class, 'update'])->name('profile.update');
+    Route::post('/profile/password', [Advertiser\ProfileController::class, 'updatePassword'])->name('profile.password');
 });
 
 // Publisher panel

@@ -49,6 +49,21 @@ class User extends Authenticatable
         return in_array($this->role, ['admin', 'manager']);
     }
 
+    public function isAdvertiser(): bool
+    {
+        return $this->role === 'advertiser';
+    }
+
+    public function advertiserProfile()
+    {
+        return $this->hasOne(AdvertiserProfile::class);
+    }
+
+    public function campaigns()
+    {
+        return $this->hasMany(Campaign::class);
+    }
+
     public function publisherProfile()
     {
         return $this->hasOne(PublisherProfile::class);

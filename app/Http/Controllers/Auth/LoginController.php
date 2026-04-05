@@ -51,8 +51,9 @@ class LoginController extends Controller
     {
         return match ($user->role) {
             'admin', 'manager' => redirect()->route('admin.dashboard'),
-            'publisher' => redirect()->route('publisher.dashboard'),
-            default => redirect('/'),
+            'publisher'        => redirect()->route('publisher.dashboard'),
+            'advertiser'       => redirect()->route('advertiser.dashboard'),
+            default            => redirect('/'),
         };
     }
 }

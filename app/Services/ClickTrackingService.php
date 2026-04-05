@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\Campaign;
 use App\Models\Click;
 use App\Models\CountryRate;
 use App\Models\DailyEarning;
@@ -124,6 +125,11 @@ class ClickTrackingService
             $this->updateDailyEarnings($link->user_id, $isWindows, $os, $geoData['country_code'], $clickValue, $link->user_id);
         }
 
+        // Track campaign click if this link belongs to a campaign
+        if ($isCounted && $link->campaign_id) {
+            $this->updateCampaignStats($link->campaign_id, $geoData['country_code']);
+        }
+
         return $click;
     }
 
@@ -179,6 +185,42 @@ class ClickTrackingService
             $earning->user->publisherProfile?->increment('balance', $clickValue);
             $earning->user->publisherProfile?->increment('total_earnings', $clickValue);
         }
+    }
+
+    private function updateCampaignStats(int $campaignId, string $countryCode): void
+    {
+        $campaign = Campaign::find($campaignId);
+        if (!$campaign || !$campaign->isActive()) return;
+
+        $campaign->increment('delivered_clicks');
+        $campaign->refresh();
+
+        // Update click breakdown by country
+        $breakdown = $campaign->click_breakdown ?? [];
+        $breakdown[$countryCode] = ($breakdown[$countryCode] ?? 0) + 1;
+        $campaign->click_breakdown = $breakdown;
+
+        // Deduct from advertiser balance based on contract type
+        $cost = 0;
+        if ($campaign->contract_type === 'fixed_rate' && $campaign->fixed_rate > 0) {
+            $cost = (float) $campaign->fixed_rate;
+        } elseif ($campaign->contract_type === 'per_click') {
+            $rates = $campaign->country_rates ?? [];
+            $cost = (float) ($rates[$countryCode] ?? $rates['default'] ?? 0);
+        }
+
+        if ($cost > 0) {
+            $campaign->user->advertiserProfile?->decrement('balance', $cost);
+            $campaign->user->advertiserProfile?->increment('total_spent', $cost);
+        }
+
+        // Complete campaign if target reached
+        if ($campaign->delivered_clicks >= $campaign->target_clicks) {
+            $campaign->status = 'completed';
+            $campaign->completed_at = now();
+        }
+
+        $campaign->save();
     }
 
     private function generateFingerprint(Request $request): string

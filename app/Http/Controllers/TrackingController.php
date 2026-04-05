@@ -24,6 +24,13 @@ class TrackingController extends Controller
         $agent = new Agent();
         $agent->setUserAgent($request->userAgent() ?? '');
         $os = $agent->platform() ?: 'Unknown';
+
+        // If link is tied to a campaign that is no longer active, use fallback URL
+        $link->load('campaign');
+        if ($link->campaign && !$link->campaign->isActive() && $link->campaign->fallback_url) {
+            return redirect()->away($link->campaign->fallback_url);
+        }
+
         $redirectUrl = $link->resolveUrlForOs($os);
 
         // Rate limiter: same IP hitting the same link within 5 seconds is noise
