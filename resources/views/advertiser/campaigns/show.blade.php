@@ -3,12 +3,6 @@
 @section('page-title', $campaign->name)
 
 @section('content')
-@if(session('success'))
-<div class="alert alert-success mb-6">{{ session('success') }}</div>
-@endif
-@if($errors->any())
-<div class="alert alert-danger mb-6">@foreach($errors->all() as $e)<div>• {{ $e }}</div>@endforeach</div>
-@endif
 
 <div style="display:flex;gap:8px;align-items:center;margin-bottom:20px;flex-wrap:wrap;">
     <a href="{{ route('advertiser.campaigns.index') }}" class="btn btn-ghost btn-sm">← Back</a>

@@ -186,6 +186,7 @@ Route::post('/register/advertiser', [AdvertiserRegisterController::class, 'regis
 // Advertiser panel
 Route::prefix('advertiser')->name('advertiser.')->middleware(['auth', 'role:advertiser'])->group(function () {
     Route::get('/dashboard', [Advertiser\DashboardController::class, 'index'])->name('dashboard');
+    Route::get('/live-stats', [Advertiser\LiveStatsController::class, 'index'])->name('live-stats');
 
     // Campaigns
     Route::prefix('campaigns')->name('campaigns.')->group(function () {

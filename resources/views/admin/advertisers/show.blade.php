@@ -3,9 +3,6 @@
 @section('page-title', $user->name)
 
 @section('content')
-@if(session('success'))
-<div class="alert" style="background:#d1fae5;color:#065f46;border:1px solid #a7f3d0;margin-bottom:20px;">{{ session('success') }}</div>
-@endif
 
 <div style="display:flex;gap:8px;align-items:center;margin-bottom:20px;flex-wrap:wrap;">
     <a href="{{ route('admin.advertisers.index') }}" class="btn btn-ghost btn-sm">← Back</a>
