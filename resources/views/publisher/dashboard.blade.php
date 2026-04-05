@@ -178,6 +178,9 @@
     0%,100%{opacity:1;transform:scale(1);}
     50%{opacity:0.4;transform:scale(1.3);}
 }
+@media(max-width:700px){
+    .country-grid { grid-template-columns: 1fr !important; }
+}
 </style>
 
 <!-- Stats -->
@@ -244,18 +247,25 @@
             <div style="font-size:12px;color:#9ca3af;margin-top:2px;">{{ $countryBreakdown->count() }} {{ Str::plural('country', $countryBreakdown->count()) }} · {{ number_format($totalBreakdownClicks) }} clicks today</div>
         </div>
     </div>
-    <div style="display:flex;flex-wrap:wrap;gap:14px;padding:20px;background:#ffffff;border-radius:12px;border:1px solid #f3f4f6;">
-        @foreach($sortedBreakdown as $code => $data)
-        <div style="display:flex;flex-direction:column;align-items:center;gap:5px;width:66px;">
-            <img src="https://flagcdn.com/48x36/{{ strtolower($code) }}.png"
-                 alt="{{ $countryNames[$code] ?? $code }}"
-                 title="{{ $countryNames[$code] ?? $code }}"
-                 style="width:48px;height:36px;border-radius:5px;object-fit:cover;box-shadow:0 1px 6px rgba(0,0,0,0.15);flex-shrink:0;"
-                 onerror="this.style.display='none'">
-            <span style="font-size:11px;font-weight:800;color:#111827;line-height:1;text-align:center;">{{ number_format($data['clicks']) }}</span>
-            <span style="font-size:9px;color:#9ca3af;font-weight:600;line-height:1;">{{ strtoupper($code) }}</span>
+    <div style="display:grid;grid-template-columns:280px 1fr;gap:20px;align-items:center;" class="country-grid">
+        <!-- Pie chart -->
+        <div>
+            <div id="countryPieChart"></div>
         </div>
-        @endforeach
+        <!-- Flag grid -->
+        <div style="display:flex;flex-wrap:wrap;gap:14px;padding:16px;background:#ffffff;border-radius:12px;border:1px solid #f3f4f6;">
+            @foreach($sortedBreakdown as $code => $data)
+            <div style="display:flex;flex-direction:column;align-items:center;gap:5px;width:66px;">
+                <img src="https://flagcdn.com/48x36/{{ strtolower($code) }}.png"
+                     alt="{{ $countryNames[$code] ?? $code }}"
+                     title="{{ $countryNames[$code] ?? $code }}"
+                     style="width:48px;height:36px;border-radius:5px;object-fit:cover;box-shadow:0 1px 6px rgba(0,0,0,0.15);flex-shrink:0;"
+                     onerror="this.style.display='none'">
+                <span style="font-size:11px;font-weight:800;color:#111827;line-height:1;text-align:center;">{{ number_format($data['clicks']) }}</span>
+                <span style="font-size:9px;color:#9ca3af;font-weight:600;line-height:1;">{{ strtoupper($code) }}</span>
+            </div>
+            @endforeach
+        </div>
     </div>
 </div>
 @endif
@@ -385,5 +395,53 @@ new ApexCharts(document.getElementById('pubClickChart'), {
     dataLabels: { enabled: false },
     grid: { borderColor: '#f3f4f6' }
 }).render();
+
+@if($countryBreakdown && $countryBreakdown->count() > 0)
+@php
+    $pieLabels = [];
+    $pieValues = [];
+    foreach ($sortedBreakdown->take(8) as $code => $data) {
+        $pieLabels[] = $countryNames[$code] ?? strtoupper($code);
+        $pieValues[] = $data['clicks'];
+    }
+    // Group remainder as "Others"
+    if ($sortedBreakdown->count() > 8) {
+        $othersClicks = $sortedBreakdown->slice(8)->sum('clicks');
+        $pieLabels[] = 'Others';
+        $pieValues[] = $othersClicks;
+    }
+@endphp
+new ApexCharts(document.getElementById('countryPieChart'), {
+    series: @json($pieValues),
+    labels: @json($pieLabels),
+    chart: { type: 'donut', height: 260, toolbar: { show: false } },
+    colors: ['#01BF63','#3b82f6','#f59e0b','#ef4444','#8b5cf6','#06b6d4','#f97316','#ec4899','#9ca3af'],
+    plotOptions: {
+        pie: {
+            donut: {
+                size: '62%',
+                labels: {
+                    show: true,
+                    total: {
+                        show: true,
+                        label: 'Total',
+                        fontSize: '13px',
+                        fontWeight: 700,
+                        color: '#374151',
+                        formatter: function(w) {
+                            return w.globals.seriesTotals.reduce((a,b) => a+b, 0).toLocaleString();
+                        }
+                    }
+                }
+            }
+        }
+    },
+    dataLabels: { enabled: false },
+    legend: { show: false },
+    tooltip: {
+        y: { formatter: val => val.toLocaleString() + ' clicks' }
+    }
+}).render();
+@endif
 </script>
 @endpush
