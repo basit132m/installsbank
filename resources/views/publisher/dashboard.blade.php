@@ -39,6 +39,41 @@
 </div>
 @endif
 
+<!-- App Download Banner -->
+<div style="margin-bottom:24px;background:linear-gradient(135deg,#0f172a 0%,#064e35 60%,#01BF63 100%);border-radius:16px;padding:28px 32px;display:flex;align-items:center;gap:24px;flex-wrap:wrap;overflow:hidden;position:relative;">
+    <div style="position:absolute;right:-30px;top:-30px;width:180px;height:180px;background:rgba(255,255,255,0.04);border-radius:50%;"></div>
+    <div style="position:absolute;right:80px;bottom:-50px;width:130px;height:130px;background:rgba(255,255,255,0.03);border-radius:50%;"></div>
+    <div style="width:64px;height:64px;background:rgba(255,255,255,0.12);border-radius:16px;display:flex;align-items:center;justify-content:center;flex-shrink:0;border:1px solid rgba(255,255,255,0.15);">
+        <svg width="32" height="32" fill="none" stroke="white" viewBox="0 0 24 24" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+    </div>
+    <div style="flex:1;min-width:200px;">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">
+            <span style="font-size:18px;font-weight:800;color:white;">Installs Bank Android App</span>
+            <span style="background:#01BF63;color:white;font-size:11px;font-weight:700;padding:2px 10px;border-radius:20px;">NEW</span>
+        </div>
+        <p style="font-size:14px;color:rgba(255,255,255,0.75);margin:0;line-height:1.6;">Monitor your earnings, view live click stats, and manage your account on the go — right from your Android device.</p>
+        <div style="display:flex;gap:16px;margin-top:12px;flex-wrap:wrap;">
+            <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:rgba(255,255,255,0.6);">
+                <svg width="14" height="14" fill="none" stroke="#01BF63" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg> Live click counter
+            </div>
+            <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:rgba(255,255,255,0.6);">
+                <svg width="14" height="14" fill="none" stroke="#01BF63" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg> Earnings dashboard
+            </div>
+            <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:rgba(255,255,255,0.6);">
+                <svg width="14" height="14" fill="none" stroke="#01BF63" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg> Withdrawal requests
+            </div>
+        </div>
+    </div>
+    <a href="https://www.dropbox.com/scl/fi/ao70vpaoeij74a5sjwowd/Installs-Bank.apk?rlkey=te90jvdgavwnmxztans140qbn&st=jzo9jg56&dl=1"
+       style="display:inline-flex;align-items:center;gap:10px;background:white;color:#0f172a;padding:13px 22px;border-radius:12px;font-size:14px;font-weight:700;text-decoration:none;flex-shrink:0;transition:all 0.2s;box-shadow:0 4px 16px rgba(0,0,0,0.2);"
+       onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 8px 24px rgba(0,0,0,0.3)'"
+       onmouseout="this.style.transform='';this.style.boxShadow='0 4px 16px rgba(0,0,0,0.2)'">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="#3DDC84"><path d="M17.523 15.341a.75.75 0 00-.61-.313H14.25V3a.75.75 0 00-.75-.75h-3a.75.75 0 00-.75.75v12.028H7.087a.75.75 0 00-.537 1.275l4.913 5.04a.75.75 0 001.074 0l4.913-5.04a.75.75 0 00.073-.962z"/><path d="M19.5 21H4.5a.75.75 0 000 1.5h15a.75.75 0 000-1.5z"/></svg>
+        Download APK
+        <span style="background:#e6faf2;color:#065f46;font-size:11px;padding:2px 7px;border-radius:6px;font-weight:600;">Android</span>
+    </a>
+</div>
+
 @if($pendingContract)
 <div class="contract-box mb-6">
     <h3 style="margin-bottom:8px;">📋 New Contract Offer</h3>
@@ -129,21 +164,59 @@
 
 <!-- Country Breakdown -->
 @if($countryBreakdown && $countryBreakdown->count() > 0)
+@php
+    $countryNames = \App\Models\CountryRate::whereIn('country_code', $countryBreakdown->keys()->toArray())
+        ->pluck('country_name', 'country_code');
+@endphp
 <div class="card mb-6">
-    <div class="card-title mb-4">Traffic by Country (Today)</div>
-    <div class="table-wrap">
-        <table>
-            <thead><tr><th>Country</th><th>Clicks</th>@if($showEarnings)<th>Earnings</th>@endif</tr></thead>
-            <tbody>
-                @foreach($countryBreakdown as $code => $data)
-                <tr>
-                    <td>{{ $code }}</td>
-                    <td><strong>{{ number_format($data['clicks']) }}</strong></td>
-                    @if($showEarnings)<td style="color:#01BF63;">${{ number_format($data['earnings'], 4) }}</td>@endif
-                </tr>
-                @endforeach
-            </tbody>
-        </table>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
+        <div>
+            <div class="card-title">Traffic by Country</div>
+            <div style="font-size:12px;color:#9ca3af;margin-top:2px;">Today's click breakdown</div>
+        </div>
+        <span style="background:#e6faf2;color:#065f46;font-size:12px;font-weight:700;padding:4px 12px;border-radius:20px;">
+            {{ $countryBreakdown->count() }} {{ Str::plural('country', $countryBreakdown->count()) }}
+        </span>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:10px;">
+        @foreach($countryBreakdown->sortByDesc('clicks') as $code => $data)
+        @php
+            $countryName = $countryNames[$code] ?? $code;
+            $flagCode = strtolower($code);
+            $maxClicks = $countryBreakdown->max('clicks');
+            $pct = $maxClicks > 0 ? round(($data['clicks'] / $maxClicks) * 100) : 0;
+        @endphp
+        <div style="display:flex;align-items:center;gap:12px;padding:12px 14px;background:#f9fafb;border-radius:10px;border:1px solid #f3f4f6;">
+            <!-- Flag -->
+            <img src="https://flagcdn.com/24x18/{{ $flagCode }}.png"
+                 alt="{{ $countryName }}"
+                 style="width:28px;height:21px;border-radius:3px;object-fit:cover;box-shadow:0 1px 3px rgba(0,0,0,0.12);flex-shrink:0;"
+                 onerror="this.style.display='none';this.nextElementSibling.style.display='inline'">
+            <span style="display:none;font-size:18px;">🌍</span>
+
+            <!-- Country info + bar -->
+            <div style="flex:1;min-width:0;">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px;">
+                    <div>
+                        <span style="font-size:14px;font-weight:700;color:#111827;">{{ $countryName }}</span>
+                        <span style="font-size:11px;color:#9ca3af;margin-left:6px;font-weight:600;">{{ strtoupper($code) }}</span>
+                    </div>
+                    <div style="display:flex;align-items:center;gap:12px;">
+                        <span style="font-size:14px;font-weight:800;color:#111827;">{{ number_format($data['clicks']) }}
+                            <span style="font-size:11px;font-weight:500;color:#9ca3af;">clicks</span>
+                        </span>
+                        @if($showEarnings)
+                        <span style="font-size:13px;font-weight:700;color:#01BF63;">${{ number_format($data['earnings'], 4) }}</span>
+                        @endif
+                    </div>
+                </div>
+                <!-- Progress bar -->
+                <div style="height:4px;background:#e5e7eb;border-radius:4px;overflow:hidden;">
+                    <div style="height:100%;width:{{ $pct }}%;background:linear-gradient(90deg,#01BF63,#00a354);border-radius:4px;transition:width 0.4s;"></div>
+                </div>
+            </div>
+        </div>
+        @endforeach
     </div>
 </div>
 @endif
@@ -185,58 +258,6 @@
             <a href="{{ route('publisher.support.create') }}" class="btn btn-ghost" style="justify-content:center;">Contact Support</a>
         </div>
     </div>
-</div>
-
-<!-- App Download Banner -->
-<div style="margin-top:24px;background:linear-gradient(135deg,#0f172a 0%,#064e35 60%,#01BF63 100%);border-radius:16px;padding:28px 32px;display:flex;align-items:center;gap:24px;flex-wrap:wrap;overflow:hidden;position:relative;">
-    <!-- Background decoration -->
-    <div style="position:absolute;right:-30px;top:-30px;width:180px;height:180px;background:rgba(255,255,255,0.04);border-radius:50%;"></div>
-    <div style="position:absolute;right:80px;bottom:-50px;width:130px;height:130px;background:rgba(255,255,255,0.03);border-radius:50%;"></div>
-
-    <!-- Phone icon -->
-    <div style="width:64px;height:64px;background:rgba(255,255,255,0.12);border-radius:16px;display:flex;align-items:center;justify-content:center;flex-shrink:0;border:1px solid rgba(255,255,255,0.15);">
-        <svg width="32" height="32" fill="none" stroke="white" viewBox="0 0 24 24" stroke-width="1.8">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"/>
-        </svg>
-    </div>
-
-    <!-- Text -->
-    <div style="flex:1;min-width:200px;">
-        <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">
-            <span style="font-size:18px;font-weight:800;color:white;">Installs Bank Android App</span>
-            <span style="background:#01BF63;color:white;font-size:11px;font-weight:700;padding:2px 10px;border-radius:20px;">NEW</span>
-        </div>
-        <p style="font-size:14px;color:rgba(255,255,255,0.75);margin:0;line-height:1.6;">
-            Monitor your earnings, view live click stats, and manage your account on the go — right from your Android device.
-        </p>
-        <div style="display:flex;gap:16px;margin-top:12px;flex-wrap:wrap;">
-            <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:rgba(255,255,255,0.6);">
-                <svg width="14" height="14" fill="none" stroke="#01BF63" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
-                Live click counter
-            </div>
-            <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:rgba(255,255,255,0.6);">
-                <svg width="14" height="14" fill="none" stroke="#01BF63" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
-                Earnings dashboard
-            </div>
-            <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:rgba(255,255,255,0.6);">
-                <svg width="14" height="14" fill="none" stroke="#01BF63" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
-                Withdrawal requests
-            </div>
-        </div>
-    </div>
-
-    <!-- Download button -->
-    <a href="https://www.dropbox.com/scl/fi/ao70vpaoeij74a5sjwowd/Installs-Bank.apk?rlkey=te90jvdgavwnmxztans140qbn&st=jzo9jg56&dl=1"
-       style="display:inline-flex;align-items:center;gap:10px;background:white;color:#0f172a;padding:13px 22px;border-radius:12px;font-size:14px;font-weight:700;text-decoration:none;flex-shrink:0;transition:all 0.2s;box-shadow:0 4px 16px rgba(0,0,0,0.2);"
-       onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 8px 24px rgba(0,0,0,0.3)'"
-       onmouseout="this.style.transform='';this.style.boxShadow='0 4px 16px rgba(0,0,0,0.2)'">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="#3DDC84">
-            <path d="M17.523 15.341a.75.75 0 00-.61-.313H14.25V3a.75.75 0 00-.75-.75h-3a.75.75 0 00-.75.75v12.028H7.087a.75.75 0 00-.537 1.275l4.913 5.04a.75.75 0 001.074 0l4.913-5.04a.75.75 0 00.073-.962z"/>
-            <path d="M19.5 21H4.5a.75.75 0 000 1.5h15a.75.75 0 000-1.5z"/>
-        </svg>
-        Download APK
-        <span style="background:#e6faf2;color:#065f46;font-size:11px;padding:2px 7px;border-radius:6px;font-weight:600;">Android</span>
-    </a>
 </div>
 
 <!-- Contact Team -->
