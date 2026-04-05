@@ -105,28 +105,18 @@
         </div>
     </div>
 
-    <!-- Flag strip: top 7 countries -->
-    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px;padding:14px 16px;background:#f9fafb;border-radius:12px;border:1px solid #f3f4f6;">
-        @foreach($sortedCountries->take(7) as $code => $data)
-        @php $pct = $totalClicks > 0 ? round(($data['clicks'] / $totalClicks) * 100, 1) : 0; @endphp
-        <div style="display:flex;flex-direction:column;align-items:center;gap:5px;min-width:52px;">
-            <div style="position:relative;">
-                <img src="https://flagcdn.com/32x24/{{ strtolower($code) }}.png"
-                     alt="{{ $code }}"
-                     style="width:32px;height:24px;border-radius:4px;object-fit:cover;box-shadow:0 1px 4px rgba(0,0,0,0.15);"
-                     onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
-                <span style="display:none;font-size:20px;">🌍</span>
-            </div>
-            <span style="font-size:10px;font-weight:800;color:#111827;">{{ number_format($data['clicks']) }}</span>
-            <span style="font-size:9px;color:#9ca3af;font-weight:600;">{{ $pct }}%</span>
+    <!-- Flag strip: all countries -->
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:20px;padding:12px 14px;background:#f9fafb;border-radius:12px;border:1px solid #f3f4f6;">
+        @foreach($sortedCountries as $code => $data)
+        <div style="display:flex;flex-direction:column;align-items:center;gap:3px;">
+            <img src="https://flagcdn.com/24x18/{{ strtolower($code) }}.png"
+                 alt="{{ $code }}"
+                 title="{{ $countryNames[$code] ?? $code }}"
+                 style="width:24px;height:18px;border-radius:3px;object-fit:cover;box-shadow:0 1px 3px rgba(0,0,0,0.15);"
+                 onerror="this.style.display='none'">
+            <span style="font-size:9px;font-weight:800;color:#374151;line-height:1;">{{ number_format($data['clicks']) }}</span>
         </div>
         @endforeach
-        @if(count($countryAgg) > 7)
-        <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;min-width:40px;">
-            <div style="width:32px;height:24px;background:#e5e7eb;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:#6b7280;">+{{ count($countryAgg) - 7 }}</div>
-            <span style="font-size:9px;color:#9ca3af;">more</span>
-        </div>
-        @endif
     </div>
 
     <!-- Full list -->
