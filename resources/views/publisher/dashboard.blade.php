@@ -99,51 +99,51 @@
 @endif
 
 <!-- Live Click Counter -->
-<div style="background:linear-gradient(135deg,#0f172a,#0d2d1f);border-radius:16px;padding:20px 24px;margin-bottom:20px;display:flex;align-items:center;gap:16px;flex-wrap:wrap;position:relative;overflow:hidden;">
-    <div style="position:absolute;inset:0;background:radial-gradient(ellipse at 80% 50%,rgba(1,191,99,0.12),transparent 60%);pointer-events:none;"></div>
+<div style="background:linear-gradient(135deg,#01BF63,#00a354);border-radius:16px;padding:20px 24px;margin-bottom:20px;display:flex;align-items:center;gap:16px;flex-wrap:wrap;position:relative;overflow:hidden;">
+    <div style="position:absolute;inset:0;background:radial-gradient(ellipse at 80% 50%,rgba(255,255,255,0.12),transparent 60%);pointer-events:none;"></div>
 
     <!-- Pulse icon -->
     <div style="position:relative;flex-shrink:0;">
-        <div style="width:48px;height:48px;background:rgba(1,191,99,0.15);border-radius:12px;display:flex;align-items:center;justify-content:center;border:1px solid rgba(1,191,99,0.3);">
-            <svg width="22" height="22" fill="none" stroke="#01BF63" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+        <div style="width:48px;height:48px;background:rgba(255,255,255,0.18);border-radius:12px;display:flex;align-items:center;justify-content:center;border:1px solid rgba(255,255,255,0.3);">
+            <svg width="22" height="22" fill="none" stroke="white" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
         </div>
-        <span style="position:absolute;top:-4px;right:-4px;width:12px;height:12px;background:#01BF63;border-radius:50%;border:2px solid #0f172a;animation:livePulse 2s infinite;"></span>
+        <span style="position:absolute;top:-4px;right:-4px;width:12px;height:12px;background:white;border-radius:50%;border:2px solid #01BF63;animation:livePulse 2s infinite;"></span>
     </div>
 
     <!-- Today clicks -->
     <div style="flex-shrink:0;">
-        <div style="font-size:11px;color:rgba(255,255,255,0.45);font-weight:600;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:2px;">Clicks Today</div>
+        <div style="font-size:11px;color:rgba(255,255,255,0.7);font-weight:600;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:2px;">Clicks Today</div>
         <div style="display:flex;align-items:baseline;gap:6px;">
             <span id="liveClickCount" style="font-size:32px;font-weight:900;color:white;line-height:1;font-variant-numeric:tabular-nums;">—</span>
-            <span style="font-size:12px;color:rgba(255,255,255,0.4);">total</span>
+            <span style="font-size:12px;color:rgba(255,255,255,0.6);">total</span>
         </div>
     </div>
 
     <!-- Divider -->
-    <div style="width:1px;height:40px;background:rgba(255,255,255,0.08);flex-shrink:0;"></div>
+    <div style="width:1px;height:40px;background:rgba(255,255,255,0.25);flex-shrink:0;"></div>
 
     <!-- Last hour -->
     <div style="flex-shrink:0;">
-        <div style="font-size:11px;color:rgba(255,255,255,0.45);font-weight:600;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:2px;">Last Hour</div>
+        <div style="font-size:11px;color:rgba(255,255,255,0.7);font-weight:600;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:2px;">Last Hour</div>
         <div style="display:flex;align-items:baseline;gap:6px;">
-            <span id="liveLastHour" style="font-size:24px;font-weight:800;color:#01BF63;line-height:1;font-variant-numeric:tabular-nums;">—</span>
-            <span style="font-size:12px;color:rgba(255,255,255,0.4);">clicks</span>
+            <span id="liveLastHour" style="font-size:24px;font-weight:800;color:white;line-height:1;font-variant-numeric:tabular-nums;">—</span>
+            <span style="font-size:12px;color:rgba(255,255,255,0.6);">clicks</span>
         </div>
     </div>
 
     <!-- Divider -->
-    <div style="width:1px;height:40px;background:rgba(255,255,255,0.08);flex-shrink:0;"></div>
+    <div style="width:1px;height:40px;background:rgba(255,255,255,0.25);flex-shrink:0;"></div>
 
     <!-- Performance badge -->
-    <div id="liveBadge" style="display:inline-flex;align-items:center;gap:7px;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.1);padding:8px 14px;border-radius:20px;flex-shrink:0;">
-        <span class="live-dot" style="background:#6b7280;"></span>
-        <span id="badgeLabel" style="font-size:13px;font-weight:700;color:rgba(255,255,255,0.8);">Loading...</span>
+    <div id="liveBadge" style="display:inline-flex;align-items:center;gap:7px;background:rgba(255,255,255,0.18);border:1px solid rgba(255,255,255,0.3);padding:8px 14px;border-radius:20px;flex-shrink:0;">
+        <span class="live-dot" style="background:white;"></span>
+        <span id="badgeLabel" style="font-size:13px;font-weight:700;color:white;">Loading...</span>
     </div>
 
     <!-- Live indicator -->
     <div style="margin-left:auto;display:flex;align-items:center;gap:6px;flex-shrink:0;">
-        <span style="width:8px;height:8px;background:#01BF63;border-radius:50%;animation:livePulse 2s infinite;display:block;"></span>
-        <span style="font-size:11px;color:rgba(255,255,255,0.35);font-weight:600;text-transform:uppercase;letter-spacing:0.05em;">Live</span>
+        <span style="width:8px;height:8px;background:white;border-radius:50%;animation:livePulse 2s infinite;display:block;"></span>
+        <span style="font-size:11px;color:rgba(255,255,255,0.7);font-weight:600;text-transform:uppercase;letter-spacing:0.05em;">Live</span>
     </div>
 </div>
 <style>

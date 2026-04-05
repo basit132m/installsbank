@@ -45,13 +45,13 @@
             <div style="font-size:12px;color:#9ca3af;margin-top:2px;">{{ count($countryAgg) }} countries · {{ number_format($totalClicks) }} total clicks</div>
         </div>
     </div>
-    <div style="display:flex;flex-wrap:wrap;gap:12px;padding:18px;background:#f9fafb;border-radius:12px;border:1px solid #f3f4f6;">
+    <div style="display:flex;flex-wrap:wrap;gap:14px;padding:20px;background:#f9fafb;border-radius:12px;border:1px solid #f3f4f6;">
         @foreach($sortedCountries as $code => $data)
-        <div style="display:flex;flex-direction:column;align-items:center;gap:5px;width:58px;">
-            <img src="https://flagcdn.com/40x30/{{ strtolower($code) }}.png"
+        <div style="display:flex;flex-direction:column;align-items:center;gap:5px;width:66px;">
+            <img src="https://flagcdn.com/48x36/{{ strtolower($code) }}.png"
                  alt="{{ $countryNames[$code] ?? $code }}"
                  title="{{ $countryNames[$code] ?? $code }}"
-                 style="width:40px;height:30px;border-radius:5px;object-fit:cover;box-shadow:0 1px 5px rgba(0,0,0,0.15);flex-shrink:0;"
+                 style="width:48px;height:36px;border-radius:5px;object-fit:cover;box-shadow:0 1px 6px rgba(0,0,0,0.15);flex-shrink:0;"
                  onerror="this.style.display='none'">
             <span style="font-size:11px;font-weight:800;color:#111827;line-height:1;text-align:center;">{{ number_format($data['clicks']) }}</span>
             <span style="font-size:9px;color:#9ca3af;font-weight:600;line-height:1;">{{ strtoupper($code) }}</span>
