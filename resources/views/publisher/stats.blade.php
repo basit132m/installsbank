@@ -30,6 +30,37 @@
     <div id="statsChart"></div>
 </div>
 
+<!-- Country Flags (moved here) -->
+@if(count($countryAgg) > 0)
+@php
+    $sortedCountries = collect($countryAgg)->sortByDesc('clicks');
+    $totalClicks = collect($countryAgg)->sum('clicks');
+    $countryNames = \App\Models\CountryRate::whereIn('country_code', array_keys($countryAgg))
+        ->pluck('country_name', 'country_code');
+@endphp
+<div class="card mb-6">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+        <div>
+            <div class="card-title">Traffic by Country</div>
+            <div style="font-size:12px;color:#9ca3af;margin-top:2px;">{{ count($countryAgg) }} countries · {{ number_format($totalClicks) }} total clicks</div>
+        </div>
+    </div>
+    <div style="display:flex;flex-wrap:wrap;gap:12px;padding:18px;background:#f9fafb;border-radius:12px;border:1px solid #f3f4f6;">
+        @foreach($sortedCountries as $code => $data)
+        <div style="display:flex;flex-direction:column;align-items:center;gap:5px;width:58px;">
+            <img src="https://flagcdn.com/40x30/{{ strtolower($code) }}.png"
+                 alt="{{ $countryNames[$code] ?? $code }}"
+                 title="{{ $countryNames[$code] ?? $code }}"
+                 style="width:40px;height:30px;border-radius:5px;object-fit:cover;box-shadow:0 1px 5px rgba(0,0,0,0.15);flex-shrink:0;"
+                 onerror="this.style.display='none'">
+            <span style="font-size:11px;font-weight:800;color:#111827;line-height:1;text-align:center;">{{ number_format($data['clicks']) }}</span>
+            <span style="font-size:9px;color:#9ca3af;font-weight:600;line-height:1;">{{ strtoupper($code) }}</span>
+        </div>
+        @endforeach
+    </div>
+</div>
+@endif
+
 <!-- Daily Breakdown Table -->
 <div class="card mb-6">
     <div class="card-title mb-4">Daily Breakdown</div>
@@ -90,37 +121,6 @@
 </div>
 @endif
 
-@if(count($countryAgg) > 0)
-@php
-    $sortedCountries = collect($countryAgg)->sortByDesc('clicks');
-    $totalClicks = collect($countryAgg)->sum('clicks');
-    $countryNames = \App\Models\CountryRate::whereIn('country_code', array_keys($countryAgg))
-        ->pluck('country_name', 'country_code');
-@endphp
-<div class="card">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
-        <div>
-            <div class="card-title">Traffic by Country</div>
-            <div style="font-size:12px;color:#9ca3af;margin-top:2px;">{{ count($countryAgg) }} countries · {{ number_format($totalClicks) }} total clicks</div>
-        </div>
-    </div>
-
-    <!-- Flag grid: all countries, fixed size, wraps to as many rows as needed -->
-    <div style="display:flex;flex-wrap:wrap;gap:10px;padding:16px;background:#f9fafb;border-radius:12px;border:1px solid #f3f4f6;">
-        @foreach($sortedCountries as $code => $data)
-        <div style="display:flex;flex-direction:column;align-items:center;gap:4px;width:48px;">
-            <img src="https://flagcdn.com/32x24/{{ strtolower($code) }}.png"
-                 alt="{{ $countryNames[$code] ?? $code }}"
-                 title="{{ $countryNames[$code] ?? $code }}"
-                 style="width:32px;height:24px;border-radius:4px;object-fit:cover;box-shadow:0 1px 4px rgba(0,0,0,0.15);flex-shrink:0;"
-                 onerror="this.style.display='none'">
-            <span style="font-size:10px;font-weight:800;color:#111827;line-height:1;text-align:center;">{{ number_format($data['clicks']) }}</span>
-            <span style="font-size:9px;color:#9ca3af;font-weight:500;line-height:1;">{{ strtoupper($code) }}</span>
-        </div>
-        @endforeach
-    </div>
-</div>
-@endif
 @endsection
 
 @push('scripts')
