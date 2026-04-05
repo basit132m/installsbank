@@ -52,11 +52,15 @@ class DashboardController extends Controller
                 ->take(10);
         }
 
-        // OS breakdown today
-        $osBreakdown = null;
-        if ($todayEarning && $todayEarning->os_breakdown) {
-            $osBreakdown = collect($todayEarning->os_breakdown)->sortByDesc('clicks');
-        }
+        // OS breakdown today — query clicks directly so it works with existing data
+        $osBreakdown = Click::where('user_id', $user->id)
+            ->whereDate('created_at', today())
+            ->where('is_counted', true)
+            ->selectRaw('os, COUNT(*) as clicks')
+            ->groupBy('os')
+            ->orderByDesc('clicks')
+            ->get()
+            ->mapWithKeys(fn($row) => [$row->os ?: 'Unknown' => ['clicks' => $row->clicks]]);
 
         $pendingContract = $user->contracts()->where('status', 'pending')->latest()->first();
         $hasTestRunning = $profile->test_status === 'running';
