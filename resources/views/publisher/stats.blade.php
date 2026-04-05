@@ -91,27 +91,82 @@
 @endif
 
 @if(count($countryAgg) > 0)
+@php
+    $sortedCountries = collect($countryAgg)->sortByDesc('clicks');
+    $totalClicks = collect($countryAgg)->sum('clicks');
+    $countryNames = \App\Models\CountryRate::whereIn('country_code', array_keys($countryAgg))
+        ->pluck('country_name', 'country_code');
+@endphp
 <div class="card">
-    <div class="card-title mb-4">Traffic by Country</div>
-    <div class="table-wrap">
-        <table>
-            <thead><tr><th>Country</th><th>Clicks</th>@if($showEarnings)<th>Earnings</th>@endif</tr></thead>
-            <tbody>
-                @foreach($countryAgg as $code => $data)
-                <tr>
-                    <td>{{ $code }}</td>
-                    <td>{{ number_format($data['clicks']) }}</td>
-                    @if($showEarnings)
-                        @if(in_array($code, $unratedCountries))
-                            <td><span style="background:#fef3c7;color:#92400e;padding:2px 10px;border-radius:10px;font-size:12px;font-weight:600;">N/A — Rate Pending</span></td>
-                        @else
-                            <td style="color:#01BF63;">${{ number_format($data['earnings'], 4) }}</td>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
+        <div>
+            <div class="card-title">Traffic by Country</div>
+            <div style="font-size:12px;color:#9ca3af;margin-top:2px;">{{ count($countryAgg) }} countries • {{ number_format($totalClicks) }} total clicks</div>
+        </div>
+    </div>
+
+    <!-- Flag strip: top 7 countries -->
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px;padding:14px 16px;background:#f9fafb;border-radius:12px;border:1px solid #f3f4f6;">
+        @foreach($sortedCountries->take(7) as $code => $data)
+        @php $pct = $totalClicks > 0 ? round(($data['clicks'] / $totalClicks) * 100, 1) : 0; @endphp
+        <div style="display:flex;flex-direction:column;align-items:center;gap:5px;min-width:52px;">
+            <div style="position:relative;">
+                <img src="https://flagcdn.com/32x24/{{ strtolower($code) }}.png"
+                     alt="{{ $code }}"
+                     style="width:32px;height:24px;border-radius:4px;object-fit:cover;box-shadow:0 1px 4px rgba(0,0,0,0.15);"
+                     onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
+                <span style="display:none;font-size:20px;">🌍</span>
+            </div>
+            <span style="font-size:10px;font-weight:800;color:#111827;">{{ number_format($data['clicks']) }}</span>
+            <span style="font-size:9px;color:#9ca3af;font-weight:600;">{{ $pct }}%</span>
+        </div>
+        @endforeach
+        @if(count($countryAgg) > 7)
+        <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;min-width:40px;">
+            <div style="width:32px;height:24px;background:#e5e7eb;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:#6b7280;">+{{ count($countryAgg) - 7 }}</div>
+            <span style="font-size:9px;color:#9ca3af;">more</span>
+        </div>
+        @endif
+    </div>
+
+    <!-- Full list -->
+    <div style="display:flex;flex-direction:column;gap:8px;">
+        @foreach($sortedCountries as $code => $data)
+        @php
+            $name = $countryNames[$code] ?? $code;
+            $pct  = $totalClicks > 0 ? round(($data['clicks'] / $totalClicks) * 100, 1) : 0;
+            $maxC = $sortedCountries->max('clicks');
+            $barW = $maxC > 0 ? round(($data['clicks'] / $maxC) * 100) : 0;
+        @endphp
+        <div style="display:flex;align-items:center;gap:12px;padding:10px 14px;background:#f9fafb;border-radius:10px;border:1px solid #f3f4f6;">
+            <img src="https://flagcdn.com/24x18/{{ strtolower($code) }}.png"
+                 alt="{{ $name }}"
+                 style="width:26px;height:19px;border-radius:3px;object-fit:cover;box-shadow:0 1px 3px rgba(0,0,0,0.1);flex-shrink:0;"
+                 onerror="this.style.display='none'">
+            <div style="flex:1;min-width:0;">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
+                    <div style="display:flex;align-items:center;gap:7px;min-width:0;">
+                        <span style="font-size:13px;font-weight:700;color:#111827;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ $name }}</span>
+                        <span style="font-size:10px;color:#9ca3af;font-weight:600;flex-shrink:0;">{{ strtoupper($code) }}</span>
+                    </div>
+                    <div style="display:flex;align-items:center;gap:12px;flex-shrink:0;">
+                        <span style="font-size:13px;font-weight:800;color:#111827;">{{ number_format($data['clicks']) }}<span style="font-size:10px;font-weight:500;color:#9ca3af;"> clicks</span></span>
+                        <span style="font-size:11px;color:#6b7280;min-width:32px;text-align:right;">{{ $pct }}%</span>
+                        @if($showEarnings)
+                            @if(in_array($code, $unratedCountries))
+                                <span style="background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:8px;font-size:11px;font-weight:600;">Rate Pending</span>
+                            @else
+                                <span style="font-size:13px;font-weight:700;color:#01BF63;min-width:60px;text-align:right;">${{ number_format($data['earnings'], 4) }}</span>
+                            @endif
                         @endif
-                    @endif
-                </tr>
-                @endforeach
-            </tbody>
-        </table>
+                    </div>
+                </div>
+                <div style="height:3px;background:#e5e7eb;border-radius:3px;overflow:hidden;">
+                    <div style="height:100%;width:{{ $barW }}%;background:linear-gradient(90deg,#01BF63,#00a354);border-radius:3px;"></div>
+                </div>
+            </div>
+        </div>
+        @endforeach
     </div>
 </div>
 @endif
