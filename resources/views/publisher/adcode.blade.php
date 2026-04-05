@@ -3,6 +3,26 @@
 @section('page-title', 'Ad Code')
 
 @section('content')
+<!-- Domain Restriction Notice -->
+@php $website = auth()->user()->website; @endphp
+<div style="background:linear-gradient(135deg,#fffbeb,#fef3c7);border:1.5px solid #fcd34d;border-radius:14px;padding:18px 20px;margin-bottom:24px;display:flex;gap:14px;align-items:flex-start;">
+    <div style="width:40px;height:40px;background:#fef3c7;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+        <svg width="20" height="20" fill="none" stroke="#d97706" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/></svg>
+    </div>
+    <div>
+        <div style="font-size:14px;font-weight:700;color:#92400e;margin-bottom:4px;">Ad Code Domain Restriction</div>
+        <div style="font-size:13px;color:#78350f;line-height:1.7;">
+            Your ad code is <strong>locked to your registered website only</strong>.
+            @if($website)
+                Clicks will only be counted when visitors come from <strong style="color:#065f46;">{{ parse_url($website, PHP_URL_HOST) ?: $website }}</strong>.
+                Clicks from any other domain will not be tracked or paid.
+            @else
+                Please update your profile with your website URL so your clicks can be validated.
+            @endif
+        </div>
+    </div>
+</div>
+
 @if(!$hasContract)
     <div class="alert alert-warning">
         You need an accepted contract before you can use ad codes. Please wait for admin to offer a contract.

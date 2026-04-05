@@ -26,12 +26,39 @@
         <table style="width:100%;">
             <tr><td style="color:#6b7280;font-size:13px;padding:6px 0;width:40%;">Email</td><td style="font-size:14px;">{{ $user->email }}</td></tr>
             <tr><td style="color:#6b7280;font-size:13px;padding:6px 0;">Phone</td><td style="font-size:14px;">{{ $user->phone ?? '—' }}</td></tr>
+            <tr><td style="color:#6b7280;font-size:13px;padding:6px 0;">Telegram</td><td style="font-size:14px;">{{ $user->telegram ?? '—' }}</td></tr>
             <tr><td style="color:#6b7280;font-size:13px;padding:6px 0;">Website</td><td style="font-size:14px;"><a href="{{ $user->website }}" target="_blank" style="color:#01BF63;">{{ $user->website ?? '—' }}</a></td></tr>
             <tr><td style="color:#6b7280;font-size:13px;padding:6px 0;">Registered</td><td style="font-size:14px;">{{ $user->created_at->format('M d, Y H:i') }}</td></tr>
             <tr><td style="color:#6b7280;font-size:13px;padding:6px 0;">Last Login</td><td style="font-size:14px;">{{ $user->last_login_at?->diffForHumans() ?? 'Never' }}</td></tr>
             <tr><td style="color:#6b7280;font-size:13px;padding:6px 0;">Contract</td><td><span class="badge {{ $user->publisherProfile?->contract_type !== 'none' ? 'badge-primary' : 'badge-gray' }}">{{ ucfirst($user->publisherProfile?->contract_type ?? 'none') }}</span></td></tr>
             <tr><td style="color:#6b7280;font-size:13px;padding:6px 0;">Payment Enabled</td><td><span class="badge {{ $user->publisherProfile?->payment_enabled ? 'badge-success' : 'badge-gray' }}">{{ $user->publisherProfile?->payment_enabled ? 'Yes' : 'No' }}</span></td></tr>
         </table>
+
+        @if($user->stat_screenshots && count($user->stat_screenshots) > 0)
+        <div style="margin-top:20px;padding-top:16px;border-top:1px solid #f3f4f6;">
+            <div style="font-size:13px;font-weight:700;color:#374151;margin-bottom:10px;">
+                📊 Submitted Statistics Screenshots
+                <span style="background:#e6faf2;color:#065f46;font-size:11px;font-weight:600;padding:2px 8px;border-radius:10px;margin-left:6px;">{{ count($user->stat_screenshots) }} file(s)</span>
+            </div>
+            <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px;">
+                @foreach($user->stat_screenshots as $i => $path)
+                <a href="{{ asset('storage/' . $path) }}" target="_blank"
+                   style="display:block;border-radius:8px;overflow:hidden;border:1.5px solid #e5e7eb;transition:border-color 0.15s;position:relative;"
+                   onmouseover="this.style.borderColor='#01BF63'" onmouseout="this.style.borderColor='#e5e7eb'">
+                    <img src="{{ asset('storage/' . $path) }}" alt="Screenshot {{ $i+1 }}"
+                         style="width:100%;height:90px;object-fit:cover;display:block;">
+                    <div style="background:#f9fafb;padding:4px 8px;font-size:11px;color:#6b7280;font-weight:600;">
+                        Screenshot {{ $i+1 }} — click to view full
+                    </div>
+                </a>
+                @endforeach
+            </div>
+        </div>
+        @else
+        <div style="margin-top:16px;padding:10px 14px;background:#fff7ed;border-radius:8px;font-size:12px;color:#92400e;">
+            ⚠️ No statistics screenshots submitted with this application.
+        </div>
+        @endif
     </div>
 
     <div class="card">
