@@ -217,7 +217,7 @@
             <div style="font-size:12px;color:#9ca3af;margin-top:2px;">{{ $countryBreakdown->count() }} {{ Str::plural('country', $countryBreakdown->count()) }} · {{ number_format($totalBreakdownClicks) }} clicks today</div>
         </div>
     </div>
-    <div style="display:flex;flex-wrap:wrap;gap:14px;padding:20px;background:#f9fafb;border-radius:12px;border:1px solid #f3f4f6;">
+    <div style="display:flex;flex-wrap:wrap;gap:14px;padding:20px;background:#ffffff;border-radius:12px;border:1px solid #f3f4f6;">
         @foreach($sortedBreakdown as $code => $data)
         <div style="display:flex;flex-direction:column;align-items:center;gap:5px;width:66px;">
             <img src="https://flagcdn.com/48x36/{{ strtolower($code) }}.png"
