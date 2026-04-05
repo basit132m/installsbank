@@ -26,7 +26,7 @@
                     <label class="form-label">Tracking Link</label>
                     <select name="tracking_link_id" class="form-control">
                         @foreach($trackingLinks as $link)
-                            <option value="{{ $link->id }}">{{ $link->name ?: $link->unique_code }} — {{ $link->total_clicks }} clicks</option>
+                            <option value="{{ $link->id }}">{{ $link->name ?: $link->unique_code }} — {{ number_format($link->unique_clicks) }} valid clicks</option>
                         @endforeach
                     </select>
                 </div>
