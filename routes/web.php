@@ -174,6 +174,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin,manager'
         Route::get('/publisher/{user}', [Admin\FraudAlertController::class, 'show'])->name('show');
         Route::post('/{fraudAlert}/resolve', [Admin\FraudAlertController::class, 'resolve'])->name('resolve');
         Route::post('/resolve-all', [Admin\FraudAlertController::class, 'resolveAll'])->name('resolve-all');
+        Route::post('/purge-old', [Admin\FraudAlertController::class, 'purgeOld'])->name('purge-old');
     });
 
     // Ad presets

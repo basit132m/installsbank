@@ -67,4 +67,10 @@ class FraudAlertController extends Controller
         ]);
         return back()->with('success', 'All alerts resolved.');
     }
+
+    public function purgeOld()
+    {
+        $deleted = FraudAlert::where('created_at', '<', now()->subHours(24))->delete();
+        return back()->with('success', "Purged {$deleted} fraud alert(s) older than 24 hours.");
+    }
 }

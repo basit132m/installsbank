@@ -8,11 +8,17 @@
         <a href="?resolved=0" class="btn {{ !$resolved ? 'btn-primary' : 'btn-ghost' }} btn-sm">Unresolved</a>
         <a href="?resolved=1" class="btn {{ $resolved ? 'btn-primary' : 'btn-ghost' }} btn-sm">Resolved</a>
     </div>
-    @if(!$resolved)
-    <form method="POST" action="{{ route('admin.fraud.resolve-all') }}" onsubmit="return confirm('Resolve all alerts?')">
-        @csrf<button class="btn btn-success btn-sm">Resolve All</button>
-    </form>
-    @endif
+    <div style="display:flex;gap:8px;align-items:center;">
+        <span style="font-size:12px;color:#9ca3af;">Auto-purge: alerts &gt;24h deleted hourly</span>
+        @if(!$resolved)
+        <form method="POST" action="{{ route('admin.fraud.resolve-all') }}" onsubmit="return confirm('Resolve all alerts?')">
+            @csrf<button class="btn btn-success btn-sm">Resolve All</button>
+        </form>
+        @endif
+        <form method="POST" action="{{ route('admin.fraud.purge-old') }}" onsubmit="return confirm('Delete all fraud alerts older than 24 hours?')">
+            @csrf<button class="btn btn-danger btn-sm">Purge Old (&gt;24h)</button>
+        </form>
+    </div>
 </div>
 
 <div class="card">
