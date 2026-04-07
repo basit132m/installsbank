@@ -160,4 +160,15 @@ class CampaignController extends Controller
         $campaign->update(['status' => 'cancelled', 'completed_at' => now()]);
         return back()->with('success', 'Campaign cancelled.');
     }
+
+    public function destroy(Campaign $campaign)
+    {
+        // Detach all tracking links before deleting
+        $campaign->trackingLinks()->update(['campaign_id' => null]);
+        // Delete all payments
+        $campaign->payments()->delete();
+        $campaign->delete();
+        return redirect()->route('admin.campaigns.index')
+            ->with('success', 'Campaign permanently deleted.');
+    }
 }

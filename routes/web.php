@@ -100,6 +100,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin,manager'
         Route::post('/{campaign}/send-contract', [Admin\CampaignController::class, 'sendContract'])->name('send-contract');
         Route::post('/payments/{payment}/confirm', [Admin\CampaignController::class, 'confirmPayment'])->name('payments.confirm');
         Route::post('/payments/{payment}/reject', [Admin\CampaignController::class, 'rejectPayment'])->name('payments.reject');
+        Route::delete('/{campaign}', [Admin\CampaignController::class, 'destroy'])->name('destroy');
     });
 
     // Advertiser country rates
@@ -109,6 +110,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin,manager'
         Route::put('/{advertiserRate}', [Admin\AdvertiserRateController::class, 'update'])->name('update');
         Route::delete('/{advertiserRate}', [Admin\AdvertiserRateController::class, 'destroy'])->name('destroy');
         Route::get('/json', [Admin\AdvertiserRateController::class, 'json'])->name('json');
+        Route::post('/sync', [Admin\AdvertiserRateController::class, 'syncFromTracked'])->name('sync');
     });
 
     // Announcements (admin only)

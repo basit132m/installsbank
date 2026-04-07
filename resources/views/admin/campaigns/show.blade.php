@@ -58,6 +58,10 @@
                 @csrf <button class="btn" style="background:#ef4444;color:#fff;">Cancel</button>
             </form>
         @endif
+        <form method="POST" action="{{ route('admin.campaigns.destroy', $campaign) }}" onsubmit="return confirm('PERMANENTLY DELETE this campaign and all its data? This cannot be undone.')">
+            @csrf @method('DELETE')
+            <button class="btn" style="background:#1f2937;color:#fff;">🗑 Delete</button>
+        </form>
     </div>
 </div>
 

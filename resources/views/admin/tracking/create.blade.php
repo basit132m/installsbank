@@ -9,14 +9,48 @@
         <p class="text-muted text-sm mb-4">A unique tracking code will be generated automatically.</p>
         <form method="POST" action="{{ route('admin.tracking.store') }}">
             @csrf
+
+            {{-- Owner type toggle --}}
             <div class="form-group">
+                <label class="form-label">Link Owner <span style="color:#ef4444;">*</span></label>
+                <div style="display:flex;gap:8px;">
+                    <label style="display:flex;align-items:center;gap:6px;cursor:pointer;padding:8px 14px;border:2px solid #d1d5db;border-radius:8px;font-size:13px;font-weight:600;transition:all .15s;" id="tab-publisher" onclick="switchOwner('publisher')" class="owner-tab active-tab">
+                        <input type="radio" name="link_owner" value="publisher" {{ old('link_owner','publisher')==='publisher'?'checked':'' }} style="display:none;" id="radio-publisher">
+                        <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+                        Publisher
+                    </label>
+                    <label style="display:flex;align-items:center;gap:6px;cursor:pointer;padding:8px 14px;border:2px solid #d1d5db;border-radius:8px;font-size:13px;font-weight:600;transition:all .15s;" id="tab-advertiser" onclick="switchOwner('advertiser')" class="owner-tab">
+                        <input type="radio" name="link_owner" value="advertiser" {{ old('link_owner')==='advertiser'?'checked':'' }} style="display:none;" id="radio-advertiser">
+                        <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-2 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+                        Advertiser
+                    </label>
+                </div>
+            </div>
+
+            {{-- Publisher dropdown --}}
+            <div class="form-group" id="publisher-section">
                 <label class="form-label">Publisher</label>
-                <select name="user_id" class="form-control" required>
+                <select name="user_id" class="form-control">
                     <option value="">Select publisher...</option>
                     @foreach($publishers as $pub)
                         <option value="{{ $pub->id }}" {{ old('user_id') == $pub->id ? 'selected' : '' }}>{{ $pub->name }} — {{ $pub->email }}</option>
                     @endforeach
                 </select>
+            </div>
+
+            {{-- Advertiser dropdown --}}
+            <div class="form-group" id="advertiser-section" style="display:none;">
+                <label class="form-label">Advertiser</label>
+                <select name="advertiser_id" class="form-control">
+                    <option value="">Select advertiser...</option>
+                    @foreach($advertisers as $adv)
+                        @php $camp = $adv->campaigns->first(); @endphp
+                        <option value="{{ $adv->id }}" {{ old('advertiser_id') == $adv->id ? 'selected' : '' }}>
+                            {{ $adv->name }} — {{ $adv->email }}{{ $camp ? ' (Campaign: '.$camp->name.')' : ' (no active campaign)' }}
+                        </option>
+                    @endforeach
+                </select>
+                <div style="font-size:12px;color:#9ca3af;margin-top:4px;">The link will be assigned to their latest non-completed campaign.</div>
             </div>
             <div class="form-group">
                 <label class="form-label">Tracking Domain</label>
@@ -93,3 +127,25 @@
     </div>
 </div>
 @endsection
+
+@push('scripts')
+<script>
+function switchOwner(type) {
+    document.getElementById('radio-publisher').checked = (type === 'publisher');
+    document.getElementById('radio-advertiser').checked = (type === 'advertiser');
+    document.getElementById('publisher-section').style.display = type === 'publisher' ? '' : 'none';
+    document.getElementById('advertiser-section').style.display = type === 'advertiser' ? '' : 'none';
+    document.querySelectorAll('.owner-tab').forEach(t => {
+        t.style.borderColor = '#d1d5db';
+        t.style.background = '';
+        t.style.color = '';
+    });
+    const active = document.getElementById('tab-' + type);
+    active.style.borderColor = type === 'publisher' ? '#10b981' : '#3b82f6';
+    active.style.background = type === 'publisher' ? '#f0fdf4' : '#eff6ff';
+    active.style.color = type === 'publisher' ? '#065f46' : '#1d4ed8';
+}
+// Init on load
+switchOwner('{{ old("link_owner","publisher") }}');
+</script>
+@endpush
