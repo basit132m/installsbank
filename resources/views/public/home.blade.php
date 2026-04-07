@@ -242,8 +242,9 @@
         <div class="nav-links">
             <a href="#features">Features</a>
             <a href="#how-it-works">How It Works</a>
-            <a href="{{ route('rates') }}">Rates</a>
-            <a href="#mobile-app">Mobile App</a>
+            <a href="#contracts">Contracts</a>
+            <a href="{{ route('rates') }}">Click Rates</a>
+            <a href="{{ route('install-rates') }}">Install Rates</a>
             <a href="#contact">Contact</a>
         </div>
         <div class="nav-cta">
@@ -259,7 +260,9 @@
     <div class="mobile-menu" id="mobileMenu">
         <a href="#features" onclick="closeMenu()">Features</a>
         <a href="#how-it-works" onclick="closeMenu()">How It Works</a>
-        <a href="{{ route('rates') }}" onclick="closeMenu()">Rates</a>
+        <a href="#contracts" onclick="closeMenu()">Contracts</a>
+        <a href="{{ route('rates') }}" onclick="closeMenu()">Click Rates</a>
+        <a href="{{ route('install-rates') }}" onclick="closeMenu()">Install Rates</a>
         <a href="#mobile-app" onclick="closeMenu()">Mobile App</a>
         <a href="#contact" onclick="closeMenu()">Contact</a>
         <div class="mob-cta">
@@ -433,6 +436,79 @@
         </div>
     </section>
 
+    <!-- Contracts -->
+    <section class="section" id="contracts" style="background:#fff;">
+        <div class="section-center">
+            <span class="section-tag">📋 Contracts</span>
+            <h2 class="section-title">Three Ways to <span style="color:var(--primary);">Earn</span></h2>
+            <p class="section-sub">After your traffic test, we offer you the contract type that best fits your traffic. You can receive multiple offers and choose the one that works for you.</p>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));gap:24px;max-width:1100px;margin:40px auto 0;padding:0 5%;">
+
+            <!-- Per-Click Contract -->
+            <div style="background:white;border:2px solid #e5e7eb;border-radius:20px;padding:32px;position:relative;overflow:hidden;transition:all .2s;" onmouseover="this.style.borderColor='#a7f3d0';this.style.boxShadow='0 8px 32px rgba(1,191,99,0.12)'" onmouseout="this.style.borderColor='#e5e7eb';this.style.boxShadow=''">
+                <div style="position:absolute;top:0;left:0;right:0;height:4px;background:linear-gradient(90deg,#01BF63,#00a354);"></div>
+                <div style="width:52px;height:52px;background:#e6faf2;border-radius:14px;display:flex;align-items:center;justify-content:center;margin-bottom:20px;">
+                    <svg width="26" height="26" fill="none" stroke="#01BF63" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5"/></svg>
+                </div>
+                <div style="font-size:11px;font-weight:700;color:#059669;text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px;">Per-Click Contract</div>
+                <div style="font-size:22px;font-weight:900;color:#111827;margin-bottom:12px;">Earn Per 1,000 Clicks</div>
+                <p style="font-size:14px;color:#6b7280;line-height:1.7;margin-bottom:20px;">You earn a fixed dollar amount for every 1,000 unique Windows clicks you deliver. The rate depends on your traffic countries — Tier 1 countries (US, UK, CA, AU) pay the most.</p>
+                <ul style="list-style:none;padding:0;margin-bottom:24px;">
+                    <li style="display:flex;align-items:flex-start;gap:8px;margin-bottom:10px;font-size:13px;color:#374151;"><span style="color:#01BF63;font-weight:700;flex-shrink:0;">✓</span> Rate based on country of traffic</li>
+                    <li style="display:flex;align-items:flex-start;gap:8px;margin-bottom:10px;font-size:13px;color:#374151;"><span style="color:#01BF63;font-weight:700;flex-shrink:0;">✓</span> Windows clicks only</li>
+                    <li style="display:flex;align-items:flex-start;gap:8px;margin-bottom:10px;font-size:13px;color:#374151;"><span style="color:#01BF63;font-weight:700;flex-shrink:0;">✓</span> Real-time earnings dashboard</li>
+                    <li style="display:flex;align-items:flex-start;gap:8px;font-size:13px;color:#374151;"><span style="color:#01BF63;font-weight:700;flex-shrink:0;">✓</span> Weekly USDT / BTC payouts</li>
+                </ul>
+                <a href="{{ route('rates') }}" style="display:inline-flex;align-items:center;gap:6px;background:#e6faf2;color:#065f46;padding:10px 18px;border-radius:10px;font-size:13px;font-weight:700;text-decoration:none;">
+                    View Click Rates →
+                </a>
+            </div>
+
+            <!-- Fixed Daily Rate Contract -->
+            <div style="background:linear-gradient(160deg,#0f172a 0%,#1e3a5f 100%);border:2px solid #1e3a5f;border-radius:20px;padding:32px;position:relative;overflow:hidden;transition:all .2s;" onmouseover="this.style.boxShadow='0 8px 32px rgba(0,0,0,0.3)'" onmouseout="this.style.boxShadow=''">
+                <div style="position:absolute;top:0;left:0;right:0;height:4px;background:linear-gradient(90deg,#f59e0b,#d97706);"></div>
+                <div style="position:absolute;top:-30px;right:-30px;width:120px;height:120px;background:rgba(255,255,255,0.03);border-radius:50%;"></div>
+                <div style="width:52px;height:52px;background:rgba(245,158,11,0.15);border-radius:14px;display:flex;align-items:center;justify-content:center;margin-bottom:20px;border:1px solid rgba(245,158,11,0.3);">
+                    <svg width="26" height="26" fill="none" stroke="#f59e0b" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+                </div>
+                <div style="font-size:11px;font-weight:700;color:#f59e0b;text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px;">Fixed Daily Contract</div>
+                <div style="font-size:22px;font-weight:900;color:white;margin-bottom:12px;">Guaranteed Daily Rate</div>
+                <p style="font-size:14px;color:rgba(255,255,255,0.65);line-height:1.7;margin-bottom:20px;">After a successful 48-hour traffic test, we offer you a fixed amount paid every single day — regardless of click volume. Predictable, stable income you can count on.</p>
+                <ul style="list-style:none;padding:0;margin-bottom:24px;">
+                    <li style="display:flex;align-items:flex-start;gap:8px;margin-bottom:10px;font-size:13px;color:rgba(255,255,255,0.8);"><span style="color:#f59e0b;font-weight:700;flex-shrink:0;">✓</span> Fixed daily amount — no surprises</li>
+                    <li style="display:flex;align-items:flex-start;gap:8px;margin-bottom:10px;font-size:13px;color:rgba(255,255,255,0.8);"><span style="color:#f59e0b;font-weight:700;flex-shrink:0;">✓</span> Offered after 48-hour test period</li>
+                    <li style="display:flex;align-items:flex-start;gap:8px;margin-bottom:10px;font-size:13px;color:rgba(255,255,255,0.8);"><span style="color:#f59e0b;font-weight:700;flex-shrink:0;">✓</span> Test period payment paid regardless</li>
+                    <li style="display:flex;align-items:flex-start;gap:8px;font-size:13px;color:rgba(255,255,255,0.8);"><span style="color:#f59e0b;font-weight:700;flex-shrink:0;">✓</span> Rate is non-negotiable — final offer</li>
+                </ul>
+                <div style="background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.25);border-radius:10px;padding:12px 16px;font-size:12px;color:rgba(255,255,255,0.6);line-height:1.6;">
+                    💡 Whether you accept or reject the offer, your 2-day test period payment will always be sent to you.
+                </div>
+            </div>
+
+            <!-- Installs-Based Contract -->
+            <div style="background:white;border:2px solid #e5e7eb;border-radius:20px;padding:32px;position:relative;overflow:hidden;transition:all .2s;" onmouseover="this.style.borderColor='#c4b5fd';this.style.boxShadow='0 8px 32px rgba(139,92,246,0.12)'" onmouseout="this.style.borderColor='#e5e7eb';this.style.boxShadow=''">
+                <div style="position:absolute;top:0;left:0;right:0;height:4px;background:linear-gradient(90deg,#8b5cf6,#6d28d9);"></div>
+                <div style="width:52px;height:52px;background:#ede9fe;border-radius:14px;display:flex;align-items:center;justify-content:center;margin-bottom:20px;">
+                    <svg width="26" height="26" fill="none" stroke="#7c3aed" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+                </div>
+                <div style="font-size:11px;font-weight:700;color:#7c3aed;text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px;">Installs-Based Contract</div>
+                <div style="font-size:22px;font-weight:900;color:#111827;margin-bottom:12px;">Earn Per Verified Install</div>
+                <p style="font-size:14px;color:#6b7280;line-height:1.7;margin-bottom:20px;">Your earnings are based on verified installs. As your Windows clicks accumulate by country, installs are registered and you're paid the install rate for that country.</p>
+                <ul style="list-style:none;padding:0;margin-bottom:24px;">
+                    <li style="display:flex;align-items:flex-start;gap:8px;margin-bottom:10px;font-size:13px;color:#374151;"><span style="color:#7c3aed;font-weight:700;flex-shrink:0;">✓</span> Country-specific install rates</li>
+                    <li style="display:flex;align-items:flex-start;gap:8px;margin-bottom:10px;font-size:13px;color:#374151;"><span style="color:#7c3aed;font-weight:700;flex-shrink:0;">✓</span> Higher rates for premium countries</li>
+                    <li style="display:flex;align-items:flex-start;gap:8px;margin-bottom:10px;font-size:13px;color:#374151;"><span style="color:#7c3aed;font-weight:700;flex-shrink:0;">✓</span> Real-time install & earnings tracking</li>
+                    <li style="display:flex;align-items:flex-start;gap:8px;font-size:13px;color:#374151;"><span style="color:#7c3aed;font-weight:700;flex-shrink:0;">✓</span> Weekly USDT / BTC payouts</li>
+                </ul>
+                <a href="{{ route('install-rates') }}" style="display:inline-flex;align-items:center;gap:6px;background:#ede9fe;color:#5b21b6;padding:10px 18px;border-radius:10px;font-size:13px;font-weight:700;text-decoration:none;">
+                    View Install Rates →
+                </a>
+            </div>
+
+        </div>
+    </section>
+
     <!-- Rates -->
     <section class="section features-bg" id="rates">
         <div class="section-center">
@@ -524,7 +600,8 @@
                 <a href="{{ route('register') }}" class="footer-link">Register</a>
                 <a href="{{ route('login') }}" class="footer-link">Login</a>
                 <a href="#how-it-works" class="footer-link">How It Works</a>
-                <a href="{{ route('rates') }}" class="footer-link">Rates</a>
+                <a href="{{ route('rates') }}" class="footer-link">Click Rates</a>
+            <a href="{{ route('install-rates') }}" class="footer-link">Install Rates</a>
             </div>
             <div>
                 <div class="footer-heading">Support</div>

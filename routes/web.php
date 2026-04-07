@@ -10,12 +10,14 @@ use App\Http\Controllers\Publisher;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Publisher\LiveStatsController;
 use App\Http\Controllers\Public\RatesController;
+use App\Http\Controllers\Public\InstallRatesController;
 use App\Http\Controllers\Auth\AdvertiserRegisterController;
 use App\Http\Controllers\Advertiser;
 
 // Public pages
 Route::get('/', fn() => view('public.home'))->name('home');
 Route::get('/rates', [RatesController::class, 'index'])->name('rates');
+Route::get('/install-rates', [InstallRatesController::class, 'index'])->name('install-rates');
 Route::get('/privacy-policy', fn() => view('public.privacy'))->name('privacy');
 Route::get('/terms-of-use', fn() => view('public.terms'))->name('terms');
 
