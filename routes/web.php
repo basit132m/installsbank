@@ -199,13 +199,25 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin,manager'
         Route::post('/', [Admin\InstallSettingsController::class, 'update'])->name('update');
     });
 
-    // Support
+    // Support (regular tickets only)
     Route::prefix('support')->name('support.')->group(function () {
         Route::get('/', [Admin\SupportController::class, 'index'])->name('index');
         Route::get('/{supportTicket}', [Admin\SupportController::class, 'show'])->name('show');
         Route::post('/{supportTicket}/reply', [Admin\SupportController::class, 'reply'])->name('reply');
         Route::post('/{supportTicket}/close', [Admin\SupportController::class, 'close'])->name('close');
     });
+
+    // Live Chat (admin side)
+    Route::prefix('chat')->name('chat.')->group(function () {
+        Route::get('/', [Admin\ChatController::class, 'index'])->name('index');
+        Route::get('/{supportTicket}', [Admin\ChatController::class, 'show'])->name('show');
+        Route::get('/{supportTicket}/messages', [Admin\ChatController::class, 'messages'])->name('messages');
+        Route::post('/{supportTicket}/reply', [Admin\ChatController::class, 'reply'])->name('reply');
+        Route::post('/{supportTicket}/close', [Admin\ChatController::class, 'close'])->name('close');
+    });
+
+    // Publisher stats export
+    Route::get('/publishers/{user}/stats/export', [Admin\PublisherController::class, 'exportStats'])->name('publishers.stats.export');
 });
 
 // Advertiser registration (POST only; GET handled by unified /register page)

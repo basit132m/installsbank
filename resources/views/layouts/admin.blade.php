@@ -435,8 +435,14 @@
             <a href="{{ route('admin.support.index') }}" class="nav-item {{ request()->routeIs('admin.support.*') ? 'active' : '' }}">
                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/></svg>
                 Support
-                @php $openTickets = \App\Models\SupportTicket::where('status','open')->count(); @endphp
+                @php $openTickets = \App\Models\SupportTicket::where('status','open')->where('is_chat',false)->count(); @endphp
                 @if($openTickets > 0)<span class="nav-badge warning">{{ $openTickets }}</span>@endif
+            </a>
+            <a href="{{ route('admin.chat.index') }}" class="nav-item {{ request()->routeIs('admin.chat.*') ? 'active' : '' }}">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1.994 1.994 0 01-1.414-.586m0 0L11 14h4a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2v4l.586-.586z"/></svg>
+                Live Chat
+                @php $openChats = \App\Models\SupportTicket::where('is_chat',true)->where('status','open')->count(); @endphp
+                @if($openChats > 0)<span class="nav-badge">{{ $openChats }}</span>@endif
             </a>
 
             @if(auth()->user()->isAdmin())

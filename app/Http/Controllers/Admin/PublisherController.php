@@ -118,40 +118,49 @@ class PublisherController extends Controller
     public function stats(User $user, Request $request)
     {
         $period = $request->get('period', '7');
-        $startDate = match($period) {
-            '1'    => today(),
-            '7'    => now()->subDays(6),
-            '30'   => now()->subDays(29),
-            '90'   => now()->subDays(89),
-            'all'  => now()->subYears(10),
-            default => now()->subDays(6),
+
+        // Determine date range
+        [$startDate, $endDate] = match($period) {
+            '1'      => [today(), today()],
+            '7'      => [now()->subDays(6)->startOfDay(), today()],
+            'last7'  => [now()->subDays(7)->startOfDay(), yesterday()->endOfDay()],
+            '30'     => [now()->subDays(29)->startOfDay(), today()],
+            'month'  => [now()->startOfMonth()->startOfDay(), yesterday()->endOfDay()],
+            '90'     => [now()->subDays(89)->startOfDay(), today()],
+            'all'    => [now()->subYears(10)->startOfDay(), today()],
+            default  => [now()->subDays(6)->startOfDay(), today()],
         };
 
         $baseQuery = fn() => Click::where('user_id', $user->id)
-            ->where('created_at', '>=', $startDate->startOfDay());
+            ->where('created_at', '>=', $startDate)
+            ->where('created_at', '<=', $endDate->copy()->endOfDay());
 
         // Summary
         $summary = [
-            'total_raw'    => ($baseQuery)()->count(),
-            'valid'        => ($baseQuery)()->where('is_counted', true)->count(),
-            'fraud'        => ($baseQuery)()->where('is_fraud', true)->count(),
-            'windows'      => ($baseQuery)()->where('is_windows', true)->where('is_counted', true)->count(),
-            'earnings'     => ($baseQuery)()->where('is_counted', true)->sum('click_value'),
+            'total_raw' => ($baseQuery)()->count(),
+            'valid'     => ($baseQuery)()->where('is_counted', true)->count(),
+            'fraud'     => ($baseQuery)()->where('is_fraud', true)->count(),
+            'windows'   => ($baseQuery)()->where('is_windows', true)->where('is_counted', true)->count(),
+            'earnings'  => ($baseQuery)()->where('is_counted', true)->sum('click_value'),
         ];
         $summary['fraud_rate'] = $summary['total_raw'] > 0
             ? round(($summary['fraud'] / $summary['total_raw']) * 100, 1) : 0;
 
-        // Daily breakdown (last N days)
-        $days = match($period) { '1' => 1, '7' => 7, '30' => 30, '90' => 90, default => 7 };
+        // Build day-by-day range
         $daily = [];
-        for ($i = min($days - 1, 89); $i >= 0; $i--) {
-            $date = now()->subDays($i)->toDateString();
+        $current = $startDate->copy()->startOfDay();
+        $end     = $endDate->copy()->startOfDay();
+        while ($current->lte($end)) {
+            $date = $current->toDateString();
             $daily[] = [
-                'date'    => now()->subDays($i)->format('M d'),
-                'valid'   => Click::where('user_id', $user->id)->whereDate('created_at', $date)->where('is_counted', true)->count(),
-                'fraud'   => Click::where('user_id', $user->id)->whereDate('created_at', $date)->where('is_fraud', true)->count(),
-                'windows' => Click::where('user_id', $user->id)->whereDate('created_at', $date)->where('is_windows', true)->where('is_counted', true)->count(),
+                'date'     => $current->format('M d'),
+                'date_raw' => $date,
+                'valid'    => Click::where('user_id', $user->id)->whereDate('created_at', $date)->where('is_counted', true)->count(),
+                'fraud'    => Click::where('user_id', $user->id)->whereDate('created_at', $date)->where('is_fraud', true)->count(),
+                'windows'  => Click::where('user_id', $user->id)->whereDate('created_at', $date)->where('is_windows', true)->where('is_counted', true)->count(),
+                'earnings' => Click::where('user_id', $user->id)->whereDate('created_at', $date)->where('is_counted', true)->sum('click_value'),
             ];
+            $current->addDay();
         }
 
         // Fraud by type
@@ -186,6 +195,56 @@ class PublisherController extends Controller
             'user', 'period', 'summary', 'daily',
             'fraudByType', 'topCountries', 'osByType', 'deviceTypes', 'recentClicks'
         ));
+    }
+
+    public function exportStats(User $user, Request $request)
+    {
+        $period = $request->get('period', '7');
+
+        [$startDate, $endDate] = match($period) {
+            '1'      => [today(), today()],
+            '7'      => [now()->subDays(6)->startOfDay(), today()],
+            'last7'  => [now()->subDays(7)->startOfDay(), yesterday()->endOfDay()],
+            '30'     => [now()->subDays(29)->startOfDay(), today()],
+            'month'  => [now()->startOfMonth()->startOfDay(), yesterday()->endOfDay()],
+            '90'     => [now()->subDays(89)->startOfDay(), today()],
+            'all'    => [now()->subYears(10)->startOfDay(), today()],
+            default  => [now()->subDays(6)->startOfDay(), today()],
+        };
+
+        $rows = [];
+        $current = $startDate->copy()->startOfDay();
+        $end     = $endDate->copy()->startOfDay();
+        while ($current->lte($end)) {
+            $date = $current->toDateString();
+            $rows[] = [
+                $date,
+                Click::where('user_id', $user->id)->whereDate('created_at', $date)->where('is_counted', true)->count(),
+                Click::where('user_id', $user->id)->whereDate('created_at', $date)->where('is_fraud', true)->count(),
+                Click::where('user_id', $user->id)->whereDate('created_at', $date)->where('is_windows', true)->where('is_counted', true)->count(),
+                number_format(Click::where('user_id', $user->id)->whereDate('created_at', $date)->where('is_counted', true)->sum('click_value'), 6, '.', ''),
+            ];
+            $current->addDay();
+        }
+
+        $filename = 'publisher-stats-' . $user->id . '-' . $period . '-' . now()->format('Ymd') . '.csv';
+
+        $headers = [
+            'Content-Type'        => 'text/csv',
+            'Content-Disposition' => "attachment; filename=\"{$filename}\"",
+        ];
+
+        $callback = function () use ($rows, $user) {
+            $f = fopen('php://output', 'w');
+            fputcsv($f, ['Publisher: ' . $user->name . ' (' . $user->email . ')']);
+            fputcsv($f, ['Date', 'Valid Clicks', 'Fraud Clicks', 'Windows Clicks', 'Earnings (USD)']);
+            foreach ($rows as $row) {
+                fputcsv($f, $row);
+            }
+            fclose($f);
+        };
+
+        return response()->stream($callback, 200, $headers);
     }
 
     public function updateFraudSettings(Request $request, User $user)

@@ -6,8 +6,8 @@ use Illuminate\Database\Eloquent\Model;
 
 class SupportTicket extends Model
 {
-    protected $fillable = ['user_id', 'subject', 'status', 'priority', 'last_reply_at'];
-    protected $casts = ['last_reply_at' => 'datetime'];
+    protected $fillable = ['user_id', 'subject', 'status', 'priority', 'is_chat', 'last_reply_at'];
+    protected $casts = ['last_reply_at' => 'datetime', 'is_chat' => 'boolean'];
 
     public function user()
     {

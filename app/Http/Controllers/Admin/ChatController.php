@@ -1,0 +1,98 @@
+<?php
+
+namespace App\Http\Controllers\Admin;
+
+use App\Http\Controllers\Controller;
+use App\Models\SupportMessage;
+use App\Models\SupportTicket;
+use Illuminate\Http\Request;
+
+class ChatController extends Controller
+{
+    /** List all live chat conversations */
+    public function index()
+    {
+        $chats = SupportTicket::with(['user', 'latestMessage'])
+            ->where('is_chat', true)
+            ->latest()
+            ->paginate(25);
+
+        $unreadCount = SupportTicket::where('is_chat', true)
+            ->where('status', 'open')
+            ->count();
+
+        return view('admin.chat.index', compact('chats', 'unreadCount'));
+    }
+
+    /** Show a single live chat conversation */
+    public function show(SupportTicket $supportTicket)
+    {
+        abort_unless($supportTicket->is_chat, 404);
+        $supportTicket->load(['user', 'messages.sender']);
+
+        // Mark publisher messages as read
+        SupportMessage::where('ticket_id', $supportTicket->id)
+            ->where('is_staff', false)
+            ->update(['is_read' => true]);
+
+        return view('admin.chat.show', compact('supportTicket'));
+    }
+
+    /** JSON endpoint for polling messages */
+    public function messages(SupportTicket $supportTicket)
+    {
+        abort_unless($supportTicket->is_chat, 404);
+
+        $messages = $supportTicket->messages()->orderBy('created_at')->get()
+            ->map(fn($m) => [
+                'id'       => $m->id,
+                'message'  => $m->message,
+                'is_staff' => (bool) $m->is_staff,
+                'sender'   => $m->sender?->name ?? ($m->is_staff ? 'Support' : 'Publisher'),
+                'time'     => $m->created_at->diffForHumans(),
+            ]);
+
+        return response()->json(['messages' => $messages]);
+    }
+
+    /** Send a reply from admin */
+    public function reply(Request $request, SupportTicket $supportTicket)
+    {
+        abort_unless($supportTicket->is_chat, 404);
+        $data = $request->validate(['message' => 'required|string|max:2000']);
+
+        $msg = SupportMessage::create([
+            'ticket_id' => $supportTicket->id,
+            'user_id'   => auth()->id(),
+            'message'   => $data['message'],
+            'is_staff'  => true,
+        ]);
+
+        $supportTicket->update(['status' => 'replied', 'last_reply_at' => now()]);
+
+        if ($request->wantsJson()) {
+            return response()->json([
+                'id'       => $msg->id,
+                'message'  => $msg->message,
+                'is_staff' => true,
+                'sender'   => auth()->user()->name,
+                'time'     => 'just now',
+            ]);
+        }
+
+        return back()->with('success', 'Reply sent.');
+    }
+
+    /** Close a chat */
+    public function close(SupportTicket $supportTicket)
+    {
+        abort_unless($supportTicket->is_chat, 404);
+        $supportTicket->update(['status' => 'closed']);
+
+        if (request()->wantsJson()) {
+            return response()->json(['status' => 'closed']);
+        }
+
+        return redirect()->route('admin.chat.index')->with('success', 'Chat closed.');
+    }
+}

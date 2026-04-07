@@ -11,7 +11,8 @@ class SupportController extends Controller
 {
     public function index(Request $request)
     {
-        $query = SupportTicket::with(['user', 'latestMessage']);
+        // Only regular (non-chat) tickets
+        $query = SupportTicket::with(['user', 'latestMessage'])->where('is_chat', false);
         if ($request->filled('status')) {
             $query->where('status', $request->status);
         }
@@ -22,14 +23,21 @@ class SupportController extends Controller
     public function show(SupportTicket $supportTicket)
     {
         $supportTicket->load(['user', 'messages.sender']);
-        SupportMessage::where('ticket_id', $supportTicket->id)->where('user_id', '!=', auth()->id())->update(['is_read' => true]);
+        SupportMessage::where('ticket_id', $supportTicket->id)
+            ->where('user_id', '!=', auth()->id())
+            ->update(['is_read' => true]);
         return view('admin.support.show', compact('supportTicket'));
     }
 
     public function reply(Request $request, SupportTicket $supportTicket)
     {
         $data = $request->validate(['message' => 'required|string|max:2000']);
-        SupportMessage::create(['ticket_id' => $supportTicket->id, 'user_id' => auth()->id(), 'message' => $data['message']]);
+        SupportMessage::create([
+            'ticket_id' => $supportTicket->id,
+            'user_id'   => auth()->id(),
+            'message'   => $data['message'],
+            'is_staff'  => true,
+        ]);
         $supportTicket->update(['status' => 'replied', 'last_reply_at' => now()]);
         return back()->with('success', 'Reply sent.');
     }

@@ -11,11 +11,15 @@
     <span style="font-size:13px;color:#9ca3af;">{{ $user->email }}</span>
 </div>
 
-{{-- Period Filter --}}
-<div style="display:flex;gap:8px;margin-bottom:24px;flex-wrap:wrap;">
-    @foreach(['1' => 'Today', '7' => '7 Days', '30' => '30 Days', '90' => '90 Days', 'all' => 'All Time'] as $val => $label)
+{{-- Period Filter + Export --}}
+<div style="display:flex;align-items:center;gap:8px;margin-bottom:24px;flex-wrap:wrap;">
+    @foreach(['1' => 'Today', 'last7' => 'Last 7 Days', 'month' => 'Current Month', '7' => '7 Days (incl. today)', '30' => '30 Days', '90' => '90 Days', 'all' => 'All Time'] as $val => $label)
         <a href="?period={{ $val }}" class="btn btn-sm {{ $period == $val ? 'btn-primary' : 'btn-ghost' }}">{{ $label }}</a>
     @endforeach
+    <a href="{{ route('admin.publishers.stats.export', [$user, 'period' => $period]) }}"
+       class="btn btn-sm btn-ghost" style="margin-left:auto;color:#3b82f6;border-color:#3b82f6;">
+        ↓ Export CSV
+    </a>
 </div>
 
 {{-- Summary Cards --}}
@@ -66,8 +70,50 @@
 
 {{-- Daily Chart --}}
 <div class="card mb-6">
-    <div class="card-title mb-4">Daily Breakdown</div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+        <div class="card-title">Day-by-Day Breakdown</div>
+        <span style="font-size:12px;color:#9ca3af;">{{ count($daily) }} days</span>
+    </div>
     <div id="dailyChart"></div>
+
+    {{-- Day-by-day table --}}
+    @if(count($daily) > 0)
+    <div style="margin-top:20px;overflow-x:auto;">
+        <table style="width:100%;font-size:13px;border-collapse:collapse;">
+            <thead>
+                <tr style="border-bottom:2px solid #f3f4f6;">
+                    <th style="text-align:left;padding:8px 12px;color:#6b7280;font-weight:600;">Date</th>
+                    <th style="text-align:right;padding:8px 12px;color:#6b7280;font-weight:600;">Valid Clicks</th>
+                    <th style="text-align:right;padding:8px 12px;color:#6b7280;font-weight:600;">Fraud Clicks</th>
+                    <th style="text-align:right;padding:8px 12px;color:#6b7280;font-weight:600;">Windows</th>
+                    <th style="text-align:right;padding:8px 12px;color:#6b7280;font-weight:600;">Earnings (USD)</th>
+                </tr>
+            </thead>
+            <tbody>
+                @php $totalEarnings = 0; @endphp
+                @foreach($daily as $row)
+                @php $totalEarnings += $row['earnings']; @endphp
+                <tr style="border-bottom:1px solid #f3f4f6;{{ $row['fraud'] > 0 ? 'background:#fffbf5;' : '' }}">
+                    <td style="padding:8px 12px;font-weight:600;color:#374151;">{{ $row['date'] }}</td>
+                    <td style="padding:8px 12px;text-align:right;color:#01BF63;font-weight:700;">{{ number_format($row['valid']) }}</td>
+                    <td style="padding:8px 12px;text-align:right;color:{{ $row['fraud'] > 0 ? '#ef4444' : '#9ca3af' }};font-weight:{{ $row['fraud'] > 0 ? '700' : '400' }};">{{ number_format($row['fraud']) }}</td>
+                    <td style="padding:8px 12px;text-align:right;color:#3b82f6;">{{ number_format($row['windows']) }}</td>
+                    <td style="padding:8px 12px;text-align:right;color:#374151;font-family:monospace;">${{ number_format($row['earnings'], 4) }}</td>
+                </tr>
+                @endforeach
+            </tbody>
+            <tfoot>
+                <tr style="border-top:2px solid #e5e7eb;background:#f9fafb;">
+                    <td style="padding:10px 12px;font-weight:700;">Total</td>
+                    <td style="padding:10px 12px;text-align:right;font-weight:700;color:#01BF63;">{{ number_format(array_sum(array_column($daily, 'valid'))) }}</td>
+                    <td style="padding:10px 12px;text-align:right;font-weight:700;color:#ef4444;">{{ number_format(array_sum(array_column($daily, 'fraud'))) }}</td>
+                    <td style="padding:10px 12px;text-align:right;font-weight:700;color:#3b82f6;">{{ number_format(array_sum(array_column($daily, 'windows'))) }}</td>
+                    <td style="padding:10px 12px;text-align:right;font-weight:700;font-family:monospace;">${{ number_format($totalEarnings, 4) }}</td>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+    @endif
 </div>
 
 <div class="grid-2 mb-6" style="align-items:start;">
@@ -248,13 +294,14 @@ new ApexCharts(document.getElementById('dailyChart'), {
         { name: 'Windows Clicks', data: daily.map(d => d.windows) },
         { name: 'Fraud Clicks', data: daily.map(d => d.fraud) },
     ],
-    chart: { type: 'bar', height: 260, toolbar: { show: false }, stacked: false },
+    chart: { type: 'bar', height: 240, toolbar: { show: false }, stacked: false },
     colors: ['#01BF63', '#3b82f6', '#ef4444'],
     xaxis: { categories: daily.map(d => d.date), labels: { style: { fontSize: '11px' } } },
     legend: { position: 'top' },
     dataLabels: { enabled: false },
     grid: { borderColor: '#f3f4f6' },
     plotOptions: { bar: { borderRadius: 3, columnWidth: '60%' } },
+    tooltip: { y: { formatter: val => val.toLocaleString() + ' clicks' } },
 }).render();
 
 @if(!empty($fraudByType))

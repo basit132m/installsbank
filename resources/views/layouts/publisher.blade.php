@@ -196,7 +196,8 @@
     </div>
     @stack('scripts')
 
-<!-- ========== LIVE CHAT WIDGET ========== -->
+<!-- ========== LIVE CHAT WIDGET (approved publishers only) ========== -->
+@if(auth()->user()->status === 'active')
 <style>
 #chatBubble {
     position:fixed; bottom:24px; right:24px; z-index:9999;
@@ -407,6 +408,7 @@ setInterval(() => { if (chatOpen) loadMessages(); else loadMessages(); }, 6000);
 setTimeout(loadMessages, 2000);
 </script>
 <!-- ========== END LIVE CHAT ========== -->
+@endif
 
 </body>
 </html>
