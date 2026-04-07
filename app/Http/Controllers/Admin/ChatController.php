@@ -104,4 +104,12 @@ class ChatController extends Controller
 
         return redirect()->route('admin.chat.index')->with('success', 'Chat closed.');
     }
+
+    public function destroy(SupportTicket $supportTicket)
+    {
+        abort_unless($supportTicket->is_chat, 404);
+        $supportTicket->messages()->delete();
+        $supportTicket->delete();
+        return redirect()->route('admin.chat.index')->with('success', 'Chat deleted.');
+    }
 }

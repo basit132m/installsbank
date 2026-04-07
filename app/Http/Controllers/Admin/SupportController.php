@@ -47,4 +47,11 @@ class SupportController extends Controller
         $supportTicket->update(['status' => 'closed']);
         return back()->with('success', 'Ticket closed.');
     }
+
+    public function destroy(SupportTicket $supportTicket)
+    {
+        $supportTicket->messages()->delete();
+        $supportTicket->delete();
+        return redirect()->route('admin.support.index')->with('success', 'Ticket deleted.');
+    }
 }

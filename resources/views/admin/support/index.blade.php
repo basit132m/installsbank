@@ -28,7 +28,14 @@
                     <td><span class="badge {{ ['low'=>'badge-gray','medium'=>'badge-info','high'=>'badge-danger'][$ticket->priority] }}">{{ ucfirst($ticket->priority) }}</span></td>
                     <td><span class="badge {{ ['open'=>'badge-success','replied'=>'badge-info','closed'=>'badge-gray'][$ticket->status] }}">{{ ucfirst($ticket->status) }}</span></td>
                     <td style="color:#9ca3af;font-size:13px;">{{ ($ticket->last_reply_at ?? $ticket->created_at)->diffForHumans() }}</td>
-                    <td><a href="{{ route('admin.support.show', $ticket) }}" class="btn btn-primary btn-sm">Reply</a></td>
+                    <td style="display:flex;gap:6px;align-items:center;">
+                        <a href="{{ route('admin.support.show', $ticket) }}" class="btn btn-primary btn-sm">Reply</a>
+                        <form method="POST" action="{{ route('admin.support.destroy', $ticket) }}"
+                              onsubmit="return confirm('Delete this ticket and all messages?')">
+                            @csrf @method('DELETE')
+                            <button class="btn btn-danger btn-sm">Delete</button>
+                        </form>
+                    </td>
                 </tr>
                 @empty
                 <tr><td colspan="6" style="text-align:center;padding:24px;color:#9ca3af;">No tickets</td></tr>

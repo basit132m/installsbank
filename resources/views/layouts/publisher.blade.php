@@ -220,25 +220,34 @@
 @keyframes chatBounce { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-4px)} }
 #chatPanel {
     position:fixed; bottom:88px; right:24px; z-index:9998;
-    width:340px; max-height:520px;
+    width:350px; max-height:600px;
     background:white; border-radius:18px;
     box-shadow:0 8px 40px rgba(0,0,0,0.18);
     display:none; flex-direction:column; overflow:hidden;
     border:1px solid #e5e7eb;
 }
 #chatPanel.open { display:flex; }
+#chatLogoBar {
+    background:white; padding:14px 18px 10px;
+    border-bottom:1px solid #f3f4f6;
+    display:flex; align-items:center; justify-content:center; position:relative;
+}
+#chatLogoBar img { height:34px; object-fit:contain; }
+#chatLogoBar button {
+    position:absolute; right:14px; top:50%; transform:translateY(-50%);
+    background:none; border:none; color:#9ca3af; font-size:22px; cursor:pointer; line-height:1;
+}
+#chatLogoBar button:hover { color:#374151; }
 #chatHeader {
     background:var(--primary); color:white;
-    padding:14px 18px; display:flex; align-items:center; gap:10px;
+    padding:10px 18px; display:flex; align-items:center; gap:10px;
 }
-#chatHeader .dot { width:9px; height:9px; background:white; border-radius:50%; opacity:.9; animation:chatBounce 2s infinite; }
-#chatHeader span { font-size:15px; font-weight:700; flex:1; }
-#chatHeader button { background:none; border:none; color:white; font-size:20px; cursor:pointer; opacity:.8; line-height:1; }
-#chatHeader button:hover { opacity:1; }
+#chatHeader .dot { width:8px; height:8px; background:white; border-radius:50%; opacity:.9; animation:chatBounce 2s infinite; }
+#chatHeader span { font-size:13px; font-weight:600; flex:1; }
 #chatMessages {
     flex:1; overflow-y:auto; padding:16px;
     display:flex; flex-direction:column; gap:10px;
-    background:#f9fafb;
+    background:#f9fafb; min-height:320px;
 }
 .chat-msg { display:flex; gap:8px; max-width:88%; }
 .chat-msg.mine { align-self:flex-end; flex-direction:row-reverse; }
@@ -246,8 +255,9 @@
     width:30px; height:30px; border-radius:50%; flex-shrink:0;
     background:var(--primary); display:flex; align-items:center;
     justify-content:center; font-size:12px; font-weight:700; color:white;
+    overflow:hidden;
 }
-.chat-avatar.staff { background:#374151; }
+.chat-avatar.staff { background:#f3f4f6; padding:3px; }
 .chat-bubble {
     background:white; border:1px solid #e5e7eb; border-radius:14px 14px 14px 2px;
     padding:9px 13px; font-size:13px; color:#111827; line-height:1.5;
@@ -292,10 +302,13 @@
 
 <!-- Panel -->
 <div id="chatPanel">
+    <div id="chatLogoBar">
+        <img src="https://installsbank.com/images/installs-bank.webp" alt="Installs Bank" onerror="this.style.display='none'">
+        <button onclick="toggleChat()">×</button>
+    </div>
     <div id="chatHeader">
         <div class="dot"></div>
-        <span>Message Us</span>
-        <button onclick="toggleChat()">×</button>
+        <span>Support Team · We reply quickly</span>
     </div>
     <div id="chatMessages">
         <div id="chatEmpty">
@@ -330,15 +343,17 @@ function toggleChat() {
     if (chatOpen) {
         loadMessages();
         document.getElementById('chatUnread').style.display = 'none';
-        if (!chatClosed) document.getElementById('chatInput').focus();
+        if (!chatClosed) setTimeout(() => document.getElementById('chatInput').focus(), 50);
     }
 }
 
 function renderMsg(m) {
     const mine = !m.is_staff;
-    const initial = mine ? '{{ strtoupper(substr(auth()->user()->name, 0, 1)) }}' : 'S';
+    const avatarContent = mine
+        ? '{{ strtoupper(substr(auth()->user()->name, 0, 1)) }}'
+        : '<img src="https://installsbank.com/images/installs-bank.webp" style="width:24px;height:24px;object-fit:contain;" onerror="this.parentNode.textContent=\'S\'">';
     return `<div class="chat-msg ${mine ? 'mine' : ''}">
-        <div class="chat-avatar ${mine ? '' : 'staff'}">${initial}</div>
+        <div class="chat-avatar ${mine ? '' : 'staff'}">${avatarContent}</div>
         <div>
             <div class="chat-bubble">${escHtml(m.message)}</div>
             <div class="chat-time">${m.time}</div>

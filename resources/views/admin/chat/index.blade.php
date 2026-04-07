@@ -49,8 +49,13 @@
                             {{ ucfirst($chat->status) }}
                         </span>
                     </td>
-                    <td>
-                        <a href="{{ route('admin.chat.show', $chat) }}" class="btn btn-primary btn-sm">Open Chat</a>
+                    <td style="display:flex;gap:6px;align-items:center;">
+                        <a href="{{ route('admin.chat.show', $chat) }}" class="btn btn-primary btn-sm">Open</a>
+                        <form method="POST" action="{{ route('admin.chat.destroy', $chat) }}"
+                              onsubmit="return confirm('Delete this chat and all its messages?')">
+                            @csrf @method('DELETE')
+                            <button class="btn btn-danger btn-sm">Delete</button>
+                        </form>
                     </td>
                 </tr>
                 @empty
@@ -64,3 +69,46 @@
     {{ $chats->links() }}
 </div>
 @endsection
+
+@push('scripts')
+<script>
+// Play a soft ping when new open chats appear
+let knownOpenCount = {{ $unreadCount }};
+function checkNewChats() {
+    fetch(window.location.href, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+    .then(r => r.text())
+    .then(html => {
+        const m = html.match(/"open"\s+chats.*?(\d+)\s+open/);
+        if (!m) return;
+        const cur = parseInt(m[1]);
+        if (cur > knownOpenCount) {
+            playPing();
+            knownOpenCount = cur;
+        }
+    }).catch(() => {});
+}
+// Poll count badge via dedicated JSON endpoint (see below)
+function pingCount() {
+    fetch('{{ route("admin.chat.index") }}?count=1', { headers: { 'Accept': 'application/json' } })
+    .then(r => r.ok ? r.json() : null)
+    .then(d => {
+        if (!d) return;
+        if (d.open > knownOpenCount) { playPing(); knownOpenCount = d.open; }
+    }).catch(() => {});
+}
+
+function playPing() {
+    try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain); gain.connect(ctx.destination);
+        osc.type = 'sine'; osc.frequency.value = 880;
+        gain.gain.setValueAtTime(0.3, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.5);
+        osc.start(); osc.stop(ctx.currentTime + 0.5);
+    } catch(e) {}
+}
+setInterval(pingCount, 8000);
+</script>
+@endpush

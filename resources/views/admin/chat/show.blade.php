@@ -110,12 +110,19 @@
     <span class="badge {{ match($supportTicket->status) { 'open' => 'badge-success', 'replied' => 'badge-info', 'closed' => 'badge-gray', default => 'badge-info' } }}">
         {{ ucfirst($supportTicket->status) }}
     </span>
-    @if($supportTicket->status !== 'closed')
-    <form method="POST" action="{{ route('admin.chat.close', $supportTicket) }}" style="margin-left:auto;">
-        @csrf
-        <button class="btn btn-ghost btn-sm" style="color:#6b7280;" onclick="return confirm('Close this chat?')">Close Chat</button>
-    </form>
-    @endif
+    <div style="display:flex;gap:8px;margin-left:auto;">
+        @if($supportTicket->status !== 'closed')
+        <form method="POST" action="{{ route('admin.chat.close', $supportTicket) }}">
+            @csrf
+            <button class="btn btn-ghost btn-sm" style="color:#6b7280;" onclick="return confirm('Close this chat?')">Close Chat</button>
+        </form>
+        @endif
+        <form method="POST" action="{{ route('admin.chat.destroy', $supportTicket) }}"
+              onsubmit="return confirm('Permanently delete this chat and all messages?')">
+            @csrf @method('DELETE')
+            <button class="btn btn-danger btn-sm">Delete Chat</button>
+        </form>
+    </div>
 </div>
 
 <div class="admin-chat-wrap">
@@ -208,15 +215,33 @@ function appendMsg(m) {
     lastId = m.id;
 }
 
+function playPing() {
+    try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain); gain.connect(ctx.destination);
+        osc.type = 'sine'; osc.frequency.value = 820;
+        gain.gain.setValueAtTime(0.25, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.6);
+        osc.start(); osc.stop(ctx.currentTime + 0.6);
+    } catch(e) {}
+}
+
 function pollMessages() {
     fetch('{{ route("admin.chat.messages", $supportTicket) }}', {
         headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
     })
     .then(r => r.json())
     .then(data => {
+        let hasNew = false;
         data.messages.forEach(m => {
-            if (m.id > lastId) appendMsg(m);
+            if (m.id > lastId) {
+                appendMsg(m);
+                if (!m.is_staff) hasNew = true; // publisher sent message
+            }
         });
+        if (hasNew) playPing();
     })
     .catch(() => {});
 }

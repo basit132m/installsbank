@@ -205,6 +205,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin,manager'
         Route::get('/{supportTicket}', [Admin\SupportController::class, 'show'])->name('show');
         Route::post('/{supportTicket}/reply', [Admin\SupportController::class, 'reply'])->name('reply');
         Route::post('/{supportTicket}/close', [Admin\SupportController::class, 'close'])->name('close');
+        Route::delete('/{supportTicket}', [Admin\SupportController::class, 'destroy'])->name('destroy');
     });
 
     // Live Chat (admin side)
@@ -214,6 +215,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin,manager'
         Route::get('/{supportTicket}/messages', [Admin\ChatController::class, 'messages'])->name('messages');
         Route::post('/{supportTicket}/reply', [Admin\ChatController::class, 'reply'])->name('reply');
         Route::post('/{supportTicket}/close', [Admin\ChatController::class, 'close'])->name('close');
+        Route::delete('/{supportTicket}', [Admin\ChatController::class, 'destroy'])->name('destroy');
     });
 
     // Publisher stats export
