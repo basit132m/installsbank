@@ -554,14 +554,14 @@ new ApexCharts(document.getElementById('osPieChart'), {
 
 @if($countryBreakdown && $countryBreakdown->count() > 0)
 @php
-    // jsvectormap uses uppercase 2-letter codes
+    // jsvectormap world map uses lowercase 2-letter ISO codes
     $mapValues = [];
     $mapLabels = [];
     $maxClicks  = $countryBreakdown->max('clicks') ?: 1;
     foreach ($countryBreakdown as $code => $info) {
-        $upper = strtoupper($code);
-        $mapValues[$upper] = (int) $info['clicks'];
-        $mapLabels[$upper] = ($countryNames[$code] ?? $upper) . ': ' . number_format($info['clicks']) . ' clicks';
+        $lower = strtolower($code);
+        $mapValues[$lower] = (int) $info['clicks'];
+        $mapLabels[$lower] = ($countryNames[$code] ?? strtoupper($code)) . ': ' . number_format($info['clicks']) . ' clicks';
     }
 @endphp
 <script>
@@ -576,26 +576,9 @@ new ApexCharts(document.getElementById('osPieChart'), {
         document.head.appendChild(s);
     }
 
-    function interpolateColor(ratio) {
-        // low = #d1fae5 (209,250,229), high = #01BF63 (1,191,99)
-        const r = Math.round(209 + (1   - 209) * ratio);
-        const g = Math.round(250 + (191 - 250) * ratio);
-        const b = Math.round(229 + (99  - 229) * ratio);
-        return 'rgb(' + r + ',' + g + ',' + b + ')';
-    }
-
-    function buildRegionColors() {
-        const colors = {};
-        for (const code in mapValues) {
-            const ratio = Math.pow(mapValues[code] / maxVal, 0.4); // pow < 1 = softer curve
-            colors[code] = interpolateColor(ratio);
-        }
-        return colors;
-    }
-
     function initMap() {
         if (typeof jsVectorMap === 'undefined') { setTimeout(initMap, 80); return; }
-        const regionColors = buildRegionColors();
+
         new jsVectorMap({
             selector: '#worldMap',
             map: 'world',
@@ -604,18 +587,23 @@ new ApexCharts(document.getElementById('osPieChart'), {
             zoomButtons: false,
             regionStyle: {
                 initial:  { fill: '#e5e7eb', stroke: '#fff', strokeWidth: 0.5, fillOpacity: 1 },
-                hover:    { fillOpacity: 0.85, cursor: 'pointer' },
-                selected: { fill: '#01BF63' }
+                hover:    { fillOpacity: 0.80, cursor: 'pointer' },
+                selected: { fill: '#e5e7eb' }
             },
             series: {
                 regions: [{
                     attribute: 'fill',
-                    values: regionColors
+                    values: mapValues,
+                    scale: ['#d1fae5', '#01BF63'],
+                    normalizeFunction: 'polynomial',
+                    min: 0,
+                    max: maxVal
                 }]
             },
             onRegionTooltipShow: function(event, tooltip, code) {
-                if (mapLabels[code]) {
-                    tooltip.text(mapLabels[code], true);
+                const label = mapLabels[code] || mapLabels[code.toLowerCase()];
+                if (label) {
+                    tooltip.text(label, true);
                 }
             }
         });

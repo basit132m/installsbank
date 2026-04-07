@@ -9,22 +9,21 @@ use Illuminate\Http\Request;
 
 class ChatController extends Controller
 {
-    /** Return messages from the publisher's most recent open chat ticket */
+    /** Return messages from the publisher's most recent chat ticket (including closed) */
     public function messages()
     {
-        // Only approved publishers
         if (auth()->user()->status !== 'active') {
-            return response()->json(['ticket_id' => null, 'messages' => []]);
+            return response()->json(['ticket_id' => null, 'status' => null, 'messages' => []]);
         }
 
+        // Return the most recent chat ticket regardless of status (publisher sees history)
         $ticket = SupportTicket::where('user_id', auth()->id())
             ->where('is_chat', true)
-            ->whereIn('status', ['open', 'answered', 'replied'])
             ->latest()
             ->first();
 
         if (!$ticket) {
-            return response()->json(['ticket_id' => null, 'messages' => []]);
+            return response()->json(['ticket_id' => null, 'status' => null, 'messages' => []]);
         }
 
         $messages = $ticket->messages()->orderBy('created_at')->get()
@@ -37,27 +36,30 @@ class ChatController extends Controller
                 'created_at' => $m->created_at->toISOString(),
             ]);
 
-        return response()->json(['ticket_id' => $ticket->id, 'messages' => $messages]);
+        return response()->json([
+            'ticket_id' => $ticket->id,
+            'status'    => $ticket->status,
+            'messages'  => $messages,
+        ]);
     }
 
-    /** Send a message — creates a chat ticket if none exists */
+    /** Send a message — creates a new chat ticket if none or last is closed */
     public function send(Request $request)
     {
-        // Only approved publishers
         if (auth()->user()->status !== 'active') {
             return response()->json(['error' => 'Unauthorized'], 403);
         }
 
         $data = $request->validate(['message' => 'required|string|max:2000']);
 
-        $isNew = false;
+        $isNew  = false;
         $ticket = SupportTicket::where('user_id', auth()->id())
             ->where('is_chat', true)
-            ->whereIn('status', ['open', 'answered', 'replied'])
             ->latest()
             ->first();
 
-        if (!$ticket) {
+        // Create new ticket if none exists or last one is closed
+        if (!$ticket || $ticket->status === 'closed') {
             $ticket = SupportTicket::create([
                 'user_id'  => auth()->id(),
                 'subject'  => 'Live Chat — ' . now()->format('M d, Y'),
@@ -77,7 +79,7 @@ class ChatController extends Controller
             'is_staff'  => false,
         ]);
 
-        // Auto-reply on first message of a new chat
+        // Auto-reply on first message of a brand new chat
         if ($isNew) {
             SupportMessage::create([
                 'ticket_id' => $ticket->id,
@@ -91,6 +93,7 @@ class ChatController extends Controller
             'id'         => $msg->id,
             'message'    => $msg->message,
             'is_staff'   => false,
+            'ticket_id'  => $ticket->id,
             'sender'     => auth()->user()->name,
             'time'       => 'just now',
             'created_at' => $msg->created_at->toISOString(),

@@ -312,12 +312,17 @@
             </svg>
         </button>
     </div>
+    <div id="chatClosedBanner" style="display:none;padding:12px 16px;background:#f3f4f6;border-top:1px solid #e5e7eb;text-align:center;">
+        <div style="font-size:12px;color:#6b7280;margin-bottom:8px;">This chat session has been closed.</div>
+        <button onclick="startNewChat()" style="background:#01BF63;color:#fff;border:none;border-radius:8px;padding:7px 18px;font-size:13px;font-weight:600;cursor:pointer;">Start New Chat</button>
+    </div>
 </div>
 
 <script>
-let chatOpen = false;
-let lastMsgId = 0;
-let chatPollTimer = null;
+let chatOpen    = false;
+let lastMsgId   = 0;
+let currentTicketId = null;
+let chatClosed  = false;
 
 function toggleChat() {
     chatOpen = !chatOpen;
@@ -325,17 +330,15 @@ function toggleChat() {
     if (chatOpen) {
         loadMessages();
         document.getElementById('chatUnread').style.display = 'none';
-        document.getElementById('chatInput').focus();
+        if (!chatClosed) document.getElementById('chatInput').focus();
     }
 }
 
 function renderMsg(m) {
     const mine = !m.is_staff;
-    const initials = mine
-        ? '{{ strtoupper(substr(auth()->user()->name, 0, 1)) }}'
-        : 'S';
+    const initial = mine ? '{{ strtoupper(substr(auth()->user()->name, 0, 1)) }}' : 'S';
     return `<div class="chat-msg ${mine ? 'mine' : ''}">
-        <div class="chat-avatar ${mine ? '' : 'staff'}">${initials}</div>
+        <div class="chat-avatar ${mine ? '' : 'staff'}">${initial}</div>
         <div>
             <div class="chat-bubble">${escHtml(m.message)}</div>
             <div class="chat-time">${m.time}</div>
@@ -344,7 +347,20 @@ function renderMsg(m) {
 }
 
 function escHtml(s) {
-    return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function setChatClosed(closed) {
+    chatClosed = closed;
+    const inputArea  = document.getElementById('chatInputArea');
+    const closedBanner = document.getElementById('chatClosedBanner');
+    if (closed) {
+        inputArea.style.display   = 'none';
+        closedBanner.style.display = 'block';
+    } else {
+        inputArea.style.display    = '';
+        closedBanner.style.display = 'none';
+    }
 }
 
 function loadMessages() {
@@ -353,12 +369,24 @@ function loadMessages() {
     })
     .then(r => r.json())
     .then(data => {
-        const box = document.getElementById('chatMessages');
+        const box   = document.getElementById('chatMessages');
         const empty = document.getElementById('chatEmpty');
-        if (!data.messages.length) { empty.style.display = 'block'; return; }
+
+        // Handle ticket switch (new chat after closure)
+        if (data.ticket_id && data.ticket_id !== currentTicketId) {
+            currentTicketId = data.ticket_id;
+            lastMsgId = 0;
+        }
+
+        // Reflect closed status
+        setChatClosed(data.status === 'closed');
+
+        if (!data.messages || !data.messages.length) {
+            empty.style.display = 'block';
+            return;
+        }
         empty.style.display = 'none';
 
-        // Only re-render if there are new messages
         const newest = data.messages[data.messages.length - 1].id;
         if (newest === lastMsgId) return;
         lastMsgId = newest;
@@ -367,33 +395,42 @@ function loadMessages() {
             data.messages.map(renderMsg).join('');
         box.scrollTop = box.scrollHeight;
 
-        // Show unread dot if panel is closed and last msg is from staff
+        // Unread dot if panel closed and latest is from staff
         const last = data.messages[data.messages.length - 1];
         if (!chatOpen && last.is_staff) {
-            const unread = document.getElementById('chatUnread');
-            unread.style.display = 'flex';
-            unread.textContent = '!';
+            const dot = document.getElementById('chatUnread');
+            dot.style.display = 'flex';
+            dot.textContent   = '!';
         }
     });
 }
 
 function sendChat() {
     const input = document.getElementById('chatInput');
-    const msg = input.value.trim();
+    const msg   = input.value.trim();
     if (!msg) return;
     input.value = '';
 
     fetch('{{ route("publisher.chat.send") }}', {
         method: 'POST',
         headers: {
-            'Content-Type': 'application/json',
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-            'Accept': 'application/json'
+            'Content-Type':  'application/json',
+            'X-CSRF-TOKEN':  document.querySelector('meta[name="csrf-token"]').content,
+            'Accept':        'application/json'
         },
         body: JSON.stringify({ message: msg })
     })
     .then(r => r.json())
     .then(m => {
+        // If server created a new ticket (after closure), reset state
+        if (m.ticket_id && m.ticket_id !== currentTicketId) {
+            currentTicketId = m.ticket_id;
+            lastMsgId = 0;
+            setChatClosed(false);
+            // Reload all messages for the new ticket (includes auto-reply)
+            setTimeout(loadMessages, 800);
+            return;
+        }
         const box = document.getElementById('chatMessages');
         document.getElementById('chatEmpty').style.display = 'none';
         box.insertAdjacentHTML('beforeend', renderMsg(m));
@@ -402,10 +439,21 @@ function sendChat() {
     });
 }
 
+function startNewChat() {
+    // Reset UI and let user type a first message
+    setChatClosed(false);
+    currentTicketId = null;
+    lastMsgId       = 0;
+    const box = document.getElementById('chatMessages');
+    box.innerHTML = '<div id="chatEmpty" style="display:none"></div>';
+    document.getElementById('chatEmpty').style.display = 'block';
+    document.getElementById('chatInput').focus();
+}
+
 // Poll every 6 seconds
-setInterval(() => { if (chatOpen) loadMessages(); else loadMessages(); }, 6000);
-// Initial check for unread
-setTimeout(loadMessages, 2000);
+setInterval(loadMessages, 6000);
+// Initial check for unread (slight delay so page loads first)
+setTimeout(loadMessages, 1500);
 </script>
 <!-- ========== END LIVE CHAT ========== -->
 @endif

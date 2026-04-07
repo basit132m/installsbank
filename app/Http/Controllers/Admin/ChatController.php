@@ -87,7 +87,16 @@ class ChatController extends Controller
     public function close(SupportTicket $supportTicket)
     {
         abort_unless($supportTicket->is_chat, 404);
-        $supportTicket->update(['status' => 'closed']);
+
+        // Insert system closure message so publisher sees it in real-time
+        SupportMessage::create([
+            'ticket_id' => $supportTicket->id,
+            'user_id'   => null,
+            'message'   => '— This chat session has been closed by support. You may start a new chat anytime. —',
+            'is_staff'  => true,
+        ]);
+
+        $supportTicket->update(['status' => 'closed', 'last_reply_at' => now()]);
 
         if (request()->wantsJson()) {
             return response()->json(['status' => 'closed']);
