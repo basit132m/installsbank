@@ -11,21 +11,15 @@ class InstallRateController extends Controller
 {
     public function index()
     {
-        // Auto-import any new tracked countries not yet in install rates (at $0)
-        $existing = InstallCountryRate::pluck('country_code')->map('strtolower');
-        $toImport = CountryRate::whereNotIn('country_code', $existing)->get();
-        foreach ($toImport as $cr) {
-            InstallCountryRate::create([
-                'country_code' => strtolower($cr->country_code),
-                'country_name' => $cr->country_name,
-                'rate_usd'     => 0,
-                'is_active'    => true,
-            ]);
-        }
-
         $rates = InstallCountryRate::orderBy('country_name')->get();
 
-        return view('admin.install-rates.index', compact('rates'));
+        // Countries tracked in publisher click data but not yet in install_country_rates
+        $existing = $rates->pluck('country_code')->map('strtoupper');
+        $unsynced = CountryRate::whereNotIn('country_code', $existing->map('strtolower'))
+            ->orderBy('country_name')
+            ->get(['country_code', 'country_name']);
+
+        return view('admin.install-rates.index', compact('rates', 'unsynced'));
     }
 
     public function store(Request $request)
