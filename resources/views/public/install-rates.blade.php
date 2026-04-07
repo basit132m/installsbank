@@ -93,6 +93,15 @@
         .info-banner { background: linear-gradient(135deg, #f5f3ff, #ede9fe); border: 1px solid #c4b5fd; border-radius: 14px; padding: 24px 28px; margin-bottom: 36px; display: flex; align-items: flex-start; gap: 16px; }
         .info-icon { width: 42px; height: 42px; background: var(--accent); border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
 
+        /* How installs work */
+        .how-box { background: #faf5ff; border: 1.5px solid #e9d5ff; border-radius: 16px; padding: 28px 32px; margin-bottom: 36px; }
+        .how-box h3 { font-size: 17px; font-weight: 800; color: #5b21b6; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+        .how-steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; }
+        .how-step { text-align: center; padding: 16px; background: white; border-radius: 12px; border: 1px solid #e9d5ff; }
+        .how-step-num { width: 36px; height: 36px; background: var(--accent); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 16px; margin: 0 auto 10px; }
+        .how-step-title { font-size: 13px; font-weight: 700; color: #374151; margin-bottom: 4px; }
+        .how-step-text { font-size: 12px; color: #6b7280; line-height: 1.5; }
+
         footer { background: #0f172a; color: #94a3b8; padding: 60px 5% 30px; }
         .footer-grid { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 40px; margin-bottom: 48px; }
         .footer-brand { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
@@ -184,11 +193,41 @@
 <section class="content">
     <div class="content-inner">
 
+        <!-- How Installs Work -->
+        <div class="how-box">
+            <h3>
+                <svg width="18" height="18" fill="none" stroke="#7c3aed" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                How Installs Are Counted
+            </h3>
+            <div class="how-steps">
+                <div class="how-step">
+                    <div class="how-step-num">1</div>
+                    <div class="how-step-title">Visitor Clicks</div>
+                    <div class="how-step-text">A Windows visitor from your site clicks your tracking link and lands on the destination page.</div>
+                </div>
+                <div class="how-step">
+                    <div class="how-step-num">2</div>
+                    <div class="how-step-title">Clicks Accumulate</div>
+                    <div class="how-step-text">Unique clicks per country accumulate. Once they reach the daily threshold, an install is recorded.</div>
+                </div>
+                <div class="how-step">
+                    <div class="how-step-num">3</div>
+                    <div class="how-step-title">Install Recorded</div>
+                    <div class="how-step-text">The install is credited to your account at the rate for that visitor's country.</div>
+                </div>
+                <div class="how-step">
+                    <div class="how-step-num">4</div>
+                    <div class="how-step-title">Earnings Added</div>
+                    <div class="how-step-text">Your balance is updated in real time. Withdraw any time you reach the minimum threshold.</div>
+                </div>
+            </div>
+        </div>
+
         <!-- Info Banner -->
         <div class="info-banner">
             <div class="info-icon">
                 <svg width="20" height="20" fill="none" stroke="white" viewBox="0 0 24 24" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"/>
                 </svg>
             </div>
             <div>
@@ -197,6 +236,8 @@
                     These rates apply only to publishers on the <strong>Installs-Based</strong> contract. Rates shown are per single verified install from each country and are updated live by our team. Remember these rates are not fixed ones — they can be changed on a daily basis depending upon the advertiser campaigns.
                 </p>
             </div>
+        </div>
+
         <!-- Search -->
         <div class="search-wrap">
             <svg class="search-icon" width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
