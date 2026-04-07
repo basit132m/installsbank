@@ -14,6 +14,20 @@
 </div>
 @endif
 
+@if($profile->test_payout_eligible)
+<div style="background:linear-gradient(135deg,#065f46,#059669);border-radius:14px;padding:18px 22px;margin-bottom:20px;display:flex;align-items:flex-start;gap:14px;">
+    <div style="width:40px;height:40px;background:rgba(255,255,255,0.15);border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+        <svg width="20" height="20" fill="none" stroke="white" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+    </div>
+    <div>
+        <div style="font-size:15px;font-weight:700;color:white;margin-bottom:4px;">Test Period Payment Ready</div>
+        <div style="font-size:13px;color:rgba(255,255,255,0.85);line-height:1.6;">
+            Your 2-day traffic test payment has been credited to your balance. You can withdraw it <strong>right now</strong> — the minimum withdrawal threshold does not apply to this payment.
+        </div>
+    </div>
+</div>
+@endif
+
 <!-- Balance Overview -->
 <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;margin-bottom:24px;">
     <div class="card" style="border:2px solid #01BF63;text-align:center;padding:24px 16px;">
@@ -75,7 +89,7 @@
                 <div style="font-size:12px;color:#9ca3af;margin-top:2px;">Available on: {{ $withdrawalDaysLabel }} (USA Eastern Time)</div>
             @endif
         </div>
-        @if($isWeekend && $profile->balance >= $threshold && $profile->payment_address && !Withdrawal_pending($profile))
+        @if($isWeekend && ($profile->balance >= $threshold || $profile->test_payout_eligible) && $profile->balance > 0 && $profile->payment_address && !Withdrawal_pending($profile))
         <button onclick="document.getElementById('withdrawModal').style.display='flex'" class="btn btn-primary">
             Request Withdrawal
         </button>
@@ -243,6 +257,11 @@ function Withdrawal_pending($profile) {
             </div>
         </div>
 
+        <!-- Hash warning -->
+        <div id="txHashWarning" style="display:none;background:#fff7ed;border:1px solid #fed7aa;border-radius:8px;padding:10px 14px;font-size:12px;color:#92400e;margin-bottom:16px;line-height:1.6;">
+            ⚠️ <strong>This may not be a valid transaction hash.</strong> It looks like a wallet address was recorded instead. Please contact support to get the correct transaction ID.
+        </div>
+
         <!-- Explorer link -->
         <a id="txExplorerLink" href="#" target="_blank" rel="noopener noreferrer"
             style="display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:12px;background:#0f172a;color:white;border-radius:10px;font-size:14px;font-weight:700;text-decoration:none;transition:opacity .15s;"
@@ -275,6 +294,11 @@ function showTxProof(hash, networkLabel, networkKey, amount) {
     document.getElementById('txHash').textContent = hash;
     document.getElementById('txAmount').textContent = '$' + amount;
     document.getElementById('txNetwork').textContent = networkLabel;
+
+    // Detect if hash looks like a wallet address instead of a tx hash
+    const isWalletAddr = /^0x[0-9a-fA-F]{40}$/.test(hash);
+    const txWarnEl = document.getElementById('txHashWarning');
+    txWarnEl.style.display = isWalletAddr ? 'block' : 'none';
 
     const explorer = explorerMap[networkKey] || { url: 'https://bscscan.com/tx/', label: 'View on Block Explorer' };
     document.getElementById('txExplorerLink').href = explorer.url + hash;

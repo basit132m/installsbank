@@ -110,8 +110,16 @@
             @csrf
             <div class="form-group">
                 <label class="form-label">Transaction ID (optional)</label>
-                <input type="text" name="receipt_hash" class="form-control" placeholder="Paste blockchain transaction ID...">
-                <div style="font-size:12px;color:#9ca3af;margin-top:4px;">Publisher will see this transaction ID as payment proof.</div>
+                <input type="text" name="receipt_hash" id="txInput-{{ $w->id }}" class="form-control" placeholder="Paste blockchain transaction ID..." oninput="validateTxHash(this, '{{ $w->id }}')">
+                <div id="txWarn-{{ $w->id }}" style="display:none;margin-top:6px;background:#fee2e2;border:1px solid #fca5a5;border-radius:7px;padding:9px 12px;font-size:12px;color:#991b1b;line-height:1.5;">
+                    ⚠️ <strong>This looks like a wallet address, not a transaction ID.</strong><br>
+                    A BEP20/ERC20 transaction hash is <strong>66 characters</strong> long (starts with <code>0x</code> followed by 64 hex digits).<br>
+                    A wallet address is only 42 characters. Please paste the correct TX hash from your exchange or wallet.
+                </div>
+                <div id="txOk-{{ $w->id }}" style="display:none;margin-top:6px;background:#d1fae5;border:1px solid #86efac;border-radius:7px;padding:7px 12px;font-size:12px;color:#065f46;">
+                    ✓ Looks like a valid transaction hash.
+                </div>
+                <div style="font-size:12px;color:#9ca3af;margin-top:4px;">Publisher will see this as payment proof. Make sure it's a TX hash, not a wallet address.</div>
             </div>
             <div style="display:flex;gap:8px;margin-top:8px;">
                 <button type="submit" class="btn btn-success">Mark as Paid</button>
@@ -142,3 +150,35 @@
 @endif
 @endforeach
 @endsection
+
+<script>
+function validateTxHash(input, id) {
+    const val = input.value.trim();
+    const warn = document.getElementById('txWarn-' + id);
+    const ok   = document.getElementById('txOk-'   + id);
+    if (!val) { warn.style.display = 'none'; ok.style.display = 'none'; return; }
+
+    // EVM wallet address: 0x + 40 hex chars = 42 total
+    const isWalletAddr = /^0x[0-9a-fA-F]{40}$/.test(val);
+    // EVM tx hash: 0x + 64 hex chars = 66 total
+    const isEvmTx = /^0x[0-9a-fA-F]{64}$/.test(val);
+    // TRC20 tx hash: 64 hex chars (no 0x)
+    const isTronTx = /^[0-9a-fA-F]{64}$/.test(val);
+    // BTC tx hash: 64 hex chars
+    const isBtcTx  = isTronTx;
+
+    if (isWalletAddr) {
+        warn.style.display = 'block';
+        ok.style.display   = 'none';
+        input.style.borderColor = '#ef4444';
+    } else if (isEvmTx || isTronTx) {
+        warn.style.display = 'none';
+        ok.style.display   = 'block';
+        input.style.borderColor = '#10b981';
+    } else {
+        warn.style.display = 'none';
+        ok.style.display   = 'none';
+        input.style.borderColor = '';
+    }
+}
+</script>

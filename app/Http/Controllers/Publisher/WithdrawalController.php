@@ -47,7 +47,8 @@ class WithdrawalController extends Controller
 
         $threshold = (float) Setting::get('withdrawal_threshold', 10);
 
-        if ($profile->balance < $threshold) {
+        // Test-period payout: bypass threshold once for publishers who completed the 48h test
+        if (!$profile->test_payout_eligible && $profile->balance < $threshold) {
             return back()->with('error', "Minimum withdrawal amount is \${$threshold}.");
         }
 
@@ -72,10 +73,11 @@ class WithdrawalController extends Controller
             'requested_at'   => now(),
         ]);
 
-        // Move balance to pending
+        // Move balance to pending; clear the one-time threshold bypass flag
         $profile->update([
-            'pending_balance' => $profile->pending_balance + $amount,
-            'balance'         => 0,
+            'pending_balance'      => $profile->pending_balance + $amount,
+            'balance'              => 0,
+            'test_payout_eligible' => false,
         ]);
 
         return back()->with('success', 'Withdrawal request submitted. Your balance is now pending. Payments are processed before the end of Sunday.');
