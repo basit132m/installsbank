@@ -22,8 +22,14 @@ class WithdrawalController extends Controller
 
     public function saveAddress(Request $request)
     {
+        $validNetworks = [
+            'usdt_trc20','usdt_bep20','usdt_erc20','usdt_ton',
+            'btc','eth','bnb','trx','sol','ltc','xrp',
+            'usdc_erc20','usdc_bep20','usdc_sol',
+        ];
+
         $data = $request->validate([
-            'payment_network' => 'required|in:trc20,bep20',
+            'payment_network' => 'required|in:' . implode(',', $validNetworks),
             'payment_address' => 'required|string|max:200',
         ]);
 
@@ -68,7 +74,7 @@ class WithdrawalController extends Controller
             'amount'         => $amount,
             'network'        => $profile->payment_network,
             'wallet_address' => $profile->payment_address,
-            'method'         => 'usdt_' . $profile->payment_network,
+            'method'         => $profile->payment_network, // full key e.g. usdt_bep20, btc, eth
             'status'         => 'pending',
             'requested_at'   => now(),
         ]);

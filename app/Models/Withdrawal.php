@@ -25,10 +25,26 @@ class Withdrawal extends Model
 
     public function networkLabel(): string
     {
-        return match($this->network ?? $this->method ?? '') {
-            'trc20', 'usdt_trc20' => 'USDT (TRC20)',
-            'bep20', 'usdt_bep20' => 'USDT (BEP20)',
-            default => strtoupper($this->network ?? $this->method ?? '—'),
-        };
+        $map = [
+            'usdt_trc20'  => 'USDT (TRC20)',
+            'trc20'       => 'USDT (TRC20)',
+            'usdt_bep20'  => 'USDT (BEP20)',
+            'bep20'       => 'USDT (BEP20)',
+            'usdt_erc20'  => 'USDT (ERC20)',
+            'erc20'       => 'USDT (ERC20)',
+            'usdt_ton'    => 'USDT (TON)',
+            'btc'         => 'Bitcoin (BTC)',
+            'eth'         => 'Ethereum (ETH)',
+            'bnb'         => 'BNB (BEP20)',
+            'trx'         => 'TRON (TRX)',
+            'sol'         => 'Solana (SOL)',
+            'ltc'         => 'Litecoin (LTC)',
+            'xrp'         => 'XRP (Ripple)',
+            'usdc_erc20'  => 'USDC (ERC20)',
+            'usdc_bep20'  => 'USDC (BEP20)',
+            'usdc_sol'    => 'USDC (Solana)',
+        ];
+        $key = $this->network ?? $this->method ?? '';
+        return $map[$key] ?? strtoupper($key) ?: '—';
     }
 }

@@ -52,26 +52,74 @@
 
 <!-- Payment Address Card -->
 <div class="card mb-6">
-    <div class="card-title mb-4">Payment Address</div>
+    <div class="card-title mb-1">Crypto Payment Address</div>
+    <p style="font-size:13px;color:#6b7280;margin-bottom:20px;">Select your preferred crypto network and provide your wallet address. Only cryptocurrency payments are supported.</p>
     <form method="POST" action="{{ route('publisher.withdrawals.save-address') }}">
         @csrf
-        <div style="display:grid;grid-template-columns:1fr 1fr auto;gap:12px;align-items:flex-end;flex-wrap:wrap;">
+
+        @php
+        $nets = [
+            'USDT' => [
+                'usdt_trc20' => 'USDT — TRC20 (Tron)',
+                'usdt_bep20' => 'USDT — BEP20 (Binance Smart Chain)',
+                'usdt_erc20' => 'USDT — ERC20 (Ethereum)',
+                'usdt_ton'   => 'USDT — TON (Telegram)',
+            ],
+            'Major Coins' => [
+                'btc' => 'Bitcoin (BTC)',
+                'eth' => 'Ethereum (ETH)',
+                'bnb' => 'BNB (BEP20 — BSC)',
+                'trx' => 'TRON (TRX)',
+                'sol' => 'Solana (SOL)',
+                'ltc' => 'Litecoin (LTC)',
+                'xrp' => 'XRP (Ripple)',
+            ],
+            'Other Stablecoins' => [
+                'usdc_erc20' => 'USDC — ERC20 (Ethereum)',
+                'usdc_bep20' => 'USDC — BEP20 (BSC)',
+                'usdc_sol'   => 'USDC — Solana',
+            ],
+        ];
+        @endphp
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;">
             <div class="form-group" style="margin-bottom:0;">
-                <label class="form-label">Network</label>
-                <select name="payment_network" class="form-control form-select" required>
-                    <option value="">Select network</option>
-                    <option value="trc20" {{ $profile->payment_network === 'trc20' ? 'selected' : '' }}>USDT — TRC20 (Tron)</option>
-                    <option value="bep20" {{ $profile->payment_network === 'bep20' ? 'selected' : '' }}>USDT — BEP20 (BSC)</option>
+                <label class="form-label">Crypto Network <span style="color:#ef4444;">*</span></label>
+                <select name="payment_network" class="form-control form-select" required onchange="updateAddressPlaceholder(this.value)">
+                    <option value="">— Select crypto network —</option>
+                    @foreach($nets as $group => $options)
+                    <optgroup label="{{ $group }}">
+                        @foreach($options as $val => $label)
+                        <option value="{{ $val }}" {{ $profile->payment_network === $val ? 'selected' : '' }}>{{ $label }}</option>
+                        @endforeach
+                    </optgroup>
+                    @endforeach
                 </select>
             </div>
             <div class="form-group" style="margin-bottom:0;">
-                <label class="form-label">USDT Wallet Address</label>
-                <input type="text" name="payment_address" class="form-control" placeholder="Your USDT wallet address" value="{{ $profile->payment_address ?? '' }}" required style="font-family:monospace;">
+                <label class="form-label">Wallet Address <span style="color:#ef4444;">*</span></label>
+                <input type="text" name="payment_address" id="walletAddressInput" class="form-control"
+                    placeholder="Your wallet address"
+                    value="{{ $profile->payment_address ?? '' }}" required
+                    style="font-family:monospace;font-size:13px;">
             </div>
-            <button type="submit" class="btn btn-primary">Save Address</button>
         </div>
-        <div style="font-size:12px;color:#9ca3af;margin-top:10px;">
-            Double-check your wallet address before saving. Payments sent to an incorrect address cannot be recovered.
+
+        @if($profile->payment_network && $profile->payment_address)
+        <div style="background:#f0fdf4;border:1px solid #86efac;border-radius:8px;padding:10px 14px;font-size:13px;color:#065f46;margin-bottom:14px;display:flex;align-items:center;gap:8px;">
+            <svg width="14" height="14" fill="none" stroke="#059669" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+            <strong>Current:</strong>&nbsp;
+            @php
+                $allNets = array_merge(...array_values($nets));
+                echo ($allNets[$profile->payment_network] ?? strtoupper($profile->payment_network)) . ' — ';
+            @endphp
+            <span style="font-family:monospace;">{{ substr($profile->payment_address, 0, 16) }}...{{ substr($profile->payment_address, -6) }}</span>
+        </div>
+        @endif
+
+        <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+            <button type="submit" class="btn btn-primary">Save Address</button>
+            <span style="font-size:12px;color:#9ca3af;">⚠️ Double-check before saving — payments to wrong addresses cannot be recovered.</span>
         </div>
     </form>
 </div>
@@ -278,13 +326,23 @@ function Withdrawal_pending($profile) {
 
 <script>
 const explorerMap = {
-    'usdt_bep20': { url: 'https://bscscan.com/tx/', label: 'View on BscScan (BEP20)' },
-    'bep20':      { url: 'https://bscscan.com/tx/', label: 'View on BscScan (BEP20)' },
-    'usdt_trc20': { url: 'https://tronscan.org/#/transaction/', label: 'View on TronScan (TRC20)' },
-    'trc20':      { url: 'https://tronscan.org/#/transaction/', label: 'View on TronScan (TRC20)' },
-    'usdt_erc20': { url: 'https://etherscan.io/tx/', label: 'View on Etherscan (ERC20)' },
-    'erc20':      { url: 'https://etherscan.io/tx/', label: 'View on Etherscan (ERC20)' },
-    'btc':        { url: 'https://blockstream.info/tx/', label: 'View on Blockstream (BTC)' },
+    'usdt_trc20':  { url: 'https://tronscan.org/#/transaction/', label: 'View on TronScan (TRC20)' },
+    'trc20':       { url: 'https://tronscan.org/#/transaction/', label: 'View on TronScan (TRC20)' },
+    'usdt_bep20':  { url: 'https://bscscan.com/tx/', label: 'View on BscScan (BEP20)' },
+    'bep20':       { url: 'https://bscscan.com/tx/', label: 'View on BscScan (BEP20)' },
+    'usdt_erc20':  { url: 'https://etherscan.io/tx/', label: 'View on Etherscan (ERC20)' },
+    'erc20':       { url: 'https://etherscan.io/tx/', label: 'View on Etherscan (ERC20)' },
+    'usdt_ton':    { url: 'https://tonscan.org/tx/', label: 'View on TonScan (TON)' },
+    'btc':         { url: 'https://blockstream.info/tx/', label: 'View on Blockstream (BTC)' },
+    'eth':         { url: 'https://etherscan.io/tx/', label: 'View on Etherscan (ETH)' },
+    'bnb':         { url: 'https://bscscan.com/tx/', label: 'View on BscScan (BNB)' },
+    'trx':         { url: 'https://tronscan.org/#/transaction/', label: 'View on TronScan (TRX)' },
+    'sol':         { url: 'https://solscan.io/tx/', label: 'View on Solscan (SOL)' },
+    'ltc':         { url: 'https://blockchair.com/litecoin/transaction/', label: 'View on Blockchair (LTC)' },
+    'xrp':         { url: 'https://xrpscan.com/tx/', label: 'View on XRPScan' },
+    'usdc_erc20':  { url: 'https://etherscan.io/tx/', label: 'View on Etherscan (USDC ERC20)' },
+    'usdc_bep20':  { url: 'https://bscscan.com/tx/', label: 'View on BscScan (USDC BEP20)' },
+    'usdc_sol':    { url: 'https://solscan.io/tx/', label: 'View on Solscan (USDC SOL)' },
 };
 
 let currentHash = '';
@@ -324,6 +382,27 @@ function copyTxHash() {
 document.getElementById('txProofModal').addEventListener('click', function(e) {
     if (e.target === this) this.style.display = 'none';
 });
+
+const placeholders = {
+    'usdt_trc20': 'T... (Tron / TRC20 address)',
+    'usdt_bep20': '0x... (BSC / BEP20 address)',
+    'usdt_erc20': '0x... (Ethereum / ERC20 address)',
+    'usdt_ton':   'UQ... (TON address)',
+    'btc':        'bc1... or 1... or 3... (Bitcoin address)',
+    'eth':        '0x... (Ethereum address)',
+    'bnb':        '0x... (BSC / BEP20 address)',
+    'trx':        'T... (TRON address)',
+    'sol':        'Base58 Solana address',
+    'ltc':        'L... or M... (Litecoin address)',
+    'xrp':        'r... (XRP address)',
+    'usdc_erc20': '0x... (Ethereum address)',
+    'usdc_bep20': '0x... (BSC address)',
+    'usdc_sol':   'Base58 Solana address',
+};
+function updateAddressPlaceholder(network) {
+    const input = document.getElementById('walletAddressInput');
+    if (input) input.placeholder = placeholders[network] || 'Your wallet address';
+}
 </script>
 
 @endsection
