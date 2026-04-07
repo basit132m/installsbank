@@ -211,6 +211,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin,manager'
 
     // Live Chat (admin side)
     Route::prefix('chat')->name('chat.')->group(function () {
+        Route::get('/latest-unread', [Admin\ChatController::class, 'latestUnread'])->name('latest-unread');
         Route::get('/', [Admin\ChatController::class, 'index'])->name('index');
         Route::get('/{supportTicket}', [Admin\ChatController::class, 'show'])->name('show');
         Route::get('/{supportTicket}/messages', [Admin\ChatController::class, 'messages'])->name('messages');

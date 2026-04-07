@@ -9,6 +9,17 @@ use Illuminate\Http\Request;
 
 class ChatController extends Controller
 {
+    /** Latest unread chat message ID — for global sound polling */
+    public function latestUnread()
+    {
+        $latest = SupportMessage::whereHas('ticket', fn($q) => $q->where('is_chat', true))
+            ->where('is_staff', false)
+            ->latest()
+            ->value('id') ?? 0;
+
+        return response()->json(['latest_id' => $latest]);
+    }
+
     /** List all live chat conversations */
     public function index()
     {

@@ -13,7 +13,7 @@
 
 {{-- Period Filter + Export --}}
 <div style="display:flex;align-items:center;gap:8px;margin-bottom:24px;flex-wrap:wrap;">
-    @foreach(['1' => 'Today', 'last7' => 'Last 7 Days', 'month' => 'Current Month', '7' => '7 Days (incl. today)', '30' => '30 Days', '90' => '90 Days', 'all' => 'All Time'] as $val => $label)
+    @foreach(['1' => 'Today', '7' => '7 Days', '30' => '30 Days', '90' => '90 Days', 'all' => 'All Time'] as $val => $label)
         <a href="?period={{ $val }}" class="btn btn-sm {{ $period == $val ? 'btn-primary' : 'btn-ghost' }}">{{ $label }}</a>
     @endforeach
     <a href="{{ route('admin.publishers.stats.export', [$user, 'period' => $period]) }}"

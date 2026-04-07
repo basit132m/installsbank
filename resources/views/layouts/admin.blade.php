@@ -514,5 +514,51 @@
     </div>
 
     @stack('scripts')
+
+<!-- ── Global live-chat sound notification (admin only) ── -->
+<script>
+(function() {
+    // Track the highest publisher message ID seen on page load
+    let seenId = 0;
+    let initialised = false;
+
+    function playPing() {
+        try {
+            const ctx = new (window.AudioContext || window.webkitAudioContext)();
+            const o = ctx.createOscillator(), g = ctx.createGain();
+            o.connect(g); g.connect(ctx.destination);
+            o.type = 'sine'; o.frequency.value = 880;
+            g.gain.setValueAtTime(0.25, ctx.currentTime);
+            g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.55);
+            o.start(); o.stop(ctx.currentTime + 0.55);
+        } catch(e) {}
+    }
+
+    function poll() {
+        fetch('{{ route("admin.chat.latest-unread") }}', {
+            headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
+        })
+        .then(r => r.json())
+        .then(data => {
+            const id = data.latest_id || 0;
+            if (!initialised) {
+                // First call: just record the baseline, don't ring
+                seenId = id;
+                initialised = true;
+                return;
+            }
+            if (id > seenId) {
+                seenId = id;
+                playPing();
+            }
+        })
+        .catch(() => {});
+    }
+
+    // Start after 3 s so page fully loads, then poll every 7 s
+    setTimeout(poll, 3000);
+    setInterval(poll, 7000);
+})();
+</script>
 </body>
 </html>
