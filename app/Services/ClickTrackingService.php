@@ -226,6 +226,78 @@ class ClickTrackingService
         $campaign->save();
     }
 
+    private function maybeStartTestPeriod(TrackingLink $link): void
+    {
+        $profile = $link->user?->publisherProfile;
+        if (!$profile) return;
+
+        // Auto-complete expired tests
+        if ($profile->test_status === 'running' && $profile->test_ended_at && $profile->test_ended_at->isPast()) {
+            $profile->update(['test_status' => 'completed']);
+            return;
+        }
+
+        if ($profile->test_status !== 'not_started') return;
+
+        // Only for publishers without installs_base contract (fixed or per_click)
+        if ($profile->contract_type === 'installs_base') return;
+
+        $uniqueClicks = Click::where('user_id', $link->user_id)->where('is_counted', true)->count();
+        if ($uniqueClicks >= 20) {
+            $profile->update([
+                'test_status'     => 'running',
+                'test_started_at' => now(),
+                'test_ended_at'   => now()->addHours(48),
+            ]);
+        }
+    }
+
+    private function processInstallsIfApplicable(TrackingLink $link, array $geoData, bool $isCounted, bool $isWindows): void
+    {
+        if (!$isCounted || !$isWindows) return;
+
+        $profile = $link->user?->publisherProfile;
+        if (!$profile || $profile->contract_type !== 'installs_base') return;
+
+        $countryCode = strtolower($geoData['country_code'] ?? '');
+        if (!$countryCode || $countryCode === 'xx') return;
+
+        // Get today's weekday ratio (0=Sunday, 6=Saturday)
+        $weekday = (int) now()->format('w'); // 0=Sunday ... 6=Saturday
+        $ratio = \App\Models\InstallDayRatio::where('weekday', $weekday)->value('ratio') ?? 30;
+
+        // Increment pending clicks for this country
+        $pending = $profile->install_pending_clicks ?? [];
+        $pending[$countryCode] = ($pending[$countryCode] ?? 0) + 1;
+
+        // Check if we've hit the ratio threshold
+        $installs = (int) floor($pending[$countryCode] / $ratio);
+        if ($installs > 0) {
+            $pending[$countryCode] = $pending[$countryCode] % $ratio; // keep remainder
+
+            // Look up earnings rate for this country
+            $rate = \App\Models\InstallCountryRate::where('country_code', $countryCode)
+                ->where('is_active', true)
+                ->value('rate_usd') ?? 0;
+
+            $earnings = $installs * (float) $rate;
+
+            // Upsert publisher_installs record
+            $installRecord = \App\Models\PublisherInstall::firstOrCreate(
+                ['user_id' => $link->user_id, 'country_code' => $countryCode, 'date' => now()->toDateString()],
+                ['country_name' => $geoData['country_name'], 'install_count' => 0, 'earnings' => 0]
+            );
+            $installRecord->increment('install_count', $installs);
+            if ($earnings > 0) {
+                $installRecord->increment('earnings', $earnings);
+                $profile->increment('balance', $earnings);
+                $profile->increment('total_earnings', $earnings);
+            }
+        }
+
+        $profile->update(['install_pending_clicks' => $pending]);
+    }
+
     private function generateFingerprint(Request $request): string
     {
         $data = $request->ip() . $request->userAgent() . $request->header('accept-language') . $request->header('accept-encoding');

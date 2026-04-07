@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Announcement;
 use App\Models\Click;
 use App\Models\DailyEarning;
+use App\Models\PublisherInstall;
 use Carbon\Carbon;
 
 class DashboardController extends Controller
@@ -62,15 +63,25 @@ class DashboardController extends Controller
             ->get()
             ->mapWithKeys(fn($row) => [$row->os ?: 'Unknown' => ['clicks' => $row->clicks]]);
 
-        $pendingContract = $user->contracts()->where('status', 'pending')->latest()->first();
+        $pendingContracts = $user->contracts()->where('status', 'pending')->latest()->get();
+        $pendingContract = $pendingContracts->first(); // backward compat
         $hasTestRunning = $profile->test_status === 'running';
         $announcements = Announcement::where('is_active', true)->latest()->get();
+
+        // Installs today (for installs_base publishers)
+        $installsToday = null;
+        if ($profile->contract_type === 'installs_base') {
+            $installsToday = PublisherInstall::where('user_id', $user->id)
+                ->where('date', today()->toDateString())
+                ->orderByDesc('install_count')
+                ->get();
+        }
 
         return view('publisher.dashboard', compact(
             'user', 'profile', 'contract', 'divider',
             'stats', 'clicksChart', 'countryBreakdown', 'osBreakdown',
-            'pendingContract', 'hasTestRunning', 'showEarnings',
-            'announcements'
+            'pendingContract', 'pendingContracts', 'hasTestRunning', 'showEarnings',
+            'announcements', 'installsToday'
         ));
     }
 

@@ -121,17 +121,58 @@
     <!-- 48-Hour Test Results -->
     <div class="card">
         <div class="card-title mb-1">48-Hour Test Results</div>
-        <div class="card-subtitle mb-4" style="font-size:12px;">Status: <strong>{{ ucfirst($user->publisherProfile?->test_status ?? 'not_started') }}</strong></div>
-        @if($user->publisherProfile?->test_total_clicks !== null)
+        @php $testStatus = $user->publisherProfile?->test_status ?? 'not_started'; @endphp
+        <div class="card-subtitle mb-4" style="font-size:12px;">
+            Status:
+            <strong style="color:{{ $testStatus === 'running' ? '#01BF63' : ($testStatus === 'completed' ? '#3b82f6' : '#6b7280') }};">
+                {{ ucfirst(str_replace('_', ' ', $testStatus)) }}
+            </strong>
+        </div>
+
+        @if($testStatus === 'not_started')
+            <div style="background:#f9fafb;border-radius:8px;padding:12px;margin-bottom:12px;font-size:13px;color:#6b7280;">
+                Waiting for <strong>20 unique clicks</strong> to auto-trigger the 48-hour test period.
+            </div>
+        @elseif($testStatus === 'running')
+            @php
+                $endAt = $user->publisherProfile->test_ended_at;
+                $startAt = $user->publisherProfile->test_started_at;
+                $hoursLeft = $endAt ? max(0, now()->diffInHours($endAt, false)) : 0;
+                $minsLeft  = $endAt ? max(0, now()->diffInMinutes($endAt, false) % 60) : 0;
+            @endphp
             <div style="background:#e6faf2;padding:12px;border-radius:8px;margin-bottom:12px;">
+                <div style="font-size:18px;font-weight:800;color:#01BF63;">{{ $hoursLeft }}h {{ $minsLeft }}m remaining</div>
+                <div style="font-size:11px;color:#6b7280;margin-top:4px;">
+                    Started: {{ $startAt?->format('M d, Y H:i') ?? '—' }} &nbsp;·&nbsp;
+                    Ends: {{ $endAt?->format('M d, Y H:i') ?? '—' }}
+                </div>
+            </div>
+            @php $liveClicks = \App\Models\Click::where('user_id', $user->id)->where('is_counted', true)->count(); @endphp
+            <div style="font-size:13px;color:#374151;margin-bottom:12px;">Current counted clicks: <strong>{{ number_format($liveClicks) }}</strong></div>
+        @elseif($testStatus === 'completed')
+            @php
+                $startAt = $user->publisherProfile->test_started_at;
+                $endAt   = $user->publisherProfile->test_ended_at;
+                $duration = ($startAt && $endAt) ? $startAt->diffForHumans($endAt, true) : '—';
+                $testClicks = \App\Models\Click::where('user_id', $user->id)->where('is_counted', true)->count();
+            @endphp
+            <div style="background:#dbeafe;padding:12px;border-radius:8px;margin-bottom:12px;">
+                <div style="font-size:14px;font-weight:700;color:#1e40af;">Test Completed</div>
+                <div style="font-size:12px;color:#1e40af;margin-top:4px;">Duration: {{ $duration }}</div>
+                <div style="font-size:12px;color:#1e40af;">Total counted clicks: <strong>{{ number_format($testClicks) }}</strong></div>
+            </div>
+        @endif
+
+        @if($user->publisherProfile?->test_total_clicks !== null)
+            <div style="background:#f0fdf4;padding:12px;border-radius:8px;margin-bottom:12px;">
                 <div style="font-size:20px;font-weight:800;color:#01BF63;">{{ number_format($user->publisherProfile->test_total_clicks) }}</div>
-                <div style="font-size:12px;color:#6b7280;">Total Clicks Entered</div>
+                <div style="font-size:12px;color:#6b7280;">Test Clicks (Manually Entered)</div>
             </div>
         @endif
         <form method="POST" action="{{ route('admin.publishers.test-results', $user) }}">
             @csrf
             <div class="form-group">
-                <label class="form-label">Enter Total Clicks</label>
+                <label class="form-label">Enter Total Clicks (manual override)</label>
                 <input type="number" name="test_total_clicks" class="form-control" value="{{ $user->publisherProfile?->test_total_clicks ?? '' }}" placeholder="e.g. 5200" min="0">
             </div>
             <button type="submit" class="btn btn-primary" style="width:100%;">Update Results</button>
@@ -141,13 +182,26 @@
     <!-- Offer Contract -->
     <div class="card">
         <div class="card-title mb-1">Offer Contract</div>
-        <div class="card-subtitle mb-4" style="font-size:12px;">Publisher will accept or reject in their dashboard.</div>
-        @php $pendingContract = $user->contracts()->where('status','pending')->first(); @endphp
-        @if($pendingContract)
-            <div class="alert" style="background:#fef3c7;color:#92400e;border:1px solid #fde68a;">
-                Pending contract: {{ ucfirst($pendingContract->type) }} at ${{ $pendingContract->rate }}
+        <div class="card-subtitle mb-4" style="font-size:12px;">Publisher will accept or reject in their dashboard. Multiple offers can be pending simultaneously.</div>
+        @php $pendingContracts = $user->contracts()->where('status','pending')->get(); @endphp
+        @if($pendingContracts->isNotEmpty())
+            <div style="margin-bottom:16px;">
+                <div style="font-size:12px;font-weight:600;color:#6b7280;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:8px;">Pending Offers</div>
+                @foreach($pendingContracts as $pc)
+                <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:#fef3c7;border-radius:8px;margin-bottom:6px;gap:8px;">
+                    <span style="font-size:13px;color:#92400e;font-weight:600;">
+                        {{ ucfirst(str_replace('_', ' ', $pc->type)) }}
+                        @if($pc->rate > 0) · ${{ $pc->rate }}@endif
+                        @if($pc->admin_note) <span style="font-weight:400;font-size:11px;">({{ $pc->admin_note }})</span>@endif
+                    </span>
+                    <form method="POST" action="{{ route('admin.contracts.expire', $pc) }}" style="flex-shrink:0;">
+                        @csrf
+                        <button type="submit" style="padding:3px 10px;background:#fee2e2;color:#991b1b;border:none;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;">Expire</button>
+                    </form>
+                </div>
+                @endforeach
             </div>
-        @else
+        @endif
         <form method="POST" action="{{ route('admin.contracts.offer', $user) }}">
             @csrf
             <div class="form-group">
@@ -155,6 +209,7 @@
                 <select name="type" class="form-control form-select" id="contractType" onchange="toggleRate()">
                     <option value="per_click">Per 1,000 Unique Clicks</option>
                     <option value="fixed">Fixed Daily Rate</option>
+                    <option value="installs_base">Installs Based</option>
                 </select>
             </div>
             <div class="form-group" id="rateGroup" style="display:none;">
@@ -163,6 +218,9 @@
             </div>
             <div id="perClickNote" style="background:#e6faf2;border-radius:8px;padding:12px;font-size:13px;color:#065f46;margin-bottom:12px;">
                 ✓ Rate calculated automatically from country rates set in the Rates panel. No manual rate needed.
+            </div>
+            <div id="installsNote" style="display:none;background:#eff6ff;border-radius:8px;padding:12px;font-size:13px;color:#1e40af;margin-bottom:12px;">
+                Publisher earns per install. Rates are configured in the <a href="{{ route('admin.install-rates.index') }}" style="color:#2563eb;font-weight:600;">Install Rates</a> page. No manual rate needed.
             </div>
             <div class="form-group">
                 <label class="form-label">Note (optional)</label>
@@ -175,11 +233,11 @@
             const type = document.getElementById('contractType').value;
             document.getElementById('rateGroup').style.display = type === 'fixed' ? 'block' : 'none';
             document.getElementById('perClickNote').style.display = type === 'per_click' ? 'block' : 'none';
+            document.getElementById('installsNote').style.display = type === 'installs_base' ? 'block' : 'none';
             document.getElementById('rateInput').required = type === 'fixed';
         }
         toggleRate();
         </script>
-        @endif
     </div>
 </div>
 

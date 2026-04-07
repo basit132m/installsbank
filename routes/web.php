@@ -182,6 +182,21 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin,manager'
         Route::delete('/{adPreset}', [Admin\AdPresetController::class, 'destroy'])->name('destroy');
     });
 
+    // Install country rates
+    Route::prefix('install-rates')->name('install-rates.')->group(function () {
+        Route::get('/', [Admin\InstallRateController::class, 'index'])->name('index');
+        Route::post('/', [Admin\InstallRateController::class, 'store'])->name('store');
+        Route::put('/{installCountryRate}', [Admin\InstallRateController::class, 'update'])->name('update');
+        Route::delete('/{installCountryRate}', [Admin\InstallRateController::class, 'destroy'])->name('destroy');
+        Route::post('/sync', [Admin\InstallRateController::class, 'syncFromTracked'])->name('sync');
+    });
+
+    // Install settings (clicks-per-install per weekday)
+    Route::prefix('install-settings')->name('install-settings.')->group(function () {
+        Route::get('/', [Admin\InstallSettingsController::class, 'index'])->name('index');
+        Route::post('/', [Admin\InstallSettingsController::class, 'update'])->name('update');
+    });
+
     // Support
     Route::prefix('support')->name('support.')->group(function () {
         Route::get('/', [Admin\SupportController::class, 'index'])->name('index');

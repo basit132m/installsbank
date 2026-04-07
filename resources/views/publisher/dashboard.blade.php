@@ -101,17 +101,23 @@
     </a>
 </div>
 
-@if($pendingContract)
+@if($pendingContracts->isNotEmpty())
+@foreach($pendingContracts as $pendingContract)
 <div class="contract-box mb-6">
-    <h3 style="margin-bottom:8px;">📋 New Contract Offer</h3>
+    <h3 style="margin-bottom:8px;">New Contract Offer</h3>
     <p style="font-size:14px;color:#374151;margin-bottom:16px;">
         @if($pendingContract->type === 'per_click')
             You have been offered <strong>${{ number_format($pendingContract->rate, 4) }} per 1,000 unique clicks</strong>.
+        @elseif($pendingContract->type === 'installs_base')
+            You have been offered an <strong>Installs Based contract</strong>. You earn per app install from your traffic.
         @else
             You have been offered a <strong>fixed daily rate of ${{ number_format($pendingContract->rate, 4) }}/day</strong>.
         @endif
         @if($pendingContract->test_total_clicks)
             <br><span style="font-size:13px;color:#6b7280;">Based on your 48-hour test: {{ number_format($pendingContract->test_total_clicks) }} clicks</span>
+        @endif
+        @if($pendingContract->admin_note)
+            <br><span style="font-size:13px;color:#6b7280;">Note: {{ $pendingContract->admin_note }}</span>
         @endif
     </p>
     <div style="display:flex;gap:10px;">
@@ -122,6 +128,35 @@
             @csrf<button class="btn btn-ghost">Decline</button>
         </form>
     </div>
+</div>
+@endforeach
+@endif
+
+{{-- 48-Hour Test Banner --}}
+@php $testStatus = $profile->test_status ?? 'not_started'; @endphp
+@if($testStatus === 'running')
+@php
+    $testEndAt    = $profile->test_ended_at;
+    $hoursLeft    = $testEndAt ? max(0, now()->diffInHours($testEndAt, false)) : 0;
+    $minsLeft     = $testEndAt ? max(0, now()->diffInMinutes($testEndAt, false) % 60) : 0;
+@endphp
+<div style="background:linear-gradient(135deg,#1e40af,#3b82f6);border-radius:14px;padding:20px 24px;margin-bottom:24px;color:white;">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px;">
+        <span style="width:10px;height:10px;background:white;border-radius:50%;animation:livePulse 2s infinite;flex-shrink:0;display:block;"></span>
+        <span style="font-size:16px;font-weight:700;">48-Hour Traffic Test in Progress</span>
+    </div>
+    <p style="font-size:14px;color:rgba(255,255,255,0.85);margin-bottom:10px;">
+        Your traffic is being evaluated. No earnings are shown during the test period.
+    </p>
+    <div style="background:rgba(255,255,255,0.15);border-radius:8px;padding:10px 16px;display:inline-flex;align-items:center;gap:10px;">
+        <svg width="16" height="16" fill="none" stroke="white" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        <span style="font-size:15px;font-weight:700;">{{ $hoursLeft }}h {{ $minsLeft }}m remaining</span>
+    </div>
+</div>
+@elseif($testStatus === 'completed' && !$contract)
+<div style="background:#f0fdf4;border:1.5px solid #86efac;border-radius:14px;padding:20px 24px;margin-bottom:24px;">
+    <div style="font-size:15px;font-weight:700;color:#166534;margin-bottom:6px;">Test Complete — Awaiting Contract</div>
+    <p style="font-size:14px;color:#166534;margin:0;">Your 48-hour test period has ended. Our team is reviewing your results and will send you a contract offer soon.</p>
 </div>
 @endif
 
@@ -226,6 +261,45 @@
     </div>
     @endif
 </div>
+
+@if($profile->contract_type === 'installs_base')
+{{-- Installs Section --}}
+<div class="card mb-6">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+        <div class="card-title">Install Earnings</div>
+        <span style="font-size:12px;color:#6b7280;">Today: {{ now()->format('M d, Y') }}</span>
+    </div>
+    @if($installsToday && $installsToday->count())
+    <div style="overflow-x:auto;">
+        <table>
+            <thead><tr><th>Country</th><th>Installs Today</th><th>Earnings</th></tr></thead>
+            <tbody>
+            @foreach($installsToday as $inst)
+            <tr>
+                <td>
+                    <div style="display:flex;align-items:center;gap:8px;">
+                        <img src="https://flagcdn.com/24x18/{{ strtolower($inst->country_code) }}.png" width="24" height="18" style="border-radius:2px;" onerror="this.style.display='none'">
+                        {{ $inst->country_name ?: strtoupper($inst->country_code) }}
+                    </div>
+                </td>
+                <td><strong>{{ number_format($inst->install_count) }}</strong></td>
+                <td>
+                    @if($inst->earnings > 0)
+                        <span style="color:#01BF63;font-weight:700;">${{ number_format($inst->earnings, 4) }}</span>
+                    @else
+                        <span style="color:#9ca3af;font-size:12px;">N/A (rate not set)</span>
+                    @endif
+                </td>
+            </tr>
+            @endforeach
+            </tbody>
+        </table>
+    </div>
+    @else
+    <div style="text-align:center;padding:30px;color:#9ca3af;font-size:13px;">No installs recorded today yet.</div>
+    @endif
+</div>
+@endif
 
 <!-- Chart -->
 <div class="card mb-6">
