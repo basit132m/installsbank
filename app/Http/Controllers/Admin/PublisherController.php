@@ -127,7 +127,7 @@ class PublisherController extends Controller
             '30'     => [now()->subDays(29)->startOfDay(), today()],
             'month'  => [now()->startOfMonth()->startOfDay(), yesterday()->endOfDay()],
             '90'     => [now()->subDays(89)->startOfDay(), today()],
-            'all'    => [now()->subYears(10)->startOfDay(), today()],
+            'all'    => [$user->created_at->startOfDay(), today()],
             default  => [now()->subDays(6)->startOfDay(), today()],
         };
 
@@ -208,7 +208,7 @@ class PublisherController extends Controller
             '30'     => [now()->subDays(29)->startOfDay(), today()],
             'month'  => [now()->startOfMonth()->startOfDay(), yesterday()->endOfDay()],
             '90'     => [now()->subDays(89)->startOfDay(), today()],
-            'all'    => [now()->subYears(10)->startOfDay(), today()],
+            'all'    => [$user->created_at->startOfDay(), today()],
             default  => [now()->subDays(6)->startOfDay(), today()],
         };
 
