@@ -151,10 +151,11 @@
                     <td style="font-size:13px;">
                         @if($w->status === 'paid')
                             @if($w->receipt_hash)
-                                <div style="font-size:11px;color:#6b7280;margin-bottom:2px;">Transaction ID:</div>
-                                <span style="font-family:monospace;font-size:12px;color:#01BF63;" title="{{ $w->receipt_hash }}">
-                                    {{ substr($w->receipt_hash, 0, 20) }}...
-                                </span>
+                                <button onclick="showTxProof('{{ $w->receipt_hash }}','{{ $w->networkLabel() }}','{{ $w->method ?? $w->network }}','{{ number_format($w->amount,2) }}')"
+                                    style="display:inline-flex;align-items:center;gap:5px;background:#f0fdf4;color:#059669;border:1px solid #86efac;border-radius:7px;padding:5px 11px;font-size:12px;font-weight:700;cursor:pointer;">
+                                    <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+                                    View Proof
+                                </button>
                             @else
                                 <span style="color:#9ca3af;">—</span>
                             @endif
@@ -200,5 +201,105 @@ function Withdrawal_pending($profile) {
     return \App\Models\Withdrawal::where('user_id', $profile->user_id)->where('status', 'pending')->exists();
 }
 @endphp
+
+<!-- Transaction Proof Modal -->
+<div id="txProofModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:2000;justify-content:center;align-items:center;padding:16px;">
+    <div style="background:white;border-radius:16px;padding:28px 28px 24px;max-width:500px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,0.25);">
+        <!-- Header -->
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
+            <div style="display:flex;align-items:center;gap:10px;">
+                <div style="width:38px;height:38px;background:#d1fae5;border-radius:10px;display:flex;align-items:center;justify-content:center;">
+                    <svg width="18" height="18" fill="none" stroke="#059669" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+                </div>
+                <div>
+                    <div style="font-size:16px;font-weight:700;">Payment Proof</div>
+                    <div style="font-size:12px;color:#6b7280;">Verified blockchain transaction</div>
+                </div>
+            </div>
+            <button onclick="document.getElementById('txProofModal').style.display='none'" style="background:#f3f4f6;border:none;border-radius:8px;width:32px;height:32px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:18px;color:#6b7280;">×</button>
+        </div>
+
+        <!-- Amount + Network badges -->
+        <div style="display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap;">
+            <div style="flex:1;min-width:120px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:14px 16px;text-align:center;">
+                <div style="font-size:11px;font-weight:600;color:#6b7280;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px;">Amount Paid</div>
+                <div style="font-size:22px;font-weight:800;color:#059669;" id="txAmount">—</div>
+            </div>
+            <div style="flex:1;min-width:120px;background:#eff6ff;border:1px solid #bfdbfe;border-radius:10px;padding:14px 16px;text-align:center;">
+                <div style="font-size:11px;font-weight:600;color:#6b7280;text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px;">Network</div>
+                <div style="font-size:15px;font-weight:700;color:#1d4ed8;" id="txNetwork">—</div>
+            </div>
+        </div>
+
+        <!-- Transaction Hash -->
+        <div style="margin-bottom:20px;">
+            <div style="font-size:12px;font-weight:600;color:#374151;margin-bottom:6px;">Transaction Hash</div>
+            <div style="display:flex;gap:8px;align-items:center;">
+                <div id="txHash" style="flex:1;font-family:monospace;font-size:12px;background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:10px 12px;word-break:break-all;color:#111827;line-height:1.5;">—</div>
+                <button onclick="copyTxHash()" id="copyBtn" style="flex-shrink:0;background:#f3f4f6;border:1px solid #e5e7eb;border-radius:8px;padding:10px 12px;cursor:pointer;font-size:12px;font-weight:600;color:#374151;display:flex;align-items:center;gap:5px;transition:all .15s;">
+                    <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+                    Copy
+                </button>
+            </div>
+        </div>
+
+        <!-- Explorer link -->
+        <a id="txExplorerLink" href="#" target="_blank" rel="noopener noreferrer"
+            style="display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:12px;background:#0f172a;color:white;border-radius:10px;font-size:14px;font-weight:700;text-decoration:none;transition:opacity .15s;"
+            onmouseover="this.style.opacity='.85'" onmouseout="this.style.opacity='1'">
+            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+            <span id="txExplorerLabel">View on Block Explorer</span>
+        </a>
+
+        <div style="text-align:center;margin-top:12px;font-size:11px;color:#9ca3af;">
+            This transaction was recorded on the blockchain and cannot be altered.
+        </div>
+    </div>
+</div>
+
+<script>
+const explorerMap = {
+    'usdt_bep20': { url: 'https://bscscan.com/tx/', label: 'View on BscScan (BEP20)' },
+    'bep20':      { url: 'https://bscscan.com/tx/', label: 'View on BscScan (BEP20)' },
+    'usdt_trc20': { url: 'https://tronscan.org/#/transaction/', label: 'View on TronScan (TRC20)' },
+    'trc20':      { url: 'https://tronscan.org/#/transaction/', label: 'View on TronScan (TRC20)' },
+    'usdt_erc20': { url: 'https://etherscan.io/tx/', label: 'View on Etherscan (ERC20)' },
+    'erc20':      { url: 'https://etherscan.io/tx/', label: 'View on Etherscan (ERC20)' },
+    'btc':        { url: 'https://blockstream.info/tx/', label: 'View on Blockstream (BTC)' },
+};
+
+let currentHash = '';
+
+function showTxProof(hash, networkLabel, networkKey, amount) {
+    currentHash = hash;
+    document.getElementById('txHash').textContent = hash;
+    document.getElementById('txAmount').textContent = '$' + amount;
+    document.getElementById('txNetwork').textContent = networkLabel;
+
+    const explorer = explorerMap[networkKey] || { url: 'https://bscscan.com/tx/', label: 'View on Block Explorer' };
+    document.getElementById('txExplorerLink').href = explorer.url + hash;
+    document.getElementById('txExplorerLabel').textContent = explorer.label;
+    document.getElementById('copyBtn').innerHTML = '<svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg> Copy';
+    document.getElementById('txProofModal').style.display = 'flex';
+}
+
+function copyTxHash() {
+    navigator.clipboard.writeText(currentHash).then(() => {
+        const btn = document.getElementById('copyBtn');
+        btn.innerHTML = '<svg width="13" height="13" fill="none" stroke="#059669" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg> Copied!';
+        btn.style.color = '#059669';
+        btn.style.borderColor = '#86efac';
+        setTimeout(() => {
+            btn.innerHTML = '<svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg> Copy';
+            btn.style.color = '#374151';
+            btn.style.borderColor = '#e5e7eb';
+        }, 2000);
+    });
+}
+
+document.getElementById('txProofModal').addEventListener('click', function(e) {
+    if (e.target === this) this.style.display = 'none';
+});
+</script>
 
 @endsection
