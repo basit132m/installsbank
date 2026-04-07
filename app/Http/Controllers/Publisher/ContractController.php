@@ -17,17 +17,28 @@ class ContractController extends Controller
 
         $contract->update(['status' => 'accepted', 'responded_at' => now()]);
 
-        // Update publisher profile
-        $profileData = [
-            'contract_type'    => $contract->type,
-            'fixed_daily_rate' => $contract->type === 'fixed' ? $contract->rate : null,
-        ];
+        // Reject all other pending contracts for this publisher
+        Contract::where('user_id', $contract->user_id)
+            ->where('id', '!=', $contract->id)
+            ->where('status', 'pending')
+            ->update(['status' => 'rejected', 'responded_at' => now()]);
 
-        // Fixed-rate publishers get payment_enabled automatically —
-        // their balance is managed by the daily credit command, not per-click earnings.
-        if ($contract->type === 'fixed') {
-            $profileData['payment_enabled'] = true;
-        }
+        // Update publisher profile
+        $profileData = match ($contract->type) {
+            'fixed' => [
+                'contract_type'    => 'fixed',
+                'fixed_daily_rate' => $contract->rate,
+                'payment_enabled'  => true,
+            ],
+            'installs_base' => [
+                'contract_type'    => 'installs_base',
+                'fixed_daily_rate' => null,
+            ],
+            default => [
+                'contract_type'    => $contract->type,
+                'fixed_daily_rate' => null,
+            ],
+        };
 
         auth()->user()->publisherProfile->update($profileData);
 

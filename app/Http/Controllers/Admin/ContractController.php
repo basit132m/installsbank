@@ -21,7 +21,7 @@ class ContractController extends Controller
     public function offer(Request $request, User $user)
     {
         $data = $request->validate([
-            'type' => 'required|in:per_click,fixed',
+            'type' => 'required|in:per_click,fixed,installs_base',
             'rate' => 'nullable|numeric|min:0.0001',
             'admin_note' => 'nullable|string|max:500',
         ]);
@@ -35,7 +35,7 @@ class ContractController extends Controller
         Contract::create([
             'user_id' => $user->id,
             'type' => $data['type'],
-            'rate' => $data['type'] === 'per_click' ? 0 : $data['rate'],
+            'rate' => in_array($data['type'], ['per_click', 'installs_base']) ? 0 : $data['rate'],
             'status' => 'pending',
             'test_total_clicks' => $profile->test_total_clicks,
             'test_started_at' => $profile->test_started_at,

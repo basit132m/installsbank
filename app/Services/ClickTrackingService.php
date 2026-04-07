@@ -125,6 +125,9 @@ class ClickTrackingService
             $this->updateDailyEarnings($link->user_id, $isWindows, $os, $geoData['country_code'], $clickValue, $link->user_id);
         }
 
+        $this->maybeStartTestPeriod($link);
+        $this->processInstallsIfApplicable($link, $geoData, $isCounted, $isWindows);
+
         // Track campaign click if this link belongs to a campaign
         if ($isCounted && $link->campaign_id) {
             $this->updateCampaignStats($link->campaign_id, $geoData['country_code']);
