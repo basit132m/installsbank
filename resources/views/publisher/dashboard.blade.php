@@ -2,6 +2,10 @@
 @section('title', 'Dashboard')
 @section('page-title', 'My Dashboard')
 
+@push('styles')
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/jsvectormap@1.5.3/dist/css/jsvectormap.min.css">
+@endpush
+
 @section('content')
 @if(session('registered'))
 <div style="background:#e6faf2;border:1px solid #a7f3d0;border-radius:12px;padding:20px 24px;margin-bottom:24px;">
@@ -337,6 +341,22 @@
     </div>
 </div>
 
+<!-- World Map -->
+<div class="card mb-6" id="worldMapCard">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+        <div>
+            <div class="card-title">Traffic World Map</div>
+            <div style="font-size:12px;color:#9ca3af;margin-top:2px;">Click distribution by country · today</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:6px;font-size:11px;color:#6b7280;">
+            <span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#d1fae5;"></span>Low
+            <span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#6ee7b7;margin-left:4px;"></span>Mid
+            <span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#01BF63;margin-left:4px;"></span>High
+        </div>
+    </div>
+    <div id="worldMap" style="height:340px;border-radius:10px;overflow:hidden;background:#f9fafb;"></div>
+</div>
+
 <!-- Country + OS Pie Charts -->
 <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:24px;" class="charts-row">
     <!-- Country donut -->
@@ -531,4 +551,80 @@ new ApexCharts(document.getElementById('osPieChart'), {
 }).render();
 @endif
 </script>
+
+@if($countryBreakdown && $countryBreakdown->count() > 0)
+@php
+    // jsvectormap uses uppercase 2-letter codes
+    $mapValues = [];
+    $mapLabels = [];
+    $maxClicks  = $countryBreakdown->max('clicks') ?: 1;
+    foreach ($countryBreakdown as $code => $info) {
+        $upper = strtoupper($code);
+        $mapValues[$upper] = (int) $info['clicks'];
+        $mapLabels[$upper] = ($countryNames[$code] ?? $upper) . ': ' . number_format($info['clicks']) . ' clicks';
+    }
+@endphp
+<script>
+(function() {
+    const mapValues = @json($mapValues);
+    const mapLabels = @json($mapLabels);
+    const maxVal    = {{ $maxClicks }};
+
+    function loadScript(src, cb) {
+        var s = document.createElement('script');
+        s.src = src; s.onload = cb;
+        document.head.appendChild(s);
+    }
+
+    function interpolateColor(ratio) {
+        // low = #d1fae5 (209,250,229), high = #01BF63 (1,191,99)
+        const r = Math.round(209 + (1   - 209) * ratio);
+        const g = Math.round(250 + (191 - 250) * ratio);
+        const b = Math.round(229 + (99  - 229) * ratio);
+        return 'rgb(' + r + ',' + g + ',' + b + ')';
+    }
+
+    function buildRegionColors() {
+        const colors = {};
+        for (const code in mapValues) {
+            const ratio = Math.pow(mapValues[code] / maxVal, 0.4); // pow < 1 = softer curve
+            colors[code] = interpolateColor(ratio);
+        }
+        return colors;
+    }
+
+    function initMap() {
+        if (typeof jsVectorMap === 'undefined') { setTimeout(initMap, 80); return; }
+        const regionColors = buildRegionColors();
+        new jsVectorMap({
+            selector: '#worldMap',
+            map: 'world',
+            backgroundColor: '#f9fafb',
+            zoomOnScroll: false,
+            zoomButtons: false,
+            regionStyle: {
+                initial:  { fill: '#e5e7eb', stroke: '#fff', strokeWidth: 0.5, fillOpacity: 1 },
+                hover:    { fillOpacity: 0.85, cursor: 'pointer' },
+                selected: { fill: '#01BF63' }
+            },
+            series: {
+                regions: [{
+                    attribute: 'fill',
+                    values: regionColors
+                }]
+            },
+            onRegionTooltipShow: function(event, tooltip, code) {
+                if (mapLabels[code]) {
+                    tooltip.text(mapLabels[code], true);
+                }
+            }
+        });
+    }
+
+    loadScript('https://cdn.jsdelivr.net/npm/jsvectormap@1.5.3/dist/js/jsvectormap.min.js', function() {
+        loadScript('https://cdn.jsdelivr.net/npm/jsvectormap@1.5.3/dist/maps/world.js', initMap);
+    });
+})();
+</script>
+@endif
 @endpush

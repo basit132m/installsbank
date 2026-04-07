@@ -267,4 +267,7 @@ Route::prefix('publisher')->name('publisher.')->middleware(['auth', 'role:publis
     Route::post('/support', [Publisher\SupportController::class, 'store'])->name('support.store');
     Route::get('/support/{supportTicket}', [Publisher\SupportController::class, 'show'])->name('support.show');
     Route::post('/support/{supportTicket}/reply', [Publisher\SupportController::class, 'reply'])->name('support.reply');
+    // Live chat API
+    Route::get('/chat/messages', [Publisher\ChatController::class, 'messages'])->name('chat.messages');
+    Route::post('/chat/send', [Publisher\ChatController::class, 'send'])->name('chat.send');
 });
