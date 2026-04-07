@@ -72,43 +72,25 @@
 
 @push('scripts')
 <script>
-// Play a soft ping when new open chats appear
+// Highlight new open chats by reloading the badge — NO sound here
+// Sound only plays on the chat show page when actively viewing a conversation
 let knownOpenCount = {{ $unreadCount }};
 function checkNewChats() {
-    fetch(window.location.href, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+    const badge = document.querySelector('[data-open-badge]');
+    fetch('{{ route("admin.chat.index") }}', { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
     .then(r => r.text())
     .then(html => {
-        const m = html.match(/"open"\s+chats.*?(\d+)\s+open/);
+        const m = html.match(/(\d+) open<\/span>/);
         if (!m) return;
         const cur = parseInt(m[1]);
         if (cur > knownOpenCount) {
-            playPing();
             knownOpenCount = cur;
+            // Just flash the page title to indicate new chat
+            document.title = '🔔 ' + document.title.replace(/^🔔 /,'');
+            setTimeout(() => { document.title = document.title.replace(/^🔔 /,''); }, 4000);
         }
     }).catch(() => {});
 }
-// Poll count badge via dedicated JSON endpoint (see below)
-function pingCount() {
-    fetch('{{ route("admin.chat.index") }}?count=1', { headers: { 'Accept': 'application/json' } })
-    .then(r => r.ok ? r.json() : null)
-    .then(d => {
-        if (!d) return;
-        if (d.open > knownOpenCount) { playPing(); knownOpenCount = d.open; }
-    }).catch(() => {});
-}
-
-function playPing() {
-    try {
-        const ctx = new (window.AudioContext || window.webkitAudioContext)();
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
-        osc.connect(gain); gain.connect(ctx.destination);
-        osc.type = 'sine'; osc.frequency.value = 880;
-        gain.gain.setValueAtTime(0.3, ctx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.5);
-        osc.start(); osc.stop(ctx.currentTime + 0.5);
-    } catch(e) {}
-}
-setInterval(pingCount, 8000);
+setInterval(checkNewChats, 10000);
 </script>
 @endpush

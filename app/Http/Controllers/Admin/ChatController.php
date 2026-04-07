@@ -43,13 +43,13 @@ class ChatController extends Controller
     {
         abort_unless($supportTicket->is_chat, 404);
 
-        $messages = $supportTicket->messages()->orderBy('created_at')->get()
+        $messages = $supportTicket->messages()->with('sender')->orderBy('created_at')->get()
             ->map(fn($m) => [
-                'id'       => $m->id,
-                'message'  => $m->message,
-                'is_staff' => (bool) $m->is_staff,
-                'sender'   => $m->sender?->name ?? ($m->is_staff ? 'Support' : 'Publisher'),
-                'time'     => $m->created_at->diffForHumans(),
+                'id'          => $m->id,
+                'message'     => $m->message,
+                'is_staff'    => (bool) $m->is_staff,
+                'sender_name' => $m->sender?->name,   // null for system messages
+                'time'        => $m->created_at->diffForHumans(),
             ]);
 
         return response()->json(['messages' => $messages]);

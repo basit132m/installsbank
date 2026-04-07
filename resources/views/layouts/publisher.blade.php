@@ -220,7 +220,7 @@
 @keyframes chatBounce { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-4px)} }
 #chatPanel {
     position:fixed; bottom:88px; right:24px; z-index:9998;
-    width:350px; max-height:600px;
+    width:420px; max-height:620px;
     background:white; border-radius:18px;
     box-shadow:0 8px 40px rgba(0,0,0,0.18);
     display:none; flex-direction:column; overflow:hidden;

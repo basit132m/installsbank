@@ -4,212 +4,281 @@
 
 @push('styles')
 <style>
-.admin-chat-wrap {
-    display: flex;
-    gap: 20px;
-    align-items: flex-start;
-}
-.admin-chat-main {
-    flex: 1;
-    min-width: 0;
-}
-.admin-chat-sidebar {
-    width: 260px;
-    flex-shrink: 0;
-}
-.chat-messages-box {
-    height: 480px;
-    overflow-y: auto;
-    padding: 20px;
+.chat-shell {
     display: flex;
     flex-direction: column;
-    gap: 14px;
-    background: #f9fafb;
-    border-radius: 12px;
-    border: 1px solid #f3f4f6;
+    height: calc(100vh - 140px);
+    min-height: 500px;
+    background: #fff;
+    border-radius: 16px;
+    border: 1px solid #e5e7eb;
+    overflow: hidden;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.06);
 }
-.msg-row {
-    display: flex;
-    gap: 10px;
-    align-items: flex-end;
-}
-.msg-row.mine {
-    flex-direction: row-reverse;
-}
-.msg-avatar {
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
-    background: #e5e7eb;
+/* ── Header ── */
+.chat-head {
     display: flex;
     align-items: center;
-    justify-content: center;
-    font-size: 13px;
-    font-weight: 700;
-    color: #374151;
+    gap: 14px;
+    padding: 14px 20px;
+    border-bottom: 1px solid #f3f4f6;
     flex-shrink: 0;
 }
-.msg-avatar.staff {
-    background: #01BF63;
-    color: #fff;
+.chat-head-avatar {
+    width: 42px; height: 42px; border-radius: 50%;
+    background: #01BF63; color: #fff;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px; font-weight: 700; flex-shrink: 0;
 }
-.msg-bubble {
-    max-width: 70%;
-    padding: 10px 14px;
-    border-radius: 16px;
+.chat-head-meta { flex: 1; min-width: 0; }
+.chat-head-meta strong { display: block; font-size: 15px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.chat-head-meta span  { font-size: 12px; color: #9ca3af; }
+.chat-head-actions { display: flex; gap: 8px; flex-shrink: 0; }
+
+/* ── Messages ── */
+.chat-messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 24px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    background: #f9fafb;
+    scroll-behavior: smooth;
+}
+
+/* ── Row ── */
+.cm-row {
+    display: flex;
+    align-items: flex-end;
+    gap: 10px;
+    max-width: 72%;
+}
+.cm-row.staff {
+    align-self: flex-end;
+    flex-direction: row-reverse;
+}
+.cm-row:not(.staff) {
+    align-self: flex-start;
+}
+
+/* ── Avatar ── */
+.cm-av {
+    width: 32px; height: 32px; border-radius: 50%; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: 700;
+}
+.cm-av.pub  { background: #e5e7eb; color: #374151; }
+.cm-av.adm  { background: #01BF63; color: #fff; }
+
+/* ── Content (bubble + time) ── */
+.cm-content {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    max-width: 100%;
+}
+.cm-row.staff .cm-content { align-items: flex-end; }
+.cm-row:not(.staff) .cm-content { align-items: flex-start; }
+
+/* ── Bubble ── */
+.cm-bubble {
+    padding: 10px 15px;
+    border-radius: 18px;
     font-size: 14px;
-    line-height: 1.5;
+    line-height: 1.55;
     word-break: break-word;
+    white-space: pre-wrap;
+    display: block;          /* NOT inline-block — block fills cm-content width */
+    width: fit-content;      /* but shrinks to text */
+    max-width: 100%;
 }
-.msg-row.mine .msg-bubble {
+.cm-row:not(.staff) .cm-bubble {
+    background: #fff;
+    color: #111827;
+    border: 1px solid #e5e7eb;
+    border-bottom-left-radius: 4px;
+}
+.cm-row.staff .cm-bubble {
     background: #01BF63;
     color: #fff;
     border-bottom-right-radius: 4px;
 }
-.msg-row:not(.mine) .msg-bubble {
-    background: #fff;
-    color: #374151;
-    border: 1px solid #e5e7eb;
-    border-bottom-left-radius: 4px;
-}
-.msg-time {
+.cm-time {
     font-size: 11px;
     color: #9ca3af;
-    margin-top: 3px;
-    text-align: right;
+    margin-top: 4px;
+    padding: 0 2px;
 }
-.msg-row:not(.mine) .msg-time {
-    text-align: left;
+
+/* ── System message ── */
+.cm-system {
+    align-self: center;
+    font-size: 12px;
+    color: #9ca3af;
+    background: #f3f4f6;
+    padding: 5px 14px;
+    border-radius: 20px;
 }
-.chat-input-row {
+
+/* ── Input ── */
+.chat-input-wrap {
+    flex-shrink: 0;
+    border-top: 1px solid #f3f4f6;
+    padding: 14px 18px;
+    background: #fff;
     display: flex;
     gap: 10px;
-    margin-top: 16px;
     align-items: flex-end;
 }
-.chat-input-row textarea {
+.chat-input-wrap textarea {
     flex: 1;
     border: 1.5px solid #e5e7eb;
-    border-radius: 12px;
-    padding: 12px 16px;
+    border-radius: 14px;
+    padding: 11px 16px;
     font-size: 14px;
+    font-family: inherit;
     resize: none;
     outline: none;
-    font-family: inherit;
     line-height: 1.5;
+    max-height: 120px;
+    transition: border-color .15s;
 }
-.chat-input-row textarea:focus {
-    border-color: #01BF63;
+.chat-input-wrap textarea:focus { border-color: #01BF63; }
+.chat-send-btn {
+    width: 44px; height: 44px; border-radius: 50%;
+    background: #01BF63; border: none; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0; transition: background .15s;
+}
+.chat-send-btn:hover { background: #00a855; }
+.chat-closed-bar {
+    padding: 14px 18px;
+    background: #f3f4f6;
+    border-top: 1px solid #e5e7eb;
+    text-align: center;
+    font-size: 13px;
+    color: #9ca3af;
+    flex-shrink: 0;
 }
 </style>
 @endpush
 
 @section('content')
-<div style="display:flex;align-items:center;gap:10px;margin-bottom:20px;flex-wrap:wrap;">
-    <a href="{{ route('admin.chat.index') }}" class="btn btn-ghost btn-sm">← Back to Chats</a>
-    <span class="badge {{ match($supportTicket->status) { 'open' => 'badge-success', 'replied' => 'badge-info', 'closed' => 'badge-gray', default => 'badge-info' } }}">
-        {{ ucfirst($supportTicket->status) }}
-    </span>
-    <div style="display:flex;gap:8px;margin-left:auto;">
+{{-- Top bar --}}
+<div style="display:flex;align-items:center;gap:8px;margin-bottom:16px;flex-wrap:wrap;">
+    <a href="{{ route('admin.chat.index') }}" class="btn btn-ghost btn-sm">← Chats</a>
+    <a href="{{ route('admin.publishers.show', $supportTicket->user) }}" class="btn btn-ghost btn-sm" style="color:#3b82f6;border-color:#3b82f6;">View Publisher</a>
+    <div style="margin-left:auto;display:flex;gap:8px;">
         @if($supportTicket->status !== 'closed')
         <form method="POST" action="{{ route('admin.chat.close', $supportTicket) }}">
             @csrf
-            <button class="btn btn-ghost btn-sm" style="color:#6b7280;" onclick="return confirm('Close this chat?')">Close Chat</button>
+            <button class="btn btn-ghost btn-sm" onclick="return confirm('Close this chat?')">Close Chat</button>
         </form>
         @endif
         <form method="POST" action="{{ route('admin.chat.destroy', $supportTicket) }}"
-              onsubmit="return confirm('Permanently delete this chat and all messages?')">
+              onsubmit="return confirm('Delete this chat permanently?')">
             @csrf @method('DELETE')
-            <button class="btn btn-danger btn-sm">Delete Chat</button>
+            <button class="btn btn-danger btn-sm">Delete</button>
         </form>
     </div>
 </div>
 
-<div class="admin-chat-wrap">
-    <!-- Chat Area -->
-    <div class="admin-chat-main">
-        <div class="card" style="padding:0;overflow:hidden;">
-            <div style="padding:16px 20px;border-bottom:1px solid #f3f4f6;display:flex;align-items:center;gap:12px;">
-                <div style="width:40px;height:40px;border-radius:50%;background:#01BF63;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:16px;">
-                    {{ strtoupper(substr($supportTicket->user->name, 0, 1)) }}
-                </div>
-                <div>
-                    <div style="font-weight:700;font-size:15px;">{{ $supportTicket->user->name }}</div>
-                    <div style="font-size:12px;color:#9ca3af;">{{ $supportTicket->user->email }}</div>
-                </div>
-                <div id="pollingStatus" style="margin-left:auto;font-size:11px;color:#9ca3af;">Live</div>
-            </div>
-
-            <div style="padding:20px;">
-                <div id="chatMessages" class="chat-messages-box">
-                    @foreach($supportTicket->messages as $msg)
-                    @php $isStaff = (bool) $msg->is_staff; @endphp
-                    <div class="msg-row {{ $isStaff ? 'mine' : '' }}" data-id="{{ $msg->id }}">
-                        <div class="msg-avatar {{ $isStaff ? 'staff' : '' }}">
-                            {{ $isStaff ? strtoupper(substr($msg->sender?->name ?? 'S', 0, 1)) : strtoupper(substr($supportTicket->user->name, 0, 1)) }}
-                        </div>
-                        <div>
-                            <div class="msg-bubble">{{ $msg->message }}</div>
-                            <div class="msg-time">{{ $msg->created_at->format('H:i') }} · {{ $msg->created_at->diffForHumans() }}</div>
-                        </div>
-                    </div>
-                    @endforeach
-                </div>
-
-                @if($supportTicket->status !== 'closed')
-                <div class="chat-input-row">
-                    <textarea id="replyInput" rows="2" placeholder="Type your reply…" onkeydown="handleKey(event)"></textarea>
-                    <button class="btn btn-primary" onclick="sendReply()" style="height:48px;padding:0 20px;">Send</button>
-                </div>
-                @else
-                <div style="text-align:center;padding:16px;color:#9ca3af;font-size:13px;margin-top:12px;">This chat is closed.</div>
-                @endif
-            </div>
+{{-- Chat shell --}}
+<div class="chat-shell">
+    {{-- Header --}}
+    <div class="chat-head">
+        <div class="chat-head-avatar">{{ strtoupper(substr($supportTicket->user->name, 0, 1)) }}</div>
+        <div class="chat-head-meta">
+            <strong>{{ $supportTicket->user->name }}</strong>
+            <span>{{ $supportTicket->user->email }} &nbsp;·&nbsp; Started {{ $supportTicket->created_at->format('M d, Y · H:i') }}</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;">
+            <span class="badge {{ match($supportTicket->status) { 'open' => 'badge-success', 'replied' => 'badge-info', 'closed' => 'badge-gray', default => 'badge-info' } }}">
+                {{ ucfirst($supportTicket->status) }}
+            </span>
+            <span id="liveIndicator" style="font-size:11px;color:#9ca3af;display:flex;align-items:center;gap:4px;">
+                <span style="width:6px;height:6px;border-radius:50%;background:#01BF63;display:inline-block;animation:livePulse 2s infinite;"></span>Live
+            </span>
         </div>
     </div>
 
-    <!-- Sidebar Info -->
-    <div class="admin-chat-sidebar">
-        <div class="card">
-            <div class="card-title mb-3">Publisher</div>
-            <table style="width:100%;font-size:13px;">
-                <tr><td style="color:#9ca3af;padding:5px 0;width:45%;">Name</td><td style="font-weight:600;">{{ $supportTicket->user->name }}</td></tr>
-                <tr><td style="color:#9ca3af;padding:5px 0;">Email</td><td>{{ $supportTicket->user->email }}</td></tr>
-                <tr><td style="color:#9ca3af;padding:5px 0;">Status</td><td><span class="badge badge-sm {{ $supportTicket->user->status === 'active' ? 'badge-success' : 'badge-warning' }}">{{ ucfirst($supportTicket->user->status) }}</span></td></tr>
-                <tr><td style="color:#9ca3af;padding:5px 0;">Started</td><td>{{ $supportTicket->created_at->format('M d, H:i') }}</td></tr>
-            </table>
-            <div style="margin-top:12px;">
-                <a href="{{ route('admin.publishers.show', $supportTicket->user) }}" class="btn btn-ghost btn-sm" style="width:100%;justify-content:center;">View Publisher</a>
+    {{-- Messages --}}
+    <div id="chatMessages" class="chat-messages">
+        @foreach($supportTicket->messages as $msg)
+        @php $isStaff = (bool) $msg->is_staff; @endphp
+        @if($isStaff && is_null($msg->user_id) && str_contains($msg->message, 'closed'))
+            <div class="cm-system">{{ $msg->message }}</div>
+        @else
+        <div class="cm-row {{ $isStaff ? 'staff' : '' }}" data-id="{{ $msg->id }}">
+            <div class="cm-av {{ $isStaff ? 'adm' : 'pub' }}">
+                {{ $isStaff ? strtoupper(substr($msg->sender?->name ?? auth()->user()->name, 0, 1)) : strtoupper(substr($supportTicket->user->name, 0, 1)) }}
+            </div>
+            <div class="cm-content">
+                <div class="cm-bubble">{{ $msg->message }}</div>
+                <div class="cm-time">{{ $msg->created_at->format('H:i') }} · {{ $msg->created_at->diffForHumans() }}</div>
             </div>
         </div>
+        @endif
+        @endforeach
     </div>
+
+    {{-- Input --}}
+    @if($supportTicket->status !== 'closed')
+    <div class="chat-input-wrap">
+        <textarea id="replyInput" rows="1" placeholder="Type your reply… (Enter to send, Shift+Enter for newline)"
+                  onkeydown="handleKey(event)" oninput="autoGrow(this)"></textarea>
+        <button class="chat-send-btn" onclick="sendReply()">
+            <svg width="18" height="18" fill="none" stroke="white" viewBox="0 0 24 24" stroke-width="2.5">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/>
+            </svg>
+        </button>
+    </div>
+    @else
+    <div class="chat-closed-bar">This chat session is closed.</div>
+    @endif
 </div>
+
+<style>
+@keyframes livePulse { 0%,100%{opacity:1} 50%{opacity:.3} }
+</style>
 @endsection
 
 @push('scripts')
 <script>
-const ticketId = {{ $supportTicket->id }};
 let lastId = {{ $supportTicket->messages->last()?->id ?? 0 }};
 const adminInitial = '{{ strtoupper(substr(auth()->user()->name, 0, 1)) }}';
+const pubInitial   = '{{ strtoupper(substr($supportTicket->user->name, 0, 1)) }}';
+const box = document.getElementById('chatMessages');
 
 // Scroll to bottom on load
-const box = document.getElementById('chatMessages');
 if (box) box.scrollTop = box.scrollHeight;
 
-function escHtml(s) {
-    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+function autoGrow(el) {
+    el.style.height = 'auto';
+    el.style.height = Math.min(el.scrollHeight, 120) + 'px';
+}
+
+function esc(s) {
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>');
 }
 
 function appendMsg(m) {
-    const isStaff = m.is_staff;
-    const initial = isStaff ? adminInitial : '{{ strtoupper(substr($supportTicket->user->name, 0, 1)) }}';
-    const html = `<div class="msg-row ${isStaff ? 'mine' : ''}" data-id="${m.id}">
-        <div class="msg-avatar ${isStaff ? 'staff' : ''}">${escHtml(initial)}</div>
-        <div>
-            <div class="msg-bubble">${escHtml(m.message)}</div>
-            <div class="msg-time">${escHtml(m.time)}</div>
-        </div>
-    </div>`;
+    let html;
+    // System message (null user = auto/close notice)
+    if (m.is_staff && !m.sender_name && m.message && m.message.includes('closed')) {
+        html = `<div class="cm-system">${esc(m.message)}</div>`;
+    } else {
+        const staff = m.is_staff;
+        const initial = staff ? adminInitial : pubInitial;
+        html = `<div class="cm-row ${staff ? 'staff' : ''}" data-id="${m.id}">
+            <div class="cm-av ${staff ? 'adm' : 'pub'}">${esc(initial)}</div>
+            <div class="cm-content">
+                <div class="cm-bubble">${esc(m.message)}</div>
+                <div class="cm-time">${esc(m.time)}</div>
+            </div>
+        </div>`;
+    }
     box.insertAdjacentHTML('beforeend', html);
     box.scrollTop = box.scrollHeight;
     lastId = m.id;
@@ -218,13 +287,12 @@ function appendMsg(m) {
 function playPing() {
     try {
         const ctx = new (window.AudioContext || window.webkitAudioContext)();
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
-        osc.connect(gain); gain.connect(ctx.destination);
-        osc.type = 'sine'; osc.frequency.value = 820;
-        gain.gain.setValueAtTime(0.25, ctx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.6);
-        osc.start(); osc.stop(ctx.currentTime + 0.6);
+        const o = ctx.createOscillator(), g = ctx.createGain();
+        o.connect(g); g.connect(ctx.destination);
+        o.type = 'sine'; o.frequency.value = 880;
+        g.gain.setValueAtTime(0.2, ctx.currentTime);
+        g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.5);
+        o.start(); o.stop(ctx.currentTime + 0.5);
     } catch(e) {}
 }
 
@@ -234,20 +302,20 @@ function pollMessages() {
     })
     .then(r => r.json())
     .then(data => {
-        let hasNew = false;
+        let hasNewPub = false;
         data.messages.forEach(m => {
             if (m.id > lastId) {
                 appendMsg(m);
-                if (!m.is_staff) hasNew = true; // publisher sent message
+                if (!m.is_staff) hasNewPub = true;
             }
         });
-        if (hasNew) playPing();
+        if (hasNewPub) playPing(); // only ring when publisher sends a message
     })
     .catch(() => {});
 }
 
-// Poll every 5 seconds
-setInterval(pollMessages, 5000);
+// Poll only while this chat page is open
+setInterval(pollMessages, 4000);
 
 function sendReply() {
     const input = document.getElementById('replyInput');
