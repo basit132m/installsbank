@@ -239,8 +239,9 @@ class ClickTrackingService
 
         if ($profile->test_status !== 'not_started') return;
 
-        // Only for publishers without installs_base contract (fixed or per_click)
-        if ($profile->contract_type === 'installs_base') return;
+        // Only for publishers who don't already have any active contract
+        // (test is part of onboarding, not for existing contracted publishers)
+        if ($profile->contract_type !== 'none') return;
 
         $uniqueClicks = Click::where('user_id', $link->user_id)->where('is_counted', true)->count();
         if ($uniqueClicks >= 20) {

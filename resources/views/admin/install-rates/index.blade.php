@@ -5,17 +5,8 @@
 @section('content')
 <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:24px;flex-wrap:wrap;gap:12px;">
     <p style="color:var(--text-muted);font-size:14px;margin:0;">
-        Set per-install rates paid to publishers on <strong>Installs Based</strong> contracts. Countries are discovered from tracked click data.
+        Set per-install rates paid to publishers on <strong>Installs Based</strong> contracts. Countries are auto-imported from tracked click data at $0 — set the rates yourself.
     </p>
-    @if($unsynced->count())
-    <form method="POST" action="{{ route('admin.install-rates.sync') }}">
-        @csrf
-        <button type="submit" style="padding:9px 16px;background:#3b82f6;color:white;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:6px;">
-            <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
-            Import {{ $unsynced->count() }} Tracked Countries (rate $0)
-        </button>
-    </form>
-    @endif
 </div>
 
 <div style="display:grid;grid-template-columns:1fr 360px;gap:24px;align-items:start;" class="rates-layout">
