@@ -3,7 +3,6 @@
 namespace App\Services;
 
 use App\Models\Campaign;
-use App\Models\BlacklistedDomain;
 use App\Models\Click;
 use App\Models\CountryRate;
 use App\Models\DailyEarning;
@@ -19,10 +18,25 @@ class ClickTrackingService
         private FraudDetectionService $fraud
     ) {}
 
-    public function processClick(TrackingLink $link, Request $request): Click
+    public function processClick(TrackingLink $link, Request $request): ?Click
     {
         $ip = $request->ip();
         $ua = $request->userAgent() ?? '';
+
+        // Blacklist check — bail out immediately, nothing is written to DB
+        $referrerHost = strtolower(parse_url($request->header('referer') ?? '', PHP_URL_HOST) ?? '');
+        $referrerHost = preg_replace('/^www\./', '', $referrerHost);
+
+        if ($referrerHost !== '') {
+            $blacklist = Cache::remember('blacklisted_domains', 3600, function () {
+                return \App\Models\BlacklistedDomain::pluck('domain')->all();
+            });
+
+            if (in_array($referrerHost, $blacklist, true)) {
+                return null;
+            }
+        }
+
         $agent = new Agent();
         $agent->setUserAgent($ua);
 
@@ -72,23 +86,6 @@ class ClickTrackingService
             if ($referrerHost !== $allowedHost) {
                 $fraudResult['is_fraud']    = true;
                 $fraudResult['fraud_reason'] = 'domain_mismatch';
-            }
-        }
-
-        // Blacklisted domain check — referrer domain must not be on the blacklist
-        if (!$fraudResult['is_fraud']) {
-            $referrerHost = strtolower(parse_url($clickData['referrer'] ?? '', PHP_URL_HOST) ?? '');
-            $referrerHost = preg_replace('/^www\./', '', $referrerHost);
-
-            if ($referrerHost !== '') {
-                $blacklist = Cache::remember('blacklisted_domains', 3600, function () {
-                    return BlacklistedDomain::pluck('domain')->all();
-                });
-
-                if (in_array($referrerHost, $blacklist, true)) {
-                    $fraudResult['is_fraud']     = true;
-                    $fraudResult['fraud_reason'] = 'blacklisted_domain';
-                }
             }
         }
 

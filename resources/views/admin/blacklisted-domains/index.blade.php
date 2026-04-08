@@ -101,8 +101,7 @@
         <div style="background:#fff7ed;border:1px solid #fed7aa;border-radius:12px;padding:14px 16px;margin-top:16px;">
             <div style="font-size:12px;font-weight:700;color:#92400e;margin-bottom:6px;">How it works</div>
             <ul style="font-size:12px;color:#78350f;line-height:1.7;padding-left:16px;margin:0;">
-                <li>Clicks whose HTTP referrer matches a blacklisted domain are silently marked as fraud.</li>
-                <li>The click is still recorded in the database but is not counted or credited.</li>
+                <li>Clicks from blacklisted domains are <strong>dropped immediately</strong> — nothing is written to the database.</li>
                 <li>Subdomain matching is exact — blacklisting <code>spam.com</code> does not block <code>sub.spam.com</code>. Add each variant separately.</li>
                 <li>The blacklist is cached for 1 hour for performance.</li>
             </ul>
