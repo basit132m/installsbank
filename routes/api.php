@@ -32,4 +32,7 @@ Route::middleware(['auth:sanctum', 'role:publisher'])->group(function () {
     Route::post('/support',          [Api\SupportController::class, 'store']);
     Route::get('/support/{ticket}',  [Api\SupportController::class, 'show']);
     Route::post('/support/{ticket}/reply', [Api\SupportController::class, 'reply']);
+
+    Route::get('/chat/messages',     [Api\ChatController::class, 'messages']);
+    Route::post('/chat/send',        [Api\ChatController::class, 'send']);
 });
