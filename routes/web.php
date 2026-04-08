@@ -53,6 +53,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin,manager'
         Route::post('/{user}/divider', [Admin\PublisherController::class, 'updateDivider'])->name('update-divider');
         Route::post('/{user}/test-results', [Admin\PublisherController::class, 'updateTestResults'])->name('test-results');
         Route::post('/{user}/payment-status', [Admin\PublisherController::class, 'updatePaymentStatus'])->name('payment-status');
+        Route::post('/{user}/fixed-rate', [Admin\PublisherController::class, 'updateFixedRate'])->name('fixed-rate');
         Route::post('/{user}/fraud-settings', [Admin\PublisherController::class, 'updateFraudSettings'])->name('fraud-settings');
         Route::post('/{user}/tags', [Admin\PublisherController::class, 'addTag'])->name('tags.add');
         Route::delete('/{user}/tags', [Admin\PublisherController::class, 'removeTag'])->name('tags.remove');
@@ -266,6 +267,10 @@ Route::prefix('publisher')->name('publisher.')->middleware(['auth', 'role:publis
     Route::post('/adcode/select', [Publisher\AdCodeController::class, 'selectPreset'])->name('adcode.select');
 
     Route::get('/contracts', [Publisher\ContractController::class, 'index'])->name('contracts');
+    Route::post('/notifications/read-all', function () {
+        \App\Models\PublisherNotification::where('user_id', auth()->id())->whereNull('read_at')->update(['read_at' => now()]);
+        return back();
+    })->name('notifications.read-all');
     Route::post('/contract/{contract}/accept', [Publisher\ContractController::class, 'accept'])->name('contract.accept');
     Route::post('/contract/{contract}/reject', [Publisher\ContractController::class, 'reject'])->name('contract.reject');
     Route::post('/contract-change-request', [Publisher\ContractChangeRequestController::class, 'store'])->name('contract-change.store');

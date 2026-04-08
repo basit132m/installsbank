@@ -68,6 +68,12 @@ class DashboardController extends Controller
         $hasTestRunning = $profile->test_status === 'running';
         $announcements = Announcement::where('is_active', true)->latest()->get();
 
+        // Unread publisher notifications (rate changes etc.)
+        $publisherNotifications = \App\Models\PublisherNotification::where('user_id', $user->id)
+            ->whereNull('read_at')
+            ->latest()
+            ->get();
+
         // Installs today (for installs_base publishers)
         $installsToday = null;
         if ($profile->contract_type === 'installs_base') {
@@ -81,7 +87,7 @@ class DashboardController extends Controller
             'user', 'profile', 'contract', 'divider',
             'stats', 'clicksChart', 'countryBreakdown', 'osBreakdown',
             'pendingContract', 'pendingContracts', 'hasTestRunning', 'showEarnings',
-            'announcements', 'installsToday'
+            'announcements', 'installsToday', 'publisherNotifications'
         ));
     }
 

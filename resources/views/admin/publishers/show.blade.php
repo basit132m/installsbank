@@ -241,6 +241,38 @@
     </div>
 </div>
 
+<!-- Fixed Rate Adjustment (only for fixed-contract publishers) -->
+@if($user->publisherProfile?->contract_type === 'fixed')
+<div class="card mb-6" style="border:1.5px solid #bbf7d0;">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;">
+        <div style="width:38px;height:38px;background:#d1fae5;border-radius:10px;display:flex;align-items:center;justify-content:center;">
+            <svg width="18" height="18" fill="none" stroke="#059669" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        </div>
+        <div>
+            <div class="card-title" style="margin-bottom:2px;">Adjust Fixed Daily Rate</div>
+            <div style="font-size:12px;color:#6b7280;">Publisher will be notified immediately when rate is changed.</div>
+        </div>
+        <div style="margin-left:auto;text-align:right;">
+            <div style="font-size:11px;color:#6b7280;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">Current Rate</div>
+            <div style="font-size:24px;font-weight:900;color:#059669;">${{ number_format($user->publisherProfile->fixed_daily_rate, 4) }}<span style="font-size:13px;font-weight:600;color:#6b7280;">/day</span></div>
+        </div>
+    </div>
+    <form method="POST" action="{{ route('admin.publishers.fixed-rate', $user) }}" style="display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap;">
+        @csrf
+        <div style="flex:1;min-width:180px;">
+            <label style="display:block;font-size:12px;font-weight:700;color:#374151;margin-bottom:6px;">New Daily Rate (USD)</label>
+            <input type="number" name="fixed_daily_rate" class="form-control"
+                   value="{{ $user->publisherProfile->fixed_daily_rate }}"
+                   step="0.0001" min="0.0001" required
+                   style="font-size:16px;font-weight:700;color:#059669;">
+        </div>
+        <button type="submit" class="btn btn-primary" onclick="return confirm('Update fixed daily rate for {{ addslashes($user->name) }}?\n\nThey will be notified immediately.')">
+            Update Rate & Notify Publisher
+        </button>
+    </form>
+</div>
+@endif
+
 <!-- Payment Settings -->
 <div class="card mb-6">
     <div class="flex-between">

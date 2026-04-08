@@ -14,6 +14,36 @@
 </div>
 @endif
 
+{{-- Publisher notifications (rate changes, etc.) --}}
+@if(isset($publisherNotifications) && $publisherNotifications->isNotEmpty())
+<div style="margin-bottom:20px;">
+    @foreach($publisherNotifications as $notif)
+    @php
+        $isIncrease = $notif->type === 'rate_increase';
+        $ns = $isIncrease
+            ? ['bg'=>'#f0fdf4','border'=>'#86efac','text'=>'#166534','icon_bg'=>'#dcfce7','icon_color'=>'#16a34a','icon'=>'M13 7h8m0 0v8m0-8l-8 8-4-4-6 6']
+            : ['bg'=>'#fff7ed','border'=>'#fed7aa','text'=>'#92400e','icon_bg'=>'#fef3c7','icon_color'=>'#d97706','icon'=>'M13 17h8m0 0V9m0 8l-8-8-4 4-6-6'];
+    @endphp
+    <div style="background:{{ $ns['bg'] }};border:1.5px solid {{ $ns['border'] }};border-radius:12px;padding:16px 20px;display:flex;gap:14px;align-items:flex-start;">
+        <div style="width:38px;height:38px;background:{{ $ns['icon_bg'] }};border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+            <svg width="18" height="18" fill="none" stroke="{{ $ns['icon_color'] }}" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="{{ $ns['icon'] }}"/></svg>
+        </div>
+        <div style="flex:1;">
+            <div style="font-size:14px;font-weight:700;color:{{ $ns['text'] }};margin-bottom:3px;">
+                {{ $isIncrease ? 'Rate Increased' : 'Rate Decreased' }}
+            </div>
+            <p style="font-size:13px;color:{{ $ns['text'] }};margin:0;line-height:1.6;">{{ $notif->message }}</p>
+        </div>
+        <span style="font-size:11px;color:{{ $ns['text'] }};opacity:0.7;white-space:nowrap;">{{ $notif->created_at->diffForHumans() }}</span>
+    </div>
+    @endforeach
+    <form method="POST" action="{{ route('publisher.notifications.read-all') }}" style="margin-top:8px;text-align:right;">
+        @csrf
+        <button type="submit" style="background:none;border:none;font-size:12px;color:#6b7280;cursor:pointer;text-decoration:underline;">Dismiss all notifications</button>
+    </form>
+</div>
+@endif
+
 @if(auth()->user()->status === 'pending')
 <div style="background:#fff7ed;border:1px solid #fed7aa;border-radius:12px;padding:24px;margin-bottom:24px;">
     <div style="display:flex;gap:14px;align-items:flex-start;">

@@ -115,6 +115,39 @@ class PublisherController extends Controller
         return back()->with('success', 'Payment status updated.');
     }
 
+    public function updateFixedRate(Request $request, User $user)
+    {
+        $profile = $user->publisherProfile;
+
+        if (!$profile || $profile->contract_type !== 'fixed') {
+            return back()->with('error', 'This publisher does not have an active Fixed Daily Rate contract.');
+        }
+
+        $data = $request->validate([
+            'fixed_daily_rate' => 'required|numeric|min:0.0001',
+        ]);
+
+        $oldRate = (float) $profile->fixed_daily_rate;
+        $newRate = (float) $data['fixed_daily_rate'];
+
+        if ($oldRate == $newRate) {
+            return back()->with('error', 'New rate is the same as the current rate. No changes made.');
+        }
+
+        $profile->update(['fixed_daily_rate' => $newRate]);
+
+        $direction = $newRate > $oldRate ? 'increased' : 'decreased';
+        $type      = $newRate > $oldRate ? 'rate_increase' : 'rate_decrease';
+
+        \App\Models\PublisherNotification::create([
+            'user_id' => $user->id,
+            'type'    => $type,
+            'message' => "Your Fixed Daily Rate has been {$direction} from \${$oldRate} to \${$newRate} per day, effective immediately.",
+        ]);
+
+        return back()->with('success', "Fixed rate updated from \${$oldRate} to \${$newRate} and publisher notified.");
+    }
+
     public function stats(User $user, Request $request)
     {
         $period = $request->get('period', '7');
