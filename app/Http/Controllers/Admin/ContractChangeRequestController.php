@@ -16,7 +16,11 @@ class ContractChangeRequestController extends Controller
             ->orderByDesc('created_at')
             ->paginate(30);
 
-        return view('admin.contract-requests.index', compact('requests'));
+        $pendingCount = ContractChangeRequest::where('status', 'pending')->count();
+        $approved     = ContractChangeRequest::where('status', 'approved')->count();
+        $rejected     = ContractChangeRequest::where('status', 'rejected')->count();
+
+        return view('admin.contract-requests.index', compact('requests', 'pendingCount', 'approved', 'rejected'));
     }
 
     public function approve(Request $request, ContractChangeRequest $contractRequest)

@@ -12,15 +12,10 @@
 @endif
 
 {{-- Stats row --}}
-@php
-    $pending  = $requests->where('status', 'pending')->count();
-    $approved = $requests->where('status', 'approved')->count();
-    $rejected = $requests->where('status', 'rejected')->count();
-@endphp
 <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:16px;margin-bottom:24px;">
     <div style="background:white;border:1px solid #fde68a;border-radius:12px;padding:18px 20px;">
         <div style="font-size:11px;font-weight:700;color:#92400e;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;">Pending</div>
-        <div style="font-size:28px;font-weight:800;color:#78350f;">{{ $requests->where('status','pending')->total() ?? $pending }}</div>
+        <div style="font-size:28px;font-weight:800;color:#78350f;">{{ $pendingCount }}</div>
     </div>
     <div style="background:white;border:1px solid #bbf7d0;border-radius:12px;padding:18px 20px;">
         <div style="font-size:11px;font-weight:700;color:#166534;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;">Approved</div>
