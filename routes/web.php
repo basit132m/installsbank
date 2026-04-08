@@ -141,6 +141,13 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin,manager'
         Route::delete('/{user}', [Admin\ManagerController::class, 'destroy'])->name('destroy');
     });
 
+    // Blacklisted domains
+    Route::prefix('blacklisted-domains')->name('blacklisted-domains.')->group(function () {
+        Route::get('/', [Admin\BlacklistedDomainController::class, 'index'])->name('index');
+        Route::post('/', [Admin\BlacklistedDomainController::class, 'store'])->name('store');
+        Route::delete('/{blacklistedDomain}', [Admin\BlacklistedDomainController::class, 'destroy'])->name('destroy');
+    });
+
     // Tracking domains
     Route::prefix('tracking-domains')->name('tracking-domains.')->group(function () {
         Route::get('/', [Admin\TrackingDomainController::class, 'index'])->name('index');

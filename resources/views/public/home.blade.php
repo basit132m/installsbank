@@ -240,12 +240,9 @@
             <span class="nav-brand-text">Installs Bank</span>
         </a>
         <div class="nav-links">
-            <a href="#features">Features</a>
-            <a href="#how-it-works">How It Works</a>
             <a href="{{ route('contracts') }}">Contracts</a>
             <a href="{{ route('rates') }}">Click Rates</a>
             <a href="{{ route('install-rates') }}">Install Rates</a>
-            <a href="#contact">Contact</a>
         </div>
         <div class="nav-cta">
             <a href="{{ route('login') }}" class="btn-login">Sign In</a>
@@ -258,13 +255,9 @@
 
     <!-- Mobile Menu -->
     <div class="mobile-menu" id="mobileMenu">
-        <a href="#features" onclick="closeMenu()">Features</a>
-        <a href="#how-it-works" onclick="closeMenu()">How It Works</a>
         <a href="{{ route('contracts') }}" onclick="closeMenu()">Contracts</a>
         <a href="{{ route('rates') }}" onclick="closeMenu()">Click Rates</a>
         <a href="{{ route('install-rates') }}" onclick="closeMenu()">Install Rates</a>
-        <a href="#mobile-app" onclick="closeMenu()">Mobile App</a>
-        <a href="#contact" onclick="closeMenu()">Contact</a>
         <div class="mob-cta">
             <a href="{{ route('login') }}" class="mob-btn-login">Sign In</a>
             <a href="{{ route('register') }}" class="mob-btn-signup">Join Now — Free</a>
