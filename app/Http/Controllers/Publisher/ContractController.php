@@ -9,6 +9,17 @@ use Illuminate\Http\Request;
 
 class ContractController extends Controller
 {
+    public function index()
+    {
+        $user    = auth()->user();
+        $profile = $user->publisherProfile;
+        $contracts = \App\Models\Contract::where('user_id', $user->id)
+            ->orderByDesc('created_at')
+            ->get();
+
+        return view('publisher.contracts', compact('profile', 'contracts'));
+    }
+
     public function accept(Contract $contract)
     {
         if ($contract->user_id !== auth()->id() || !$contract->isPending()) {

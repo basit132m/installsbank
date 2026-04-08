@@ -257,6 +257,7 @@ Route::prefix('publisher')->name('publisher.')->middleware(['auth', 'role:publis
     Route::get('/adcode', [Publisher\AdCodeController::class, 'index'])->name('adcode');
     Route::post('/adcode/select', [Publisher\AdCodeController::class, 'selectPreset'])->name('adcode.select');
 
+    Route::get('/contracts', [Publisher\ContractController::class, 'index'])->name('contracts');
     Route::post('/contract/{contract}/accept', [Publisher\ContractController::class, 'accept'])->name('contract.accept');
     Route::post('/contract/{contract}/reject', [Publisher\ContractController::class, 'reject'])->name('contract.reject');
 
