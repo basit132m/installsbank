@@ -18,6 +18,7 @@ use App\Http\Controllers\Advertiser;
 Route::get('/', fn() => view('public.home'))->name('home');
 Route::get('/rates', [RatesController::class, 'index'])->name('rates');
 Route::get('/install-rates', [InstallRatesController::class, 'index'])->name('install-rates');
+Route::get('/contracts', fn() => view('public.contracts'))->name('contracts');
 Route::get('/privacy-policy', fn() => view('public.privacy'))->name('privacy');
 Route::get('/terms-of-use', fn() => view('public.terms'))->name('terms');
 
@@ -70,6 +71,13 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin,manager'
         Route::get('/', [Admin\ContractController::class, 'index'])->name('index');
         Route::post('/publisher/{user}/offer', [Admin\ContractController::class, 'offer'])->name('offer');
         Route::post('/{contract}/expire', [Admin\ContractController::class, 'expire'])->name('expire');
+    });
+
+    // Contract change requests
+    Route::prefix('contract-requests')->name('contract-requests.')->group(function () {
+        Route::get('/', [Admin\ContractChangeRequestController::class, 'index'])->name('index');
+        Route::post('/{contractRequest}/approve', [Admin\ContractChangeRequestController::class, 'approve'])->name('approve');
+        Route::post('/{contractRequest}/reject', [Admin\ContractChangeRequestController::class, 'reject'])->name('reject');
     });
 
     // Settings (admin only)
@@ -260,6 +268,7 @@ Route::prefix('publisher')->name('publisher.')->middleware(['auth', 'role:publis
     Route::get('/contracts', [Publisher\ContractController::class, 'index'])->name('contracts');
     Route::post('/contract/{contract}/accept', [Publisher\ContractController::class, 'accept'])->name('contract.accept');
     Route::post('/contract/{contract}/reject', [Publisher\ContractController::class, 'reject'])->name('contract.reject');
+    Route::post('/contract-change-request', [Publisher\ContractChangeRequestController::class, 'store'])->name('contract-change.store');
 
     Route::get('/withdrawals', [Publisher\WithdrawalController::class, 'index'])->name('withdrawals.index');
     Route::post('/withdrawals', [Publisher\WithdrawalController::class, 'store'])->name('withdrawals.store');

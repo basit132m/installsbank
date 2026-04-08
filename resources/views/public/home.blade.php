@@ -242,7 +242,7 @@
         <div class="nav-links">
             <a href="#features">Features</a>
             <a href="#how-it-works">How It Works</a>
-            <a href="#contracts">Contracts</a>
+            <a href="{{ route('contracts') }}">Contracts</a>
             <a href="{{ route('rates') }}">Click Rates</a>
             <a href="{{ route('install-rates') }}">Install Rates</a>
             <a href="#contact">Contact</a>
@@ -260,7 +260,7 @@
     <div class="mobile-menu" id="mobileMenu">
         <a href="#features" onclick="closeMenu()">Features</a>
         <a href="#how-it-works" onclick="closeMenu()">How It Works</a>
-        <a href="#contracts" onclick="closeMenu()">Contracts</a>
+        <a href="{{ route('contracts') }}" onclick="closeMenu()">Contracts</a>
         <a href="{{ route('rates') }}" onclick="closeMenu()">Click Rates</a>
         <a href="{{ route('install-rates') }}" onclick="closeMenu()">Install Rates</a>
         <a href="#mobile-app" onclick="closeMenu()">Mobile App</a>

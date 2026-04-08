@@ -11,13 +11,20 @@ class ContractController extends Controller
 {
     public function index()
     {
-        $user    = auth()->user();
-        $profile = $user->publisherProfile;
+        $user      = auth()->user();
+        $profile   = $user->publisherProfile;
         $contracts = \App\Models\Contract::where('user_id', $user->id)
             ->orderByDesc('created_at')
             ->get();
+        $changeRequests = \App\Models\ContractChangeRequest::where('user_id', $user->id)
+            ->orderByDesc('created_at')
+            ->get();
+        $snapshots = \App\Models\PublisherContractSnapshot::where('user_id', $user->id)
+            ->orderByDesc('changed_at')
+            ->get();
+        $hasPendingRequest = $changeRequests->where('status', 'pending')->isNotEmpty();
 
-        return view('publisher.contracts', compact('profile', 'contracts'));
+        return view('publisher.contracts', compact('profile', 'contracts', 'changeRequests', 'snapshots', 'hasPendingRequest'));
     }
 
     public function accept(Contract $contract)
