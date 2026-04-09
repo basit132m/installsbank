@@ -4,9 +4,9 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Mail\BroadcastMailable;
-use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Validator;
 
 class BroadcastEmailController extends Controller
 {
@@ -31,14 +31,7 @@ Register Now: https://installsbank.com/register";
     public function index()
     {
         $this->authorizeAccess();
-
-        $publishers = User::where('role', 'publisher')
-            ->orderBy('name')
-            ->get(['id', 'name', 'email', 'status']);
-
-        $defaultBody = $this->defaultBody;
-
-        return view('admin.broadcast-email.index', compact('publishers', 'defaultBody'));
+        return view('admin.broadcast-email.index', ['defaultBody' => $this->defaultBody]);
     }
 
     public function send(Request $request)
@@ -46,44 +39,47 @@ Register Now: https://installsbank.com/register";
         $this->authorizeAccess();
 
         $data = $request->validate([
-            'recipients'    => 'required|in:all,active,specific',
-            'specific_ids'  => 'required_if:recipients,specific|array',
-            'specific_ids.*'=> 'exists:users,id',
-            'subject'       => 'required|string|max:200',
-            'body'          => 'required|string|max:10000',
+            'emails'  => 'required|string',
+            'subject' => 'required|string|max:200',
+            'body'    => 'required|string|max:10000',
         ]);
 
-        $query = User::where('role', 'publisher');
+        // Parse emails — support comma, semicolon, newline separated
+        $rawEmails = preg_split('/[\s,;]+/', $data['emails']);
+        $valid   = [];
+        $invalid = [];
 
-        if ($data['recipients'] === 'active') {
-            $query->where('status', 'active');
-        } elseif ($data['recipients'] === 'specific') {
-            $query->whereIn('id', $data['specific_ids']);
+        foreach ($rawEmails as $email) {
+            $email = trim($email);
+            if ($email === '') continue;
+            if (filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                $valid[] = $email;
+            } else {
+                $invalid[] = $email;
+            }
         }
 
-        $publishers = $query->get(['id', 'name', 'email']);
+        $valid = array_unique($valid);
 
-        if ($publishers->isEmpty()) {
-            return back()->with('error', 'No publishers found for the selected recipients.')->withInput();
+        if (empty($valid)) {
+            return back()->with('error', 'No valid email addresses found. Please check your input.')->withInput();
         }
 
         $sent   = 0;
         $failed = 0;
 
-        foreach ($publishers as $publisher) {
+        foreach ($valid as $email) {
             try {
-                Mail::to($publisher->email)
-                    ->send(new BroadcastMailable($publisher->name, $data['subject'], $data['body']));
+                Mail::to($email)->send(new BroadcastMailable('', $data['subject'], $data['body']));
                 $sent++;
             } catch (\Exception) {
                 $failed++;
             }
         }
 
-        $msg = "Email sent to {$sent} publisher(s).";
-        if ($failed > 0) {
-            $msg .= " {$failed} failed.";
-        }
+        $msg = "Email sent to {$sent} address(es).";
+        if ($failed > 0) $msg .= " {$failed} failed to send.";
+        if (!empty($invalid)) $msg .= " Skipped " . count($invalid) . " invalid address(es): " . implode(', ', $invalid) . ".";
 
         return back()->with('success', $msg);
     }
@@ -92,7 +88,6 @@ Register Now: https://installsbank.com/register";
     {
         $user = auth()->user();
         if ($user->role === 'admin') return;
-
         if (!$user->hasPermission('can_send_broadcast_emails')) {
             abort(403, 'You do not have permission to send broadcast emails.');
         }
