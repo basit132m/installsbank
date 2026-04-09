@@ -69,10 +69,18 @@ class ManagerController extends Controller
     private function extractPermissions(Request $request): array
     {
         $perms = [
-            'can_manage_publishers', 'can_view_publishers', 'can_manage_contracts',
-            'can_manage_rates', 'can_manage_withdrawals', 'can_view_withdrawals',
-            'can_manage_ad_presets', 'can_view_fraud_alerts', 'can_resolve_fraud_alerts',
-            'can_manage_support', 'can_view_stats', 'can_manage_test_periods',
+            'can_manage_publishers', 'can_view_publishers',
+            'can_manage_test_periods', 'can_manage_publisher_websites',
+            'can_manage_contracts', 'can_manage_contract_requests',
+            'can_manage_rate_increase_requests',
+            'can_manage_rates', 'can_manage_install_rates',
+            'can_manage_tracking', 'can_manage_blacklisted_domains',
+            'can_manage_withdrawals', 'can_view_withdrawals',
+            'can_manage_ad_presets',
+            'can_manage_advertisers', 'can_manage_campaigns',
+            'can_view_fraud_alerts', 'can_resolve_fraud_alerts',
+            'can_manage_support', 'can_manage_live_chat',
+            'can_view_stats',
         ];
         $result = [];
         foreach ($perms as $perm) {
