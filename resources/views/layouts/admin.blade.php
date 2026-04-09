@@ -376,6 +376,12 @@
                 @php $pendingContractReqs = \App\Models\ContractChangeRequest::where('status','pending')->count(); @endphp
                 @if($pendingContractReqs > 0)<span class="nav-badge warning">{{ $pendingContractReqs }}</span>@endif
             </a>
+            <a href="{{ route('admin.rate-increase-requests.index') }}" class="nav-item {{ request()->routeIs('admin.rate-increase-requests.*') ? 'active' : '' }}">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>
+                Rate Increase Requests
+                @php $pendingRateReqs = \App\Models\RateIncreaseRequest::where('status','pending')->count(); @endphp
+                @if($pendingRateReqs > 0)<span class="nav-badge warning">{{ $pendingRateReqs }}</span>@endif
+            </a>
 
             <div class="nav-section-title">Advertisers</div>
             <a href="{{ route('admin.advertisers.index') }}" class="nav-item {{ request()->routeIs('admin.advertisers.*') ? 'active' : '' }}">

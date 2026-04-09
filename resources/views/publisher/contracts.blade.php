@@ -110,6 +110,104 @@
 
 </div>
 
+{{-- Rate Increase Request (fixed publishers only) --}}
+@if($ct === 'fixed' && $profile)
+<div class="card" style="margin-bottom:28px;border:1.5px solid #bbf7d0;">
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:20px;">
+        <div>
+            <div class="card-title" style="color:#166534;">Request Rate Increase</div>
+            <p style="font-size:13px;color:#6b7280;margin-top:4px;">Your current daily rate is <strong style="color:#166534;">${{ number_format($profile->fixed_daily_rate, 4) }}/day</strong>. Submit stats showing traffic growth to request a higher rate.</p>
+        </div>
+        @if($hasPendingRateRequest)
+        <span style="background:#fef3c7;border:1px solid #fcd34d;border-radius:20px;padding:5px 14px;font-size:12px;font-weight:700;color:#92400e;white-space:nowrap;">
+            ⏳ Request Pending Review
+        </span>
+        @endif
+    </div>
+
+    @if($hasPendingRateRequest)
+    <div style="background:#fffbeb;border:1px solid #fde68a;border-radius:10px;padding:14px 16px;font-size:13px;color:#78350f;">
+        You have a pending rate increase request. You can submit a new one once admin responds.
+    </div>
+    @else
+    <form method="POST" action="{{ route('publisher.rate-increase.store') }}" enctype="multipart/form-data">
+        @csrf
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;">
+            <div class="form-group" style="margin-bottom:0;">
+                <label class="form-label">Current Daily Rate</label>
+                <div style="padding:10px 14px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;font-size:14px;font-weight:700;color:#166534;">
+                    ${{ number_format($profile->fixed_daily_rate, 4) }}/day
+                </div>
+            </div>
+            <div class="form-group" style="margin-bottom:0;">
+                <label class="form-label">Requested New Rate ($/day)</label>
+                <input type="number" name="requested_rate" class="form-control" step="0.0001" min="{{ $profile->fixed_daily_rate + 0.0001 }}" required placeholder="e.g. 5.0000">
+            </div>
+        </div>
+        <div class="form-group" style="margin-bottom:16px;">
+            <label class="form-label">Justification <span style="color:#9ca3af;font-weight:400;">(optional)</span></label>
+            <textarea name="justification" class="form-control" rows="3" maxlength="2000"
+                      placeholder="Describe your traffic growth — e.g. average daily clicks then vs. now, regions..."></textarea>
+        </div>
+        <div class="form-group" style="margin-bottom:16px;">
+            <label class="form-label">Stats Screenshots <span style="color:#9ca3af;font-weight:400;">(optional — Google Console, analytics, etc.)</span></label>
+            <input type="file" name="screenshots[]" class="form-control" multiple accept=".jpg,.jpeg,.png,.pdf"
+                   style="padding:8px 12px;">
+            <div style="font-size:11px;color:#9ca3af;margin-top:4px;">Upload screenshots from the date your deal was made and present stats. JPG, PNG or PDF, max 5 MB each.</div>
+        </div>
+        <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:12px 14px;margin-bottom:16px;font-size:13px;color:#166534;">
+            <strong>How it works:</strong> If approved, your new rate takes effect from the <strong>1st of next month</strong>. For example, approval in April means May 1st onwards.
+        </div>
+        <button type="submit" class="btn btn-primary" style="background:#01BF63;">Submit Rate Increase Request</button>
+    </form>
+    @endif
+
+    {{-- Rate increase request history --}}
+    @if($rateIncreaseRequests->isNotEmpty())
+    <div style="margin-top:24px;border-top:1px solid #f3f4f6;padding-top:20px;">
+        <div style="font-size:13px;font-weight:700;color:#374151;margin-bottom:12px;">Rate Increase Request History</div>
+        <table style="width:100%;border-collapse:collapse;font-size:13px;">
+            <thead>
+                <tr style="border-bottom:2px solid #f3f4f6;">
+                    <th style="text-align:left;padding:6px 10px;font-size:11px;font-weight:700;color:#6b7280;text-transform:uppercase;">From</th>
+                    <th style="text-align:left;padding:6px 10px;font-size:11px;font-weight:700;color:#6b7280;text-transform:uppercase;">Requested</th>
+                    <th style="text-align:left;padding:6px 10px;font-size:11px;font-weight:700;color:#6b7280;text-transform:uppercase;">Approved Rate</th>
+                    <th style="text-align:left;padding:6px 10px;font-size:11px;font-weight:700;color:#6b7280;text-transform:uppercase;">Effective</th>
+                    <th style="text-align:left;padding:6px 10px;font-size:11px;font-weight:700;color:#6b7280;text-transform:uppercase;">Status</th>
+                    <th style="text-align:left;padding:6px 10px;font-size:11px;font-weight:700;color:#6b7280;text-transform:uppercase;">Admin Note</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach($rateIncreaseRequests as $ri)
+                @php
+                    $riColor = match($ri->status) {
+                        'approved' => ['bg'=>'#d1fae5','text'=>'#065f46'],
+                        'rejected' => ['bg'=>'#fee2e2','text'=>'#991b1b'],
+                        default    => ['bg'=>'#fef3c7','text'=>'#92400e'],
+                    };
+                @endphp
+                <tr style="border-bottom:1px solid #f3f4f6;">
+                    <td style="padding:8px 10px;color:#374151;">${{ number_format($ri->current_rate, 4) }}</td>
+                    <td style="padding:8px 10px;color:#374151;">${{ number_format($ri->requested_rate, 4) }}</td>
+                    <td style="padding:8px 10px;font-weight:700;color:#166534;">
+                        {{ $ri->approved_rate ? '$' . number_format($ri->approved_rate, 4) : '—' }}
+                    </td>
+                    <td style="padding:8px 10px;color:#6b7280;white-space:nowrap;">
+                        {{ $ri->effective_from ? $ri->effective_from->format('M 1, Y') : '—' }}
+                    </td>
+                    <td style="padding:8px 10px;">
+                        <span style="padding:3px 8px;border-radius:20px;font-size:11px;font-weight:700;background:{{ $riColor['bg'] }};color:{{ $riColor['text'] }};">{{ ucfirst($ri->status) }}</span>
+                    </td>
+                    <td style="padding:8px 10px;color:#6b7280;font-size:12px;">{{ $ri->admin_note ?? '—' }}</td>
+                </tr>
+                @endforeach
+            </tbody>
+        </table>
+    </div>
+    @endif
+</div>
+@endif
+
 {{-- Request Contract Change --}}
 @if($ct && $profile)
 <div class="card" style="margin-bottom:28px;">

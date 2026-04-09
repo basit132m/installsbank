@@ -81,6 +81,13 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin,manager'
         Route::post('/{contractRequest}/reject', [Admin\ContractChangeRequestController::class, 'reject'])->name('reject');
     });
 
+    // Rate increase requests
+    Route::prefix('rate-increase-requests')->name('rate-increase-requests.')->group(function () {
+        Route::get('/', [Admin\RateIncreaseRequestController::class, 'index'])->name('index');
+        Route::post('/{rateRequest}/approve', [Admin\RateIncreaseRequestController::class, 'approve'])->name('approve');
+        Route::post('/{rateRequest}/reject', [Admin\RateIncreaseRequestController::class, 'reject'])->name('reject');
+    });
+
     // Settings (admin only)
     Route::prefix('settings')->name('settings.')->middleware('role:admin')->group(function () {
         Route::get('/', [Admin\SettingsController::class, 'index'])->name('index');
@@ -281,6 +288,7 @@ Route::prefix('publisher')->name('publisher.')->middleware(['auth', 'role:publis
     Route::post('/contract/{contract}/accept', [Publisher\ContractController::class, 'accept'])->name('contract.accept');
     Route::post('/contract/{contract}/reject', [Publisher\ContractController::class, 'reject'])->name('contract.reject');
     Route::post('/contract-change-request', [Publisher\ContractChangeRequestController::class, 'store'])->name('contract-change.store');
+    Route::post('/rate-increase-request', [Publisher\RateIncreaseRequestController::class, 'store'])->name('rate-increase.store');
 
     Route::get('/withdrawals', [Publisher\WithdrawalController::class, 'index'])->name('withdrawals.index');
     Route::post('/withdrawals', [Publisher\WithdrawalController::class, 'store'])->name('withdrawals.store');

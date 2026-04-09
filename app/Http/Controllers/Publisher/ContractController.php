@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Publisher;
 use App\Http\Controllers\Controller;
 use App\Models\Contract;
 use App\Models\PublisherProfile;
+use App\Models\RateIncreaseRequest;
 use Illuminate\Http\Request;
 
 class ContractController extends Controller
@@ -24,7 +25,12 @@ class ContractController extends Controller
             ->get();
         $hasPendingRequest = $changeRequests->where('status', 'pending')->isNotEmpty();
 
-        return view('publisher.contracts', compact('profile', 'contracts', 'changeRequests', 'snapshots', 'hasPendingRequest'));
+        $rateIncreaseRequests = RateIncreaseRequest::where('user_id', $user->id)
+            ->orderByDesc('created_at')
+            ->get();
+        $hasPendingRateRequest = $rateIncreaseRequests->where('status', 'pending')->isNotEmpty();
+
+        return view('publisher.contracts', compact('profile', 'contracts', 'changeRequests', 'snapshots', 'hasPendingRequest', 'rateIncreaseRequests', 'hasPendingRateRequest'));
     }
 
     public function accept(Contract $contract)

@@ -19,19 +19,31 @@
 <div style="margin-bottom:20px;">
     @foreach($publisherNotifications as $notif)
     @php
-        $isIncrease = $notif->type === 'rate_increase';
-        $ns = $isIncrease
-            ? ['bg'=>'#f0fdf4','border'=>'#86efac','text'=>'#166534','icon_bg'=>'#dcfce7','icon_color'=>'#16a34a','icon'=>'M13 7h8m0 0v8m0-8l-8 8-4-4-6 6']
-            : ['bg'=>'#fff7ed','border'=>'#fed7aa','text'=>'#92400e','icon_bg'=>'#fef3c7','icon_color'=>'#d97706','icon'=>'M13 17h8m0 0V9m0 8l-8-8-4 4-6-6'];
+        $ns = match($notif->type) {
+            'rate_increase', 'rate_increase_approved', 'rate_applied'
+                => ['bg'=>'#f0fdf4','border'=>'#86efac','text'=>'#166534','icon_bg'=>'#dcfce7','icon_color'=>'#16a34a',
+                    'icon'=>'M13 7h8m0 0v8m0-8l-8 8-4-4-6 6',
+                    'title'=> $notif->type === 'rate_applied' ? 'Rate Now Active' : 'Rate Increase Approved'],
+            'rate_increase_rejected'
+                => ['bg'=>'#fff1f2','border'=>'#fca5a5','text'=>'#991b1b','icon_bg'=>'#fee2e2','icon_color'=>'#ef4444',
+                    'icon'=>'M6 18L18 6M6 6l12 12',
+                    'title'=>'Rate Increase Declined'],
+            'rate_decrease'
+                => ['bg'=>'#fff7ed','border'=>'#fed7aa','text'=>'#92400e','icon_bg'=>'#fef3c7','icon_color'=>'#d97706',
+                    'icon'=>'M13 17h8m0 0V9m0 8l-8-8-4 4-6-6',
+                    'title'=>'Rate Decreased'],
+            default
+                => ['bg'=>'#eff6ff','border'=>'#bfdbfe','text'=>'#1e40af','icon_bg'=>'#dbeafe','icon_color'=>'#3b82f6',
+                    'icon'=>'M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z',
+                    'title'=>'Notification'],
+        };
     @endphp
     <div style="background:{{ $ns['bg'] }};border:1.5px solid {{ $ns['border'] }};border-radius:12px;padding:16px 20px;display:flex;gap:14px;align-items:flex-start;">
         <div style="width:38px;height:38px;background:{{ $ns['icon_bg'] }};border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
             <svg width="18" height="18" fill="none" stroke="{{ $ns['icon_color'] }}" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="{{ $ns['icon'] }}"/></svg>
         </div>
         <div style="flex:1;">
-            <div style="font-size:14px;font-weight:700;color:{{ $ns['text'] }};margin-bottom:3px;">
-                {{ $isIncrease ? 'Rate Increased' : 'Rate Decreased' }}
-            </div>
+            <div style="font-size:14px;font-weight:700;color:{{ $ns['text'] }};margin-bottom:3px;">{{ $ns['title'] }}</div>
             <p style="font-size:13px;color:{{ $ns['text'] }};margin:0;line-height:1.6;">{{ $notif->message }}</p>
         </div>
         <span style="font-size:11px;color:{{ $ns['text'] }};opacity:0.7;white-space:nowrap;">{{ $notif->created_at->diffForHumans() }}</span>
