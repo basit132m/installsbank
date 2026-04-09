@@ -45,6 +45,16 @@ class LoginController extends Controller
             $user->update(['last_login_at' => now()]);
             if ($user->role === 'publisher') {
                 $request->session()->flash('show_welcome', true);
+
+                // First login after approval — show congratulations overlay once
+                $approvalNotif = \App\Models\PublisherNotification::where('user_id', $user->id)
+                    ->where('type', 'account_approved')
+                    ->whereNull('read_at')
+                    ->first();
+                if ($approvalNotif) {
+                    $approvalNotif->update(['read_at' => now()]);
+                    $request->session()->flash('show_approval_welcome', true);
+                }
             }
             return $this->redirectByRole($user);
         }

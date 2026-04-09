@@ -238,6 +238,51 @@
 </script>
 @endif
 
+@if(session('show_approval_welcome'))
+<div id="approvalOverlay" style="
+    position:fixed;inset:0;z-index:100000;
+    background:rgba(255,255,255,0.98);
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    gap:20px;padding:24px;
+    animation:wFadeIn .4s ease;
+">
+    <img src="https://installsbank.com/images/waving-fox.webp"
+         alt="Congratulations"
+         style="width:200px;max-width:55vw;object-fit:contain;animation:wBounce 1s ease infinite alternate;">
+    <div style="text-align:center;max-width:480px;">
+        <div style="display:inline-block;background:#f0fdf4;border:1.5px solid #86efac;border-radius:20px;padding:5px 18px;font-size:13px;font-weight:700;color:#166534;margin-bottom:14px;">
+            🎉 Account Approved
+        </div>
+        <div style="font-size:26px;font-weight:800;color:#111827;letter-spacing:-0.5px;line-height:1.2;margin-bottom:10px;">
+            Congratulations, {{ auth()->user()->name }}!
+        </div>
+        <div style="font-size:15px;color:#4b5563;line-height:1.7;margin-bottom:6px;">
+            Your account has been approved at <strong>Installs Bank</strong>.
+        </div>
+        <div style="font-size:14px;color:#6b7280;line-height:1.7;">
+            Choose your well-suited contract type and request for your ad code to start earning.
+        </div>
+    </div>
+    <a href="{{ route('publisher.contracts') }}"
+       style="background:#01BF63;color:white;text-decoration:none;border-radius:12px;padding:13px 32px;font-size:15px;font-weight:700;margin-top:4px;">
+        Choose Contract →
+    </a>
+    <button onclick="closeApprovalOverlay()" style="background:none;border:none;font-size:13px;color:#9ca3af;cursor:pointer;margin-top:-8px;">
+        Skip for now
+    </button>
+</div>
+<script>
+function closeApprovalOverlay() {
+    var el = document.getElementById('approvalOverlay');
+    if (!el) return;
+    el.style.animation = 'wFadeOut .5s ease forwards';
+    setTimeout(function(){ el.remove(); }, 500);
+}
+// Auto-dismiss after 8 seconds
+setTimeout(closeApprovalOverlay, 8000);
+</script>
+@endif
+
 <!-- ========== LIVE CHAT WIDGET (approved publishers only) ========== -->
 @if(auth()->user()->status === 'active')
 <style>

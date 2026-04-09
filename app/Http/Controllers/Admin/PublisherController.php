@@ -70,6 +70,13 @@ class PublisherController extends Controller
     public function activate(User $user)
     {
         $user->update(['status' => 'active']);
+
+        \App\Models\PublisherNotification::create([
+            'user_id' => $user->id,
+            'type'    => 'account_approved',
+            'message' => 'Your account has been approved! You can now choose your contract type and request your ad code to start earning.',
+        ]);
+
         return back()->with('success', 'Publisher activated successfully.');
     }
 
