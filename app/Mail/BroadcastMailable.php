@@ -12,22 +12,25 @@ class BroadcastMailable extends Mailable
 {
     use Queueable, SerializesModels;
 
-    public function __construct(
-        public string $recipientName,
-        public string $subject,
-        public string $bodyContent,
-    ) {}
+    public string $emailSubject;
+    public string $bodyContent;
+
+    public function __construct(string $emailSubject, string $bodyContent)
+    {
+        $this->emailSubject = $emailSubject;
+        $this->bodyContent  = $bodyContent;
+    }
 
     public function envelope(): Envelope
     {
-        return new Envelope(subject: $this->subject);
+        return new Envelope(subject: $this->emailSubject);
     }
 
     public function content(): Content
     {
         return new Content(
-            view:     'emails.broadcast',
-            text:     'emails.broadcast-text',
+            view: 'emails.broadcast',
+            text: 'emails.broadcast-text',
         );
     }
 }

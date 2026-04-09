@@ -72,7 +72,7 @@ Register Now: https://installsbank.com/register";
 
         foreach ($valid as $email) {
             try {
-                Mail::to($email)->send(new BroadcastMailable('', $data['subject'], $data['body']));
+                Mail::to($email)->send(new BroadcastMailable($data['subject'], $data['body']));
                 $sent++;
             } catch (\Exception) {
                 $failed++;
