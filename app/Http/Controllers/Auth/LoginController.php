@@ -33,6 +33,9 @@ class LoginController extends Controller
             }
 
             $user->update(['last_login_at' => now()]);
+            if ($user->role === 'publisher') {
+                $request->session()->flash('show_welcome', true);
+            }
             return $this->redirectByRole($user);
         }
 

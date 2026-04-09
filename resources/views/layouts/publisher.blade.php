@@ -200,6 +200,39 @@
     </div>
     @stack('scripts')
 
+@if(session('show_welcome'))
+<div id="welcomeOverlay" style="
+    position:fixed;inset:0;z-index:99999;
+    background:rgba(255,255,255,0.97);
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    gap:24px;
+    animation:wFadeIn .4s ease;
+">
+    <img src="https://installsbank.com/images/waving-fox.webp"
+         alt="Welcome"
+         style="width:220px;max-width:60vw;object-fit:contain;animation:wBounce 1s ease infinite alternate;">
+    <div style="text-align:center;">
+        <div style="font-size:26px;font-weight:800;color:#111827;letter-spacing:-0.5px;">Welcome Back to Installs Bank</div>
+        <div style="font-size:15px;color:#6b7280;margin-top:8px;">Good to see you again, {{ auth()->user()->name }}!</div>
+    </div>
+</div>
+<style>
+@keyframes wFadeIn  { from{opacity:0;transform:scale(1.04)} to{opacity:1;transform:scale(1)} }
+@keyframes wBounce  { from{transform:translateY(0)} to{transform:translateY(-10px)} }
+@keyframes wFadeOut { from{opacity:1;transform:scale(1)} to{opacity:0;transform:scale(0.96)} }
+</style>
+<script>
+(function(){
+    var el = document.getElementById('welcomeOverlay');
+    if(!el) return;
+    setTimeout(function(){
+        el.style.animation = 'wFadeOut .5s ease forwards';
+        setTimeout(function(){ el.remove(); }, 500);
+    }, 3000);
+})();
+</script>
+@endif
+
 <!-- ========== LIVE CHAT WIDGET (approved publishers only) ========== -->
 @if(auth()->user()->status === 'active')
 <style>
