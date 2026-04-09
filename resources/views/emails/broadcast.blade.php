@@ -6,12 +6,12 @@
 <meta name="format-detection" content="telephone=no">
 <title>{{ $subject }}</title>
 </head>
-<body style="margin:0;padding:0;background-color:#f3f4f6;font-family:Arial,Helvetica,sans-serif;-webkit-text-size-adjust:100%;-ms-text-size-adjust:100%;">
+<body style="margin:0;padding:0;background-color:#f3f4f6;font-family:Arial,Helvetica,sans-serif;">
 
-{{-- Preheader (hidden preview text in inbox) --}}
-<div style="display:none;max-height:0;overflow:hidden;mso-hide:all;font-size:1px;color:#f3f4f6;line-height:1px;">
+{{-- Preheader --}}
+<div style="display:none;max-height:0;overflow:hidden;mso-hide:all;font-size:1px;color:#f3f4f6;">
     High payouts on every click &amp; install — Join Installs Bank today and start earning.
-    &nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;
+    &nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;
 </div>
 
 <table width="100%" border="0" cellpadding="0" cellspacing="0" style="background-color:#f3f4f6;">
@@ -34,113 +34,78 @@
     <tr>
         <td style="padding:36px 40px 28px;">
 
-            {{-- Greeting / custom intro --}}
-            <p style="font-size:15px;color:#374151;line-height:1.8;margin:0 0 24px;white-space:pre-line;">{{ $bodyContent }}</p>
+            <p style="font-size:15px;font-weight:700;color:#111827;margin:0 0 16px;">Hello,</p>
 
-            {{-- Visit us --}}
-            <p style="font-size:15px;color:#374151;line-height:1.8;margin:0 0 10px;">
-                Visit us at
-                <a href="https://installsbank.com/" style="color:#01BF63;text-decoration:none;font-weight:700;">installsbank.com</a>
-            </p>
+            @php
+                // Replace plain URLs and key phrases with clickable links
+                $rendered = $bodyContent;
 
-            {{-- Rates links --}}
-            <p style="font-size:15px;color:#374151;line-height:1.8;margin:0 0 24px;">
-                Check our&nbsp;
-                <a href="https://installsbank.com/rates" style="color:#01BF63;font-weight:700;text-decoration:none;">Click Rates</a>
-                &nbsp;and&nbsp;
-                <a href="https://installsbank.com/install-rates" style="color:#01BF63;font-weight:700;text-decoration:none;">Install Rates</a>.
-            </p>
+                $rendered = str_replace(
+                    'https://installsbank.com/rates',
+                    '<a href="https://installsbank.com/rates" style="color:#01BF63;font-weight:700;text-decoration:none;">https://installsbank.com/rates</a>',
+                    $rendered
+                );
+                $rendered = str_replace(
+                    'https://installsbank.com/install-rates',
+                    '<a href="https://installsbank.com/install-rates" style="color:#01BF63;font-weight:700;text-decoration:none;">https://installsbank.com/install-rates</a>',
+                    $rendered
+                );
+                $rendered = str_replace(
+                    'https://installsbank.com/register',
+                    '<a href="https://installsbank.com/register" style="color:#01BF63;font-weight:700;text-decoration:none;">https://installsbank.com/register</a>',
+                    $rendered
+                );
+                $rendered = str_replace(
+                    'https://installsbank.com/',
+                    '<a href="https://installsbank.com/" style="color:#01BF63;font-weight:700;text-decoration:none;">https://installsbank.com/</a>',
+                    $rendered
+                );
 
-            {{-- Divider --}}
-            <table width="100%" border="0" cellpadding="0" cellspacing="0" style="margin-bottom:24px;">
-                <tr><td style="border-top:2px solid #f3f4f6;"></td></tr>
-            </table>
+                // Convert newlines to <br> for HTML display
+                $rendered = nl2br(e(htmlspecialchars_decode($rendered)));
+            @endphp
 
-            {{-- Features heading --}}
-            <p style="font-size:16px;font-weight:700;color:#111827;margin:0 0 14px;">
-                What Makes Us Different
-            </p>
-
-            {{-- Feature rows --}}
-            <table width="100%" border="0" cellpadding="0" cellspacing="0">
-                @foreach([
-                    ['🚀', 'Only PPI Network with Built-In Android App', 'Your publishers can track installs from our dedicated Android app — no third-party tools needed.'],
-                    ['💰', 'High Payouts on Every Click &amp; Install', 'Competitive rates paid on every unique valid click and verified app install from your traffic.'],
-                    ['📊', 'Real-Time Stats Dashboard', 'Watch your clicks, installs, and earnings update live — full transparency, always.'],
-                    ['⚙️', 'Flexible Contract Types', 'Choose Click-Based, Install-Based, or Fixed Daily Rate — whichever suits your traffic best.'],
-                    ['🔐', 'Fast &amp; Secure Crypto Withdrawals', 'Get paid quickly via crypto. Minimum thresholds are low and withdrawals are processed promptly.'],
-                ] as $feat)
-                <tr>
-                    <td style="padding:10px 0;border-bottom:1px solid #f9fafb;vertical-align:top;">
-                        <table border="0" cellpadding="0" cellspacing="0">
-                            <tr>
-                                <td style="width:36px;vertical-align:top;padding-top:2px;">
-                                    <span style="font-size:20px;">{{ $feat[0] }}</span>
-                                </td>
-                                <td style="vertical-align:top;">
-                                    <div style="font-size:14px;font-weight:700;color:#111827;margin-bottom:3px;">{!! $feat[1] !!}</div>
-                                    <div style="font-size:13px;color:#6b7280;line-height:1.6;">{!! $feat[2] !!}</div>
-                                </td>
-                            </tr>
-                        </table>
-                    </td>
-                </tr>
-                @endforeach
-            </table>
-
-            {{-- CTA button --}}
-            <table border="0" cellpadding="0" cellspacing="0" style="margin:32px auto;display:block;text-align:center;">
-                <tr>
-                    <td align="center" style="background-color:#01BF63;border-radius:12px;">
-                        <a href="https://installsbank.com/register"
-                           style="display:inline-block;padding:15px 44px;font-size:16px;font-weight:700;color:#ffffff;text-decoration:none;font-family:Arial,Helvetica,sans-serif;letter-spacing:0.3px;">
-                            Register Now — It's Free
-                        </a>
-                    </td>
-                </tr>
-            </table>
+            <div style="font-size:15px;color:#374151;line-height:1.9;margin:0 0 28px;">
+                {!! $rendered !!}
+            </div>
 
         </td>
     </tr>
 
-    {{-- Contact Us section --}}
+    {{-- Contact Us --}}
     <tr>
         <td style="background-color:#f9fafb;border-top:2px solid #f3f4f6;padding:24px 40px;">
             <p style="font-size:14px;font-weight:700;color:#374151;margin:0 0 14px;">Contact Us</p>
             <table border="0" cellpadding="0" cellspacing="0" width="100%">
                 <tr>
                     {{-- WhatsApp --}}
-                    <td style="padding-right:12px;width:50%;vertical-align:top;">
+                    <td style="width:50%;vertical-align:top;padding-right:16px;padding-bottom:8px;">
                         <table border="0" cellpadding="0" cellspacing="0">
                             <tr>
                                 <td style="vertical-align:middle;padding-right:10px;">
-                                    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/6/6b/WhatsApp.svg/120px-WhatsApp.svg.png"
-                                         width="28" height="28" alt="WhatsApp" style="display:block;">
+                                    <div style="width:36px;height:36px;background-color:#25D366;border-radius:50%;display:inline-block;text-align:center;line-height:36px;">
+                                        <span style="color:#ffffff;font-size:18px;font-weight:700;">W</span>
+                                    </div>
                                 </td>
                                 <td style="vertical-align:middle;">
-                                    <div style="font-size:13px;font-weight:700;color:#111827;margin-bottom:2px;">WhatsApp</div>
-                                    <a href="https://wa.me/19707426488?text=Hello%20Installs%20Bank%20team%2C%20I%27m%20interested%20in%20joining%20your%20network."
-                                       style="font-size:12px;color:#25D366;text-decoration:none;font-weight:600;">
-                                        Chat on WhatsApp
-                                    </a>
+                                    <div style="font-size:13px;font-weight:700;color:#111827;margin-bottom:3px;">WhatsApp</div>
+                                    <div style="font-size:13px;color:#25D366;font-weight:600;">+1 (970) 742-6488</div>
                                 </td>
                             </tr>
                         </table>
                     </td>
                     {{-- Telegram --}}
-                    <td style="width:50%;vertical-align:top;">
+                    <td style="width:50%;vertical-align:top;padding-bottom:8px;">
                         <table border="0" cellpadding="0" cellspacing="0">
                             <tr>
                                 <td style="vertical-align:middle;padding-right:10px;">
-                                    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/8/82/Telegram_logo.svg/120px-Telegram_logo.svg.png"
-                                         width="28" height="28" alt="Telegram" style="display:block;">
+                                    <div style="width:36px;height:36px;background-color:#0088cc;border-radius:50%;display:inline-block;text-align:center;line-height:36px;">
+                                        <span style="color:#ffffff;font-size:16px;font-weight:700;">T</span>
+                                    </div>
                                 </td>
                                 <td style="vertical-align:middle;">
-                                    <div style="font-size:13px;font-weight:700;color:#111827;margin-bottom:2px;">Telegram</div>
-                                    <a href="https://t.me/installsbank?text=Hello%20Installs%20Bank%20team%2C%20I%27m%20interested%20in%20joining%20your%20network."
-                                       style="font-size:12px;color:#0088cc;text-decoration:none;font-weight:600;">
-                                        Message on Telegram
-                                    </a>
+                                    <div style="font-size:13px;font-weight:700;color:#111827;margin-bottom:3px;">Telegram</div>
+                                    <div style="font-size:13px;color:#0088cc;font-weight:600;">@installsbank</div>
                                 </td>
                             </tr>
                         </table>
