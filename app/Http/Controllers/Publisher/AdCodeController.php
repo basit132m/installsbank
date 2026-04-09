@@ -11,13 +11,32 @@ class AdCodeController extends Controller
 {
     public function index()
     {
-        $user = auth()->user();
+        $user    = auth()->user();
+        $profile = $user->publisherProfile;
         $trackingLinks = TrackingLink::where('user_id', $user->id)->where('is_active', true)->get();
         $presets = AdPreset::where('is_active', true)->get();
         $adButtons = AdButton::where('user_id', $user->id)->with(['preset', 'trackingLink'])->get();
-        $hasContract = $user->activeContract !== null;
+        $hasContract = $profile && $profile->contract_type !== 'none';
 
-        return view('publisher.adcode', compact('trackingLinks', 'presets', 'adButtons', 'hasContract'));
+        return view('publisher.adcode', compact('trackingLinks', 'presets', 'adButtons', 'hasContract', 'profile'));
+    }
+
+    public function requestAdcode(\Illuminate\Http\Request $request)
+    {
+        $user    = auth()->user();
+        $profile = $user->publisherProfile;
+
+        if (!$profile || $profile->contract_type === 'none') {
+            return back()->with('error', 'Please select a contract type first.');
+        }
+
+        if ($profile->adcode_requested_at) {
+            return back()->with('error', 'You have already submitted an ad code request.');
+        }
+
+        $profile->update(['adcode_requested_at' => now()]);
+
+        return back()->with('success', 'Ad code request submitted! Our team will assign your tracking link shortly.');
     }
 
     public function selectPreset(\Illuminate\Http\Request $request)

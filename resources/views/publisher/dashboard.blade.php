@@ -85,6 +85,22 @@
 </div>
 @endif
 
+{{-- Contract selection banner (approved publishers who haven't chosen yet) --}}
+@if(auth()->user()->status === 'active' && ($profile?->contract_type === 'none' || !$profile))
+<div style="background:linear-gradient(135deg,#f0fdf4,#dcfce7);border:1.5px solid #86efac;border-radius:14px;padding:20px 24px;margin-bottom:24px;display:flex;gap:16px;align-items:center;flex-wrap:wrap;">
+    <div style="width:48px;height:48px;background:#01BF63;border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+        <svg width="24" height="24" fill="none" stroke="white" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+    </div>
+    <div style="flex:1;min-width:200px;">
+        <div style="font-size:15px;font-weight:800;color:#065f46;margin-bottom:4px;">Choose Your Contract Type</div>
+        <div style="font-size:13px;color:#166534;line-height:1.6;">Your account is approved! Select Per-Click, Fixed Daily Rate, or Installs Base to get started and request your ad code.</div>
+    </div>
+    <a href="{{ route('publisher.contracts') }}" style="background:#01BF63;color:white;text-decoration:none;border-radius:10px;padding:10px 20px;font-size:13px;font-weight:700;white-space:nowrap;flex-shrink:0;">
+        Select Contract →
+    </a>
+</div>
+@endif
+
 <!-- Announcements -->
 @if($announcements->isNotEmpty())
 @foreach($announcements as $ann)

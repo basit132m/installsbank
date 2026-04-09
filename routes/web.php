@@ -312,6 +312,7 @@ Route::prefix('publisher')->name('publisher.')->middleware(['auth', 'role:publis
 
         Route::get('/adcode', [Publisher\AdCodeController::class, 'index'])->name('adcode');
         Route::post('/adcode/select', [Publisher\AdCodeController::class, 'selectPreset'])->name('adcode.select');
+        Route::post('/adcode/request', [Publisher\AdCodeController::class, 'requestAdcode'])->name('adcode.request');
 
         Route::get('/withdrawals', [Publisher\WithdrawalController::class, 'index'])->name('withdrawals.index');
         Route::post('/withdrawals', [Publisher\WithdrawalController::class, 'store'])->name('withdrawals.store');
@@ -321,6 +322,7 @@ Route::prefix('publisher')->name('publisher.')->middleware(['auth', 'role:publis
         Route::post('/websites', [Publisher\WebsiteController::class, 'store'])->name('websites.store');
 
         Route::get('/contracts', [Publisher\ContractController::class, 'index'])->name('contracts');
+        Route::post('/contract/select', [Publisher\ContractController::class, 'selectContract'])->name('contract.select');
         Route::post('/contract/{contract}/accept', [Publisher\ContractController::class, 'accept'])->name('contract.accept');
         Route::post('/contract/{contract}/reject', [Publisher\ContractController::class, 'reject'])->name('contract.reject');
         Route::post('/contract-change-request', [Publisher\ContractChangeRequestController::class, 'store'])->name('contract-change.store');

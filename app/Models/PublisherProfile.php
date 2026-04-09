@@ -15,6 +15,7 @@ class PublisherProfile extends Model
         'fraud_country_mismatch', 'fraud_suspicious_referrer',
         'fraud_headless_browser', 'allowed_countries',
         'install_pending_clicks',
+        'adcode_requested_at',
     ];
 
     protected $casts = [
@@ -28,6 +29,7 @@ class PublisherProfile extends Model
         'fraud_headless_browser'   => 'boolean',
         'allowed_countries'        => 'array',
         'install_pending_clicks'   => 'array',
+        'adcode_requested_at'      => 'datetime',
     ];
 
     public function user()

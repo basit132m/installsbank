@@ -33,6 +33,30 @@ class ContractController extends Controller
         return view('publisher.contracts', compact('profile', 'contracts', 'changeRequests', 'snapshots', 'hasPendingRequest', 'rateIncreaseRequests', 'hasPendingRateRequest'));
     }
 
+    public function selectContract(\Illuminate\Http\Request $request)
+    {
+        $user    = auth()->user();
+        $profile = $user->publisherProfile;
+
+        if (!$profile || $profile->contract_type !== 'none') {
+            return back()->with('error', 'You have already selected a contract type.');
+        }
+
+        $data = $request->validate([
+            'type' => 'required|in:per_click,fixed,installs_base',
+        ]);
+
+        $profile->update(['contract_type' => $data['type']]);
+
+        $message = match ($data['type']) {
+            'per_click'     => 'Per-Click contract selected! You can now request your ad code.',
+            'installs_base' => 'Installs Base contract selected! You can now request your ad code.',
+            'fixed'         => 'Fixed Daily Rate selected. A 48-hour traffic test is required. Request your ad code below to begin the test.',
+        };
+
+        return redirect()->route('publisher.adcode')->with('success', $message);
+    }
+
     public function accept(Contract $contract)
     {
         if ($contract->user_id !== auth()->id() || !$contract->isPending()) {

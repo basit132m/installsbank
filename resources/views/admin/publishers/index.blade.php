@@ -63,8 +63,13 @@
                                 <span class="badge badge-primary">Per Click</span>
                             @elseif($pub->publisherProfile->contract_type === 'fixed')
                                 <span class="badge badge-info">Fixed</span>
+                            @elseif($pub->publisherProfile->contract_type === 'installs_base')
+                                <span class="badge badge-success">Installs</span>
                             @else
                                 <span class="badge badge-gray">None</span>
+                            @endif
+                            @if($pub->publisherProfile->adcode_requested_at)
+                                <span class="badge badge-warning" title="Ad code requested {{ $pub->publisherProfile->adcode_requested_at->diffForHumans() }}">Adcode Req.</span>
                             @endif
                         @else
                             <span class="badge badge-gray">—</span>

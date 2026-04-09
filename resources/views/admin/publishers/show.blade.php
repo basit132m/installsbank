@@ -30,7 +30,11 @@
             <tr><td style="color:#6b7280;font-size:13px;padding:6px 0;">Website</td><td style="font-size:14px;"><a href="{{ $user->website }}" target="_blank" style="color:#01BF63;">{{ $user->website ?? '—' }}</a></td></tr>
             <tr><td style="color:#6b7280;font-size:13px;padding:6px 0;">Registered</td><td style="font-size:14px;">{{ $user->created_at->format('M d, Y H:i') }}</td></tr>
             <tr><td style="color:#6b7280;font-size:13px;padding:6px 0;">Last Login</td><td style="font-size:14px;">{{ $user->last_login_at?->diffForHumans() ?? 'Never' }}</td></tr>
-            <tr><td style="color:#6b7280;font-size:13px;padding:6px 0;">Contract</td><td><span class="badge {{ $user->publisherProfile?->contract_type !== 'none' ? 'badge-primary' : 'badge-gray' }}">{{ ucfirst($user->publisherProfile?->contract_type ?? 'none') }}</span></td></tr>
+            <tr><td style="color:#6b7280;font-size:13px;padding:6px 0;">Contract</td><td><span class="badge {{ $user->publisherProfile?->contract_type !== 'none' ? 'badge-primary' : 'badge-gray' }}">{{ ucfirst($user->publisherProfile?->contract_type ?? 'none') }}</span>
+                @if($user->publisherProfile?->adcode_requested_at)
+                <span class="badge badge-warning" style="margin-left:4px;" title="Requested {{ $user->publisherProfile->adcode_requested_at->format('M d, Y H:i') }}">Adcode Requested</span>
+                @endif
+            </td></tr>
             <tr><td style="color:#6b7280;font-size:13px;padding:6px 0;">Payment Enabled</td><td><span class="badge {{ $user->publisherProfile?->payment_enabled ? 'badge-success' : 'badge-gray' }}">{{ $user->publisherProfile?->payment_enabled ? 'Yes' : 'No' }}</span></td></tr>
         </table>
 
