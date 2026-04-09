@@ -45,6 +45,9 @@
                 'Stats' => [
                     'can_view_stats' => 'View Publisher Stats',
                 ],
+                'Communications' => [
+                    'can_send_broadcast_emails' => 'Send Broadcast Emails to Publishers',
+                ],
             ];
             @endphp
 

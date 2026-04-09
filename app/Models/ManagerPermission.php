@@ -27,6 +27,8 @@ class ManagerPermission extends Model
         'can_manage_support', 'can_manage_live_chat',
         // Stats
         'can_view_stats',
+        // Communications
+        'can_send_broadcast_emails',
     ];
 
     protected $casts = [
@@ -51,6 +53,7 @@ class ManagerPermission extends Model
         'can_manage_support'              => 'boolean',
         'can_manage_live_chat'            => 'boolean',
         'can_view_stats'                  => 'boolean',
+        'can_send_broadcast_emails'       => 'boolean',
     ];
 
     public function user()

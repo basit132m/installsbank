@@ -256,6 +256,10 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin,manager'
         Route::delete('/{supportTicket}', [Admin\ChatController::class, 'destroy'])->name('destroy');
     });
 
+    // Broadcast email
+    Route::get('/broadcast-email', [Admin\BroadcastEmailController::class, 'index'])->name('broadcast-email.index');
+    Route::post('/broadcast-email', [Admin\BroadcastEmailController::class, 'send'])->name('broadcast-email.send');
+
     // Publisher stats export
     Route::get('/publishers/{user}/stats/export', [Admin\PublisherController::class, 'exportStats'])->name('publishers.stats.export');
 });
