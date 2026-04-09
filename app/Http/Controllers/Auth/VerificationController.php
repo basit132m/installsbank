@@ -37,7 +37,10 @@ class VerificationController extends Controller
             }
         });
 
+        $user->update(['last_login_at' => now()]);
         Auth::login($user);
+
+        session()->flash('show_welcome', true);
 
         return redirect()->route('publisher.dashboard')
             ->with('success', 'Your email has been verified! Your account is now pending admin review.');
