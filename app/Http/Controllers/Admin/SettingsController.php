@@ -32,10 +32,16 @@ class SettingsController extends Controller
             $settings[$key] = env($key, '');
         }
 
-        $withdrawalDays = json_decode(Setting::get('withdrawal_days', '[0,6]'), true); // 0=Sun,6=Sat default
-        $announcements = Announcement::with('creator')->latest()->get();
+        $withdrawalDays = json_decode(Setting::get('withdrawal_days', '[0,6]'), true);
+        $announcements  = Announcement::with('creator')->latest()->get();
 
-        return view('admin.settings.index', compact('settings', 'withdrawalDays', 'announcements'));
+        $contactInfo = [
+            'whatsapp' => Setting::get('contact_whatsapp', ''),
+            'telegram' => Setting::get('contact_telegram', ''),
+            'email'    => Setting::get('contact_email', ''),
+        ];
+
+        return view('admin.settings.index', compact('settings', 'withdrawalDays', 'announcements', 'contactInfo'));
     }
 
     public function updateWithdrawalDays(Request $request)
@@ -94,6 +100,21 @@ class SettingsController extends Controller
         Artisan::call('config:clear');
 
         return back()->with('success', 'Settings saved successfully.');
+    }
+
+    public function updateContactInfo(Request $request)
+    {
+        $data = $request->validate([
+            'whatsapp' => 'nullable|string|max:50',
+            'telegram' => 'nullable|string|max:100',
+            'email'    => 'nullable|email|max:255',
+        ]);
+
+        Setting::set('contact_whatsapp', trim($data['whatsapp'] ?? ''));
+        Setting::set('contact_telegram', ltrim(trim($data['telegram'] ?? ''), '@'));
+        Setting::set('contact_email',    trim($data['email'] ?? ''));
+
+        return back()->with('success', 'Contact info updated successfully.');
     }
 
     public function testEmail(Request $request)

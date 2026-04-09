@@ -272,6 +272,67 @@
     </form>
 </div>
 
+<!-- Contact Info -->
+<div class="settings-section" style="margin-top:24px;">
+    <div class="section-header">
+        <div class="section-icon" style="background:#f0fdf4;">
+            <svg width="20" height="20" fill="none" stroke="#01BF63" viewBox="0 0 24 24" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/>
+            </svg>
+        </div>
+        <div>
+            <div class="section-title">Contact Information</div>
+            <div class="section-subtitle">WhatsApp, Telegram and support email shown to publishers</div>
+        </div>
+    </div>
+
+    <form method="POST" action="{{ route('admin.settings.contact-info') }}">
+        @csrf
+        <div class="form-row">
+            <div class="form-group">
+                <label class="form-label">
+                    <span style="display:inline-flex;align-items:center;gap:6px;">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="#25D366"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M11.99 0C5.388 0 0 5.388 0 12c0 2.118.555 4.103 1.522 5.825L.058 24l6.304-1.654A11.934 11.934 0 0011.99 24C18.61 24 24 18.612 24 12S18.61 0 11.99 0zm.01 21.818c-1.794 0-3.463-.48-4.897-1.314l-.351-.209-3.642.955.972-3.545-.228-.364A9.799 9.799 0 012.182 12C2.182 6.591 6.591 2.182 12 2.182S21.818 6.591 21.818 12 17.409 21.818 12 21.818z"/></svg>
+                        WhatsApp Number
+                    </span>
+                </label>
+                <input type="text" name="whatsapp" class="form-control"
+                       value="{{ $contactInfo['whatsapp'] }}"
+                       placeholder="+1234567890">
+                <div class="hint">Include country code, e.g. +44 7911 123456</div>
+            </div>
+            <div class="form-group">
+                <label class="form-label">
+                    <span style="display:inline-flex;align-items:center;gap:6px;">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="#26A5E4"><path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/></svg>
+                        Telegram Username
+                    </span>
+                </label>
+                <div style="display:flex;align-items:center;gap:0;">
+                    <span style="padding:10px 12px;background:#f3f4f6;border:1.5px solid #e5e7eb;border-right:none;border-radius:8px 0 0 8px;font-size:14px;color:#6b7280;font-weight:600;">@</span>
+                    <input type="text" name="telegram" class="form-control"
+                           value="{{ $contactInfo['telegram'] }}"
+                           placeholder="installsbank"
+                           style="border-radius:0 8px 8px 0;">
+                </div>
+                <div class="hint">Username without the @ — e.g. installsbank</div>
+            </div>
+        </div>
+        <div class="form-group">
+            <label class="form-label">Support Email</label>
+            <input type="email" name="email" class="form-control"
+                   value="{{ $contactInfo['email'] }}"
+                   placeholder="support@installsbank.com"
+                   style="max-width:360px;">
+            <div class="hint">Displayed to publishers as the support contact email</div>
+        </div>
+        <button type="submit" class="btn btn-primary">
+            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+            Save Contact Info
+        </button>
+    </form>
+</div>
+
 <!-- Announcements -->
 <div class="settings-section" style="margin-top:24px;">
     <div class="section-header">
