@@ -281,27 +281,13 @@ Route::prefix('advertiser')->name('advertiser.')->middleware(['auth', 'role:adve
 
 // Publisher panel
 Route::prefix('publisher')->name('publisher.')->middleware(['auth', 'role:publisher'])->group(function () {
-    Route::get('/dashboard', [Publisher\DashboardController::class, 'index'])->name('dashboard');
-    Route::get('/stats', [Publisher\StatsController::class, 'index'])->name('stats');
-    Route::get('/adcode', [Publisher\AdCodeController::class, 'index'])->name('adcode');
-    Route::post('/adcode/select', [Publisher\AdCodeController::class, 'selectPreset'])->name('adcode.select');
 
-    Route::get('/contracts', [Publisher\ContractController::class, 'index'])->name('contracts');
+    // ── Always accessible (pending + active) ──────────────────────────────
+    Route::get('/dashboard', [Publisher\DashboardController::class, 'index'])->name('dashboard');
     Route::post('/notifications/read-all', function () {
         \App\Models\PublisherNotification::where('user_id', auth()->id())->whereNull('read_at')->update(['read_at' => now()]);
         return back();
     })->name('notifications.read-all');
-    Route::post('/contract/{contract}/accept', [Publisher\ContractController::class, 'accept'])->name('contract.accept');
-    Route::post('/contract/{contract}/reject', [Publisher\ContractController::class, 'reject'])->name('contract.reject');
-    Route::post('/contract-change-request', [Publisher\ContractChangeRequestController::class, 'store'])->name('contract-change.store');
-    Route::post('/rate-increase-request', [Publisher\RateIncreaseRequestController::class, 'store'])->name('rate-increase.store');
-
-    Route::get('/withdrawals', [Publisher\WithdrawalController::class, 'index'])->name('withdrawals.index');
-    Route::post('/withdrawals', [Publisher\WithdrawalController::class, 'store'])->name('withdrawals.store');
-    Route::post('/withdrawals/save-address', [Publisher\WithdrawalController::class, 'saveAddress'])->name('withdrawals.save-address');
-
-    // Live stats JSON endpoint for real-time click counter
-    Route::get('/live-stats', [LiveStatsController::class, 'index'])->name('live-stats');
 
     // Profile
     Route::get('/profile', [Publisher\ProfileController::class, 'show'])->name('profile');
@@ -310,16 +296,34 @@ Route::prefix('publisher')->name('publisher.')->middleware(['auth', 'role:publis
     Route::post('/profile/avatar', [Publisher\ProfileController::class, 'updateAvatar'])->name('profile.avatar');
     Route::post('/profile/avatar/remove', [Publisher\ProfileController::class, 'removeAvatar'])->name('profile.avatar.remove');
 
-    // Publisher websites (multi-site)
-    Route::get('/websites', [Publisher\WebsiteController::class, 'index'])->name('websites.index');
-    Route::post('/websites', [Publisher\WebsiteController::class, 'store'])->name('websites.store');
-
+    // Support & live chat
     Route::get('/support', [Publisher\SupportController::class, 'index'])->name('support.index');
     Route::get('/support/create', [Publisher\SupportController::class, 'create'])->name('support.create');
     Route::post('/support', [Publisher\SupportController::class, 'store'])->name('support.store');
     Route::get('/support/{supportTicket}', [Publisher\SupportController::class, 'show'])->name('support.show');
     Route::post('/support/{supportTicket}/reply', [Publisher\SupportController::class, 'reply'])->name('support.reply');
-    // Live chat API
     Route::get('/chat/messages', [Publisher\ChatController::class, 'messages'])->name('chat.messages');
     Route::post('/chat/send', [Publisher\ChatController::class, 'send'])->name('chat.send');
+
+    // ── Requires approved account ─────────────────────────────────────────
+    Route::middleware('publisher.approved')->group(function () {
+        Route::get('/stats', [Publisher\StatsController::class, 'index'])->name('stats');
+        Route::get('/live-stats', [LiveStatsController::class, 'index'])->name('live-stats');
+
+        Route::get('/adcode', [Publisher\AdCodeController::class, 'index'])->name('adcode');
+        Route::post('/adcode/select', [Publisher\AdCodeController::class, 'selectPreset'])->name('adcode.select');
+
+        Route::get('/withdrawals', [Publisher\WithdrawalController::class, 'index'])->name('withdrawals.index');
+        Route::post('/withdrawals', [Publisher\WithdrawalController::class, 'store'])->name('withdrawals.store');
+        Route::post('/withdrawals/save-address', [Publisher\WithdrawalController::class, 'saveAddress'])->name('withdrawals.save-address');
+
+        Route::get('/websites', [Publisher\WebsiteController::class, 'index'])->name('websites.index');
+        Route::post('/websites', [Publisher\WebsiteController::class, 'store'])->name('websites.store');
+
+        Route::get('/contracts', [Publisher\ContractController::class, 'index'])->name('contracts');
+        Route::post('/contract/{contract}/accept', [Publisher\ContractController::class, 'accept'])->name('contract.accept');
+        Route::post('/contract/{contract}/reject', [Publisher\ContractController::class, 'reject'])->name('contract.reject');
+        Route::post('/contract-change-request', [Publisher\ContractChangeRequestController::class, 'store'])->name('contract-change.store');
+        Route::post('/rate-increase-request', [Publisher\RateIncreaseRequestController::class, 'store'])->name('rate-increase.store');
+    });
 });

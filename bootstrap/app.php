@@ -13,7 +13,8 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->alias([
-            'role' => \App\Http\Middleware\RoleMiddleware::class,
+            'role'               => \App\Http\Middleware\RoleMiddleware::class,
+            'publisher.approved' => \App\Http\Middleware\RequirePublisherApproved::class,
         ]);
         $middleware->statefulApi();
     })
