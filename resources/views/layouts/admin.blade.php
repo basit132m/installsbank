@@ -480,12 +480,17 @@
 
         <div class="sidebar-footer">
             <div class="user-info">
-                <div class="user-avatar">{{ strtoupper(substr(auth()->user()->name, 0, 1)) }}</div>
-                <div>
-                    <div class="user-name">{{ auth()->user()->name }}</div>
+                @if(auth()->user()->avatar)
+                    <img src="{{ asset('avatars/' . auth()->user()->avatar) }}" alt="Avatar"
+                         style="width:36px;height:36px;border-radius:50%;object-fit:cover;flex-shrink:0;">
+                @else
+                    <div class="user-avatar">{{ strtoupper(substr(auth()->user()->name, 0, 1)) }}</div>
+                @endif
+                <a href="{{ route('admin.profile') }}" style="text-decoration:none;flex:1;min-width:0;">
+                    <div class="user-name" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ auth()->user()->name }}</div>
                     <div class="user-role">{{ auth()->user()->role }}</div>
-                </div>
-                <form method="POST" action="{{ route('logout') }}" style="margin-left:auto;">
+                </a>
+                <form method="POST" action="{{ route('logout') }}" style="margin-left:auto;flex-shrink:0;">
                     @csrf
                     <button type="submit" style="background:none;border:none;cursor:pointer;color:var(--gray-400);padding:4px;" title="Logout">
                         <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>

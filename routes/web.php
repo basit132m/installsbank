@@ -48,6 +48,13 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin,manager'
 
     Route::get('/dashboard', [Admin\DashboardController::class, 'index'])->name('dashboard');
 
+    // Profile (admin + manager)
+    Route::get('/profile', [Admin\ProfileController::class, 'show'])->name('profile');
+    Route::post('/profile', [Admin\ProfileController::class, 'update'])->name('profile.update');
+    Route::post('/profile/password', [Admin\ProfileController::class, 'updatePassword'])->name('profile.password');
+    Route::post('/profile/avatar', [Admin\ProfileController::class, 'updateAvatar'])->name('profile.avatar');
+    Route::post('/profile/avatar/remove', [Admin\ProfileController::class, 'removeAvatar'])->name('profile.avatar.remove');
+
     // Publishers
     Route::prefix('publishers')->name('publishers.')->group(function () {
         Route::get('/', [Admin\PublisherController::class, 'index'])->name('index');
