@@ -32,6 +32,14 @@ class LoginController extends Controller
                 return back()->withErrors(['email' => 'Your account has been suspended.']);
             }
 
+            // Require email verification for publishers
+            if ($user->role === 'publisher' && is_null($user->email_verified_at)) {
+                Auth::logout();
+                return redirect()->route('email.check')
+                    ->with('email', $user->email)
+                    ->withErrors(['email' => 'Please verify your email address before logging in.']);
+            }
+
             $user->update(['last_login_at' => now()]);
             if ($user->role === 'publisher') {
                 $request->session()->flash('show_welcome', true);

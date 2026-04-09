@@ -3,12 +3,15 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Mail\VerifyEmailMailable;
 use App\Models\ClickDivider;
 use App\Models\PublisherProfile;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Str;
 
 class RegisterController extends Controller
 {
@@ -45,27 +48,37 @@ class RegisterController extends Controller
         // Store screenshots
         $paths = [];
         foreach ($request->file('screenshots', []) as $file) {
-            $path = $file->store('stat-screenshots', 'public');
-            $paths[] = $path;
+            $paths[] = $file->store('stat-screenshots', 'public');
         }
 
+        $verificationToken = Str::random(64);
+
         $user = User::create([
-            'name'             => $data['name'],
-            'email'            => $data['email'],
-            'password'         => Hash::make($data['password']),
-            'role'             => 'publisher',
-            'status'           => 'pending',
-            'website'          => $data['website'],
-            'phone'            => $data['phone'] ?? null,
-            'telegram'         => $data['telegram'] ?? null,
-            'stat_screenshots' => $paths,
+            'name'               => $data['name'],
+            'email'              => $data['email'],
+            'password'           => Hash::make($data['password']),
+            'role'               => 'publisher',
+            'status'             => 'pending',
+            'website'            => $data['website'],
+            'phone'              => $data['phone'] ?? null,
+            'telegram'           => $data['telegram'] ?? null,
+            'stat_screenshots'   => $paths,
+            'verification_token' => $verificationToken,
+            // email_verified_at stays null until they click the link
         ]);
 
         PublisherProfile::create(['user_id' => $user->id]);
         ClickDivider::create(['user_id' => $user->id, 'divider_value' => 1, 'is_enabled' => false]);
 
-        Auth::login($user);
+        // Send verification email
+        try {
+            Mail::to($user->email)->send(new VerifyEmailMailable($user));
+        } catch (\Exception $e) {
+            // Log but don't break registration
+            \Log::error('Verification email failed: ' . $e->getMessage());
+        }
 
-        return redirect()->route('publisher.dashboard')->with('registered', true);
+        return redirect()->route('email.check')
+            ->with('email', $user->email);
     }
 }

@@ -25,6 +25,11 @@ Route::get('/terms-of-use', fn() => view('public.terms'))->name('terms');
 // Click tracking
 Route::get('/track/{code}', [TrackingController::class, 'track'])->name('track');
 
+// Email verification
+Route::get('/email/check', fn() => view('auth.email-check'))->name('email.check');
+Route::get('/email/verify/{token}', [App\Http\Controllers\Auth\VerificationController::class, 'verify'])->name('email.verify');
+Route::post('/email/resend', [App\Http\Controllers\Auth\VerificationController::class, 'resend'])->name('email.resend');
+
 // Auth
 Route::get('/login', [LoginController::class, 'showLogin'])->name('login');
 Route::post('/login', [LoginController::class, 'login']);
