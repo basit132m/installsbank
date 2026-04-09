@@ -11,12 +11,19 @@ class TrackingDomainController extends Controller
     public function index()
     {
         $domains = TrackingDomain::withCount('trackingLinks')->latest()->get();
-        $serverIpv4 = gethostbyname(gethostname());
-        $serverIpv6 = null;
-        // Try to get IPv6
-        $records = @dns_get_record(gethostname(), DNS_AAAA);
-        if (!empty($records)) {
-            $serverIpv6 = $records[0]['ipv6'] ?? null;
+        $ctx = stream_context_create(['http' => ['timeout' => 3, 'ignore_errors' => true]]);
+        $serverIpv4 = trim((string) @file_get_contents('https://api4.my-ip.io/ip', false, $ctx))
+                   ?: trim((string) @file_get_contents('https://ipv4.icanhazip.com', false, $ctx))
+                   ?: gethostbyname(gethostname());
+        $serverIpv6 = trim((string) @file_get_contents('https://api6.my-ip.io/ip', false, $ctx))
+                   ?: trim((string) @file_get_contents('https://ipv6.icanhazip.com', false, $ctx))
+                   ?: null;
+        // Validate they look like real IPs (not error pages)
+        if ($serverIpv4 && !filter_var($serverIpv4, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4)) {
+            $serverIpv4 = gethostbyname(gethostname());
+        }
+        if ($serverIpv6 && !filter_var($serverIpv6, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6)) {
+            $serverIpv6 = null;
         }
         $appPath = base_path();
         $homeDir = dirname(dirname($appPath)); // ~/domains/installsbank.com → ~
