@@ -37,32 +37,30 @@
             <p style="font-size:15px;font-weight:700;color:#111827;margin:0 0 16px;">Hello,</p>
 
             @php
-                // Replace plain URLs and key phrases with clickable links
-                $rendered = $bodyContent;
-
+                // Escape first, then replace URLs with links, then convert newlines
+                $rendered = e($bodyContent);
+                $linkStyle = 'color:#01BF63;font-weight:700;text-decoration:none;';
                 $rendered = str_replace(
-                    'https://installsbank.com/rates',
-                    '<a href="https://installsbank.com/rates" style="color:#01BF63;font-weight:700;text-decoration:none;">https://installsbank.com/rates</a>',
+                    'https://installsbank.com/install-rates',
+                    '<a href="https://installsbank.com/install-rates" style="'.$linkStyle.'">https://installsbank.com/install-rates</a>',
                     $rendered
                 );
                 $rendered = str_replace(
-                    'https://installsbank.com/install-rates',
-                    '<a href="https://installsbank.com/install-rates" style="color:#01BF63;font-weight:700;text-decoration:none;">https://installsbank.com/install-rates</a>',
+                    'https://installsbank.com/rates',
+                    '<a href="https://installsbank.com/rates" style="'.$linkStyle.'">https://installsbank.com/rates</a>',
                     $rendered
                 );
                 $rendered = str_replace(
                     'https://installsbank.com/register',
-                    '<a href="https://installsbank.com/register" style="color:#01BF63;font-weight:700;text-decoration:none;">https://installsbank.com/register</a>',
+                    '<a href="https://installsbank.com/register" style="'.$linkStyle.'">https://installsbank.com/register</a>',
                     $rendered
                 );
                 $rendered = str_replace(
                     'https://installsbank.com/',
-                    '<a href="https://installsbank.com/" style="color:#01BF63;font-weight:700;text-decoration:none;">https://installsbank.com/</a>',
+                    '<a href="https://installsbank.com/" style="'.$linkStyle.'">https://installsbank.com/</a>',
                     $rendered
                 );
-
-                // Convert newlines to <br> for HTML display
-                $rendered = nl2br(e(htmlspecialchars_decode($rendered)));
+                $rendered = nl2br($rendered);
             @endphp
 
             <div style="font-size:15px;color:#374151;line-height:1.9;margin:0 0 28px;">
