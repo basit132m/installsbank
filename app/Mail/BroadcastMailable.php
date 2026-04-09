@@ -25,6 +25,9 @@ class BroadcastMailable extends Mailable
 
     public function content(): Content
     {
-        return new Content(view: 'emails.broadcast');
+        return new Content(
+            view:     'emails.broadcast',
+            text:     'emails.broadcast-text',
+        );
     }
 }

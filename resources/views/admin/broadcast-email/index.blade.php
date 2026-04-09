@@ -54,10 +54,10 @@
             {{-- Body --}}
             <div class="form-group" style="margin-bottom:20px;">
                 <label class="form-label">
-                    Email Body
-                    <span style="font-weight:400;color:#9ca3af;margin-left:6px;">(promotional image is always included at the top)</span>
+                    Opening Message
+                    <span style="font-weight:400;color:#9ca3af;margin-left:6px;">(intro paragraph only — links, features, CTA &amp; contact section are added automatically)</span>
                 </label>
-                <textarea name="body" id="emailBody" class="form-control" rows="18" required maxlength="10000"
+                <textarea name="body" id="emailBody" class="form-control" rows="6" required maxlength="10000"
                           style="font-family:monospace;font-size:13px;line-height:1.7;">{{ old('body', $defaultBody) }}</textarea>
                 @error('body')<div style="color:#ef4444;font-size:12px;margin-top:4px;">{{ $message }}</div>@enderror
                 <div style="font-size:11px;color:#9ca3af;margin-top:4px;text-align:right;">

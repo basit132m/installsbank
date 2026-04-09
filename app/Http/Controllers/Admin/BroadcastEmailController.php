@@ -14,19 +14,7 @@ class BroadcastEmailController extends Controller
 
 Contacting from Installs Bank!
 
-We are a PPI network that provides Download Button ADS with high payouts on every single unique click and install. Visit us at https://installsbank.com/.
-
-You can check our CLICK RATES at https://installsbank.com/rates and INSTALL RATES at https://installsbank.com/install-rates.
-
-Features that Keep Us Different from Others:
-
-* Only PPI Network with Built-In Android App 🚀
-* High Payouts on Every Click & Install 💰
-* Real-Time Stats in Your Dashboard 📊
-* Choose: Click-Based, Install-Based or Fixed Contracts ⚙️
-* Fast & Secure Crypto Withdrawals 🔐
-
-Register Now: https://installsbank.com/register";
+We are a PPI network that provides Download Button Ads with high payouts on every single unique click and install.";
 
     public function index()
     {
