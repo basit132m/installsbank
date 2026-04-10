@@ -10,19 +10,20 @@ use Illuminate\Support\Facades\Validator;
 
 class BroadcastEmailController extends Controller
 {
-    private string $defaultBody = "Contacting from Installs Bank!
+    private string $defaultBody = "We are reaching out about a publisher partnership opportunity with Installs Bank.
 
-We are a PPI network that provides Download Button ADS with high payouts on every single unique click and install. You can check our CLICK RATES and INSTALL RATES at Installs Bank website.
+Installs Bank is a pay-per-install network where publishers place our download buttons on their websites and get paid for every click and install generated.
 
-Features that Keep Us Different from Others:
+What we offer:
+- Click-based and install-based contracts
+- Real-time statistics dashboard
+- Built-in Android app for publishers
+- Crypto withdrawals
+- Fixed contract option for stable income
 
-Only PPI Network with Built-In Android App.
-High Payouts on Every Click & Install.
-Real-Time Stats in Your Dashboard.
-Choose: Click-Based, Install-Based or Fixed Contracts.
-Fast & Secure Crypto Withdrawals.
+If you have website traffic and are interested in monetizing it, we would love to discuss a partnership.
 
-Register Now to earn max from your traffics.";
+Contact us on WhatsApp at +1 (970) 742-6488 or Telegram @installsbank and we will get back to you shortly.";
 
     public function index()
     {
