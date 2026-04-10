@@ -46,7 +46,7 @@
             <div class="form-group" style="margin-bottom:16px;">
                 <label class="form-label">Subject</label>
                 <input type="text" name="subject" class="form-control"
-                       value="{{ old('subject', 'Earn More with Installs Bank — High Payouts on Every Click & Install') }}"
+                       value="{{ old('subject', 'Partnership Opportunity from Installs Bank') }}"
                        required maxlength="200">
                 @error('subject')<div style="color:#ef4444;font-size:12px;margin-top:4px;">{{ $message }}</div>@enderror
             </div>
