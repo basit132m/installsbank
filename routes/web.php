@@ -260,10 +260,6 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin,manager'
     Route::get('/broadcast-email', [Admin\BroadcastEmailController::class, 'index'])->name('broadcast-email.index');
     Route::post('/broadcast-email', [Admin\BroadcastEmailController::class, 'send'])->name('broadcast-email.send');
 
-    // Contact form submitter
-    Route::get('/contact-form', [Admin\ContactFormController::class, 'index'])->name('contact-form.index');
-    Route::post('/contact-form', [Admin\ContactFormController::class, 'submit'])->name('contact-form.submit');
-
     // Publisher stats export
     Route::get('/publishers/{user}/stats/export', [Admin\PublisherController::class, 'exportStats'])->name('publishers.stats.export');
 });
