@@ -65,6 +65,16 @@ return [
             'transport' => 'resend',
         ],
 
+        'resend_smtp' => [
+            'transport'  => 'smtp',
+            'host'       => 'smtp.resend.com',
+            'port'       => 465,
+            'encryption' => 'ssl',
+            'username'   => 'resend',
+            'password'   => env('RESEND_KEY'),
+            'timeout'    => null,
+        ],
+
         'sendmail' => [
             'transport' => 'sendmail',
             'path' => env('MAIL_SENDMAIL_PATH', '/usr/sbin/sendmail -bs -i'),
