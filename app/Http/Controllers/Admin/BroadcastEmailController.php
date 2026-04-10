@@ -61,20 +61,24 @@ Register Now to earn max from your traffics.";
             return back()->with('error', 'No valid email addresses found. Please check your input.')->withInput();
         }
 
-        $sent   = 0;
-        $failed = 0;
+        $sent        = 0;
+        $failed      = 0;
+        $lastError   = null;
 
         foreach ($valid as $email) {
             try {
                 Mail::to($email)->send(new BroadcastMailable($data['subject'], $data['body']));
                 $sent++;
-            } catch (\Exception) {
+            } catch (\Throwable $e) {
                 $failed++;
+                $lastError = $e->getMessage();
+                \Log::error('BroadcastEmail send failed', ['email' => $email, 'error' => $e->getMessage()]);
             }
         }
 
         $msg = "Email sent to {$sent} address(es).";
-        if ($failed > 0) $msg .= " {$failed} failed to send.";
+        if ($failed > 0) $msg .= " {$failed} failed.";
+        if ($lastError)  $msg .= " Last error: " . $lastError;
         if (!empty($invalid)) $msg .= " Skipped " . count($invalid) . " invalid address(es): " . implode(', ', $invalid) . ".";
 
         return back()->with('success', $msg);
