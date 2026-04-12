@@ -154,39 +154,6 @@
     </div>
 </div>
 
-<!-- Performance by Link -->
-@if($linkStats->count() > 0)
-<div class="card mb-6">
-    <div class="card-title mb-1">Performance by Link</div>
-    <div style="font-size:12px;color:#9ca3af;margin-bottom:16px;">Click a link name to view its individual stats</div>
-    <div class="table-wrap">
-        <table>
-            <thead>
-                <tr>
-                    <th>Link</th>
-                    <th>Status</th>
-                    <th>Unique Clicks</th>
-                    @if($showEarnings)<th>Earnings</th>@endif
-                </tr>
-            </thead>
-            <tbody>
-                @foreach($linkStats as $ls)
-                <tr style="{{ $selectedLink?->id == $ls['id'] ? 'background:#f0fdf4;' : '' }}">
-                    <td>
-                        <a href="?period={{ $period }}&link_id={{ $ls['id'] }}"
-                           style="font-weight:600;font-size:13px;color:#01BF63;text-decoration:none;">{{ $ls['name'] }}</a>
-                        <div style="font-family:monospace;font-size:11px;color:#9ca3af;">{{ $ls['code'] }}</div>
-                    </td>
-                    <td><span class="badge {{ $ls['active'] ? 'badge-success' : 'badge-danger' }}">{{ $ls['active'] ? 'Active' : 'Inactive' }}</span></td>
-                    <td><strong>{{ number_format($ls['valid']) }}</strong></td>
-                    @if($showEarnings)<td style="color:#01BF63;">${{ number_format($ls['earnings'], 4) }}</td>@endif
-                </tr>
-                @endforeach
-            </tbody>
-        </table>
-    </div>
-</div>
-@endif
 
 @endsection
 
