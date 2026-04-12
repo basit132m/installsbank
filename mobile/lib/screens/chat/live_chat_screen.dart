@@ -18,6 +18,7 @@ class _LiveChatScreenState extends State<LiveChatScreen> with WidgetsBindingObse
   String? _chatStatus;
   bool _loading = true;
   bool _sending = false;
+  bool _polling = false;
   bool _chatClosed = false;
   int _lastMessageId = 0;
 
@@ -56,7 +57,7 @@ class _LiveChatScreenState extends State<LiveChatScreen> with WidgetsBindingObse
 
   void _startPolling() {
     _pollTimer?.cancel();
-    _pollTimer = Timer.periodic(const Duration(seconds: 4), (_) => _poll());
+    _pollTimer = Timer.periodic(const Duration(seconds: 15), (_) => _poll());
   }
 
   Future<void> _load({bool initial = false}) async {
@@ -89,7 +90,10 @@ class _LiveChatScreenState extends State<LiveChatScreen> with WidgetsBindingObse
   }
 
   Future<void> _poll() async {
+    if (_polling) return;
+    _polling = true;
     final res = await ApiService.get('/chat/messages');
+    _polling = false;
     if (!mounted) return;
     if (!res.ok) return;
 

@@ -18,6 +18,7 @@ class _DashboardScreenState extends State<DashboardScreen> with AutomaticKeepAli
   Map<String, dynamic>? _data;
   Map<String, dynamic>? _live;
   bool _loading = true;
+  bool _loadPending = false;
   String? _error;
   Timer? _liveTimer;
 
@@ -38,6 +39,8 @@ class _DashboardScreenState extends State<DashboardScreen> with AutomaticKeepAli
   }
 
   Future<void> _load() async {
+    if (_loadPending) return;
+    _loadPending = true;
     setState(() { _loading = _data == null; _error = null; });
     try {
       final res = await ApiService.get('/dashboard');
@@ -49,6 +52,8 @@ class _DashboardScreenState extends State<DashboardScreen> with AutomaticKeepAli
       }
     } catch (e) {
       if (mounted) setState(() { _error = e.toString(); _loading = false; });
+    } finally {
+      _loadPending = false;
     }
   }
 

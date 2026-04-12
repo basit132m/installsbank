@@ -25,12 +25,13 @@ class ChatController extends Controller
             return response()->json(['ticket_id' => null, 'status' => null, 'messages' => []]);
         }
 
+        $authName = auth()->user()->name;
         $messages = $ticket->messages()->orderBy('created_at')->get()
             ->map(fn($m) => [
                 'id'         => $m->id,
                 'message'    => $m->message,
                 'is_staff'   => (bool) $m->is_staff,
-                'sender'     => $m->sender?->name ?? 'Support',
+                'sender'     => $m->is_staff ? 'Support Team' : $authName,
                 'time'       => $m->created_at->diffForHumans(),
                 'created_at' => $m->created_at->toISOString(),
             ]);

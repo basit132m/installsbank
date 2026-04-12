@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Click;
 use App\Models\DailyEarning;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Cache;
 
 class DashboardController extends Controller
 {
@@ -112,11 +113,13 @@ class DashboardController extends Controller
         $earningsToday = $showEarnings ? (float)($todayEarning?->earnings ?? 0) : null;
         $windowsToday  = (int)($todayEarning?->windows_clicks_divided ?? 0);
 
-        // Last hour — two small indexed queries
-        $lastHourBase       = Click::where('user_id', $user->id)->where('created_at', '>=', now()->subHour())->where('is_counted', true);
-        $lastHourWindows    = (clone $lastHourBase)->where('is_windows', true)->count();
-        $lastHourNonWindows = (clone $lastHourBase)->where('is_windows', false)->count();
-        $clicksLastHour     = $lastHourNonWindows + (int)floor($lastHourWindows / $dividerValue);
+        // Last hour — cached 2 minutes to prevent Click table overload on shared hosting
+        $clicksLastHour = Cache::remember("livehour_{$user->id}", 120, function () use ($user, $dividerValue) {
+            $lastHourBase       = Click::where('user_id', $user->id)->where('created_at', '>=', now()->subHour())->where('is_counted', true);
+            $lastHourWindows    = (clone $lastHourBase)->where('is_windows', true)->count();
+            $lastHourNonWindows = (clone $lastHourBase)->where('is_windows', false)->count();
+            return $lastHourNonWindows + (int)floor($lastHourWindows / $dividerValue);
+        });
 
         return response()->json([
             'clicks_today'     => $clicksToday,
