@@ -435,33 +435,46 @@
     </div>
 </div>
 
-@if(in_array($profile->contract_type ?? '', ['per_click', 'installs_base']))
-<!-- Windows + Earnings summary below Traffic by Country — live updating -->
-<div class="card mb-6" id="windowsSummaryCard">
+@if(in_array($profile->contract_type ?? '', ['per_click', 'installs_base']) && $windowsByCountry->count() > 0)
+<!-- Traffic by Country — Windows clicks with divider applied -->
+<div class="card mb-6">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
         <div>
-            <div class="card-title">Windows Performance Today</div>
-            <div style="font-size:12px;color:#9ca3af;margin-top:2px;">Updates every 30 seconds</div>
+            <div class="card-title">Traffic by Country</div>
+            <div style="font-size:12px;color:#9ca3af;margin-top:2px;">Windows clicks today · {{ $windowsByCountry->count() }} {{ Str::plural('country', $windowsByCountry->count()) }}</div>
         </div>
-        <span style="display:flex;align-items:center;gap:5px;font-size:11px;color:#01BF63;font-weight:700;">
-            <span style="width:7px;height:7px;background:#01BF63;border-radius:50%;display:inline-block;animation:livePulse 2s infinite;"></span>Live
-        </span>
     </div>
-    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;">
-        <div style="background:#f0fdf4;border-radius:10px;padding:14px 18px;">
-            <div style="font-size:10px;color:#6b7280;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:6px;">Windows Clicks</div>
-            <div id="summaryWindowsCount" style="font-size:24px;font-weight:900;color:#01BF63;font-variant-numeric:tabular-nums;">{{ number_format($todayEarning?->windows_clicks_divided ?? 0) }}</div>
-        </div>
-        <div style="background:#f9fafb;border-radius:10px;padding:14px 18px;">
-            <div style="font-size:10px;color:#6b7280;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:6px;">Total Valid Clicks</div>
-            <div style="font-size:24px;font-weight:900;color:#374151;font-variant-numeric:tabular-nums;">{{ number_format($stats['clicks_today']) }}</div>
-        </div>
-        @if($showEarnings)
-        <div style="background:#eff6ff;border-radius:10px;padding:14px 18px;">
-            <div style="font-size:10px;color:#6b7280;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:6px;">Earnings Today</div>
-            <div id="summaryEarnings" style="font-size:24px;font-weight:900;color:#3b82f6;font-variant-numeric:tabular-nums;">${{ number_format($todayEarning?->earnings ?? 0, 4) }}</div>
-        </div>
-        @endif
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>Country</th>
+                    <th>Windows Clicks</th>
+                    @if($showEarnings && $profile->contract_type === 'per_click')<th>Earnings</th>@endif
+                </tr>
+            </thead>
+            <tbody>
+                @foreach($windowsByCountry as $row)
+                <tr>
+                    <td>
+                        <div style="display:flex;align-items:center;gap:10px;">
+                            <img src="https://flagcdn.com/24x18/{{ strtolower($row->country_code) }}.png"
+                                 style="width:24px;height:18px;border-radius:3px;object-fit:cover;flex-shrink:0;"
+                                 onerror="this.style.display='none'">
+                            <div>
+                                <div style="font-weight:600;font-size:13px;">{{ $row->country_name }}</div>
+                                <div style="font-size:11px;color:#9ca3af;"><code>{{ $row->country_code }}</code></div>
+                            </div>
+                        </div>
+                    </td>
+                    <td><span style="font-weight:700;color:#01BF63;">{{ number_format($row->windows) }}</span></td>
+                    @if($showEarnings && $profile->contract_type === 'per_click')
+                    <td style="color:#01BF63;font-weight:600;">${{ number_format($row->earnings, 4) }}</td>
+                    @endif
+                </tr>
+                @endforeach
+            </tbody>
+        </table>
     </div>
 </div>
 @endif
@@ -615,16 +628,6 @@ function fetchLiveStats() {
             const earnEl = document.getElementById('liveEarningsToday');
             if (earnEl && data.earnings_today !== null) {
                 earnEl.textContent = '$' + parseFloat(data.earnings_today).toFixed(4);
-            }
-
-            // Windows Performance Today (below Traffic by Country)
-            const sumWin = document.getElementById('summaryWindowsCount');
-            if (sumWin && data.windows_today !== undefined) {
-                sumWin.textContent = data.windows_today.toLocaleString();
-            }
-            const sumEarn = document.getElementById('summaryEarnings');
-            if (sumEarn && data.earnings_today !== null) {
-                sumEarn.textContent = '$' + parseFloat(data.earnings_today).toFixed(4);
             }
         })
         .catch(() => {});

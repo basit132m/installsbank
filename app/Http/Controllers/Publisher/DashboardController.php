@@ -13,41 +13,38 @@ class DashboardController extends Controller
 {
     public function index()
     {
-        $user = auth()->user();
+        $user    = auth()->user();
         $profile = $user->publisherProfile;
         $contract = $user->activeContract;
-        $divider = $user->clickDivider;
+        $divider  = $user->clickDivider;
 
-        // Publisher sees divided clicks (not actual)
         $todayEarning = DailyEarning::where('user_id', $user->id)->whereDate('date', today())->first();
 
-        // Show earnings for all per-click publishers regardless of payment_enabled.
-        // payment_enabled only gates the ability to request withdrawals.
         $showEarnings = !$profile->isFixedRate();
         $canWithdraw  = $profile->payment_enabled && !$profile->isFixedRate();
 
         $stats = [
-            'clicks_today' => $todayEarning?->valid_clicks ?? 0,
-            'earnings_today' => $showEarnings ? ($todayEarning?->earnings ?? 0) : null,
-            'balance' => $showEarnings ? $profile->balance : null,
-            'total_earnings' => $showEarnings ? $profile->total_earnings : null,
+            'clicks_today'     => $todayEarning?->valid_clicks ?? 0,
+            'earnings_today'   => $showEarnings ? ($todayEarning?->earnings ?? 0) : null,
+            'balance'          => $showEarnings ? $profile->balance : null,
+            'total_earnings'   => $showEarnings ? $profile->total_earnings : null,
             'clicks_this_week' => $this->getWeeklyClicks($user->id),
-            'clicks_this_month' => $this->getMonthlyClicks($user->id),
+            'clicks_this_month'=> $this->getMonthlyClicks($user->id),
         ];
 
-        // Chart data - last 7 days (publisher sees divided clicks)
+        // Chart data — last 7 days (divider-applied)
         $clicksChart = [];
         for ($i = 6; $i >= 0; $i--) {
             $date = Carbon::today()->subDays($i);
-            $de = DailyEarning::where('user_id', $user->id)->where('date', $date->toDateString())->first();
+            $de   = DailyEarning::where('user_id', $user->id)->where('date', $date->toDateString())->first();
             $clicksChart[] = [
-                'date' => $date->format('M d'),
-                'clicks' => $de?->valid_clicks ?? 0,
+                'date'     => $date->format('M d'),
+                'clicks'   => $de?->valid_clicks ?? 0,
                 'earnings' => $showEarnings ? ($de?->earnings ?? 0) : 0,
             ];
         }
 
-        // Country breakdown today
+        // Country breakdown today (flag grid — all valid clicks from DailyEarning)
         $countryBreakdown = null;
         if ($todayEarning && $todayEarning->country_breakdown) {
             $countryBreakdown = collect($todayEarning->country_breakdown)
@@ -55,7 +52,30 @@ class DashboardController extends Controller
                 ->take(10);
         }
 
-        // OS breakdown today — query clicks directly so it works with existing data
+        // Per-country Windows breakdown today — for the Traffic by Country table
+        // (per_click and installs_base only; Windows clicks with divider applied)
+        $dividerVal = ($divider && $divider->is_enabled) ? max(1, (float)$divider->divider_value) : 1;
+        $windowsByCountry = collect();
+        if (in_array($profile->contract_type ?? 'none', ['per_click', 'installs_base'])) {
+            $windowsByCountry = Click::where('user_id', $user->id)
+                ->whereDate('created_at', today())
+                ->where('is_counted', true)
+                ->where('is_windows', true)
+                ->selectRaw('country_code, country_name, COUNT(*) as raw_windows, SUM(click_value) as earnings')
+                ->groupBy('country_code', 'country_name')
+                ->orderByDesc('raw_windows')
+                ->get()
+                ->map(fn($r) => (object)[
+                    'country_code' => $r->country_code ?: 'XX',
+                    'country_name' => $r->country_name ?: 'Unknown',
+                    'windows'      => (int)floor($r->raw_windows / $dividerVal),
+                    'earnings'     => (float)$r->earnings,
+                ])
+                ->filter(fn($r) => $r->windows >= 1 || $r->earnings > 0)
+                ->values();
+        }
+
+        // OS breakdown today
         $osBreakdown = Click::where('user_id', $user->id)
             ->whereDate('created_at', today())
             ->where('is_counted', true)
@@ -66,17 +86,15 @@ class DashboardController extends Controller
             ->mapWithKeys(fn($row) => [$row->os ?: 'Unknown' => ['clicks' => $row->clicks]]);
 
         $pendingContracts = $user->contracts()->where('status', 'pending')->latest()->get();
-        $pendingContract = $pendingContracts->first(); // backward compat
-        $hasTestRunning = $profile->test_status === 'running';
-        $announcements = Announcement::where('is_active', true)->latest()->get();
+        $pendingContract  = $pendingContracts->first();
+        $hasTestRunning   = $profile->test_status === 'running';
+        $announcements    = Announcement::where('is_active', true)->latest()->get();
 
-        // Unread publisher notifications (rate changes etc.)
         $publisherNotifications = \App\Models\PublisherNotification::where('user_id', $user->id)
             ->whereNull('read_at')
             ->latest()
             ->get();
 
-        // Installs today (for installs_base publishers)
         $installsToday = null;
         if ($profile->contract_type === 'installs_base') {
             $installsToday = PublisherInstall::where('user_id', $user->id)
@@ -89,7 +107,8 @@ class DashboardController extends Controller
             'user', 'profile', 'contract', 'divider',
             'stats', 'clicksChart', 'countryBreakdown', 'osBreakdown',
             'pendingContract', 'pendingContracts', 'hasTestRunning', 'showEarnings', 'canWithdraw',
-            'announcements', 'installsToday', 'publisherNotifications', 'todayEarning'
+            'announcements', 'installsToday', 'publisherNotifications', 'todayEarning',
+            'windowsByCountry'
         ));
     }
 

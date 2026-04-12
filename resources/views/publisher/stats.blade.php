@@ -3,12 +3,47 @@
 @section('page-title', 'Statistics')
 
 @section('content')
-<!-- Period Filter -->
-<div style="display:flex;gap:8px;margin-bottom:24px;flex-wrap:wrap;">
-    @foreach(['1'=>'Today','7'=>'7 Days','30'=>'30 Days','90'=>'90 Days'] as $val => $label)
-        <a href="?period={{ $val }}" class="btn {{ $period == $val ? 'btn-primary' : 'btn-ghost' }} btn-sm">{{ $label }}</a>
-    @endforeach
+
+<!-- Filters row: Period + Link selector -->
+<div style="display:flex;gap:12px;margin-bottom:24px;flex-wrap:wrap;align-items:center;">
+    <!-- Period buttons -->
+    <div style="display:flex;gap:6px;flex-wrap:wrap;">
+        @foreach(['1'=>'Today','7'=>'7 Days','30'=>'30 Days','90'=>'90 Days'] as $val => $label)
+            <a href="?period={{ $val }}{{ $selectedLink ? '&link_id='.$selectedLink->id : '' }}"
+               class="btn {{ $period == $val ? 'btn-primary' : 'btn-ghost' }} btn-sm">{{ $label }}</a>
+        @endforeach
+    </div>
+
+    <!-- Link selector -->
+    @if($allLinks->count() > 0)
+    <div style="display:flex;align-items:center;gap:8px;margin-left:auto;">
+        <span style="font-size:12px;color:#6b7280;font-weight:600;">Filter by link:</span>
+        <form method="GET" style="display:flex;gap:6px;align-items:center;">
+            <input type="hidden" name="period" value="{{ $period }}">
+            <select name="link_id" onchange="this.form.submit()"
+                    style="font-size:12px;border:1.5px solid #e5e7eb;border-radius:8px;padding:5px 10px;background:#fff;color:#111827;outline:none;">
+                <option value="">All Links</option>
+                @foreach($allLinks as $lnk)
+                    <option value="{{ $lnk->id }}" {{ $selectedLink?->id == $lnk->id ? 'selected' : '' }}>
+                        {{ $lnk->name ?: 'Link #'.$lnk->id }}
+                    </option>
+                @endforeach
+            </select>
+            @if($selectedLink)
+            <a href="?period={{ $period }}" class="btn btn-ghost btn-sm" style="padding:4px 10px;font-size:11px;">✕ Clear</a>
+            @endif
+        </form>
+    </div>
+    @endif
 </div>
+
+@if($selectedLink)
+<div style="background:#eff6ff;border:1.5px solid #bfdbfe;border-radius:10px;padding:10px 16px;margin-bottom:20px;display:flex;align-items:center;gap:10px;">
+    <svg width="15" height="15" fill="none" stroke="#3b82f6" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101"/><path stroke-linecap="round" stroke-linejoin="round" d="M14.828 14.828a4 4 0 015.656 0l4-4a4 4 0 01-5.656-5.656l-1.102 1.101"/></svg>
+    <span style="font-size:13px;font-weight:600;color:#1e40af;">Showing stats for: {{ $selectedLink->name ?: 'Link #'.$selectedLink->id }}</span>
+    <code style="font-size:11px;color:#6b7280;background:#f1f5f9;padding:2px 6px;border-radius:4px;">{{ $selectedLink->unique_code }}</code>
+</div>
+@endif
 
 <!-- Totals -->
 <div class="stats-grid mb-6">
@@ -30,51 +65,62 @@
     <div id="statsChart"></div>
 </div>
 
-<!-- Country Flags (moved here) -->
-@if(count($countryAgg) > 0)
-@php
-    $sortedCountries = collect($countryAgg)->sortByDesc('clicks');
-    $totalClicks = collect($countryAgg)->sum('clicks');
-    $countryNames = \App\Models\CountryRate::whereIn('country_code', array_keys($countryAgg))
-        ->pluck('country_name', 'country_code');
-@endphp
+<!-- Traffic by Country — proper table with Windows Clicks + Earnings -->
+@if($countryStats->count() > 0)
 <div class="card mb-6">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
-        <div>
-            <div class="card-title">Traffic by Country</div>
-            <div style="font-size:12px;color:#9ca3af;margin-top:2px;">{{ count($countryAgg) }} countries · {{ number_format($totalClicks) }} total clicks</div>
-        </div>
+    <div class="card-title mb-1">Traffic by Country</div>
+    <div style="font-size:12px;color:#9ca3af;margin-bottom:16px;">
+        {{ $countryStats->count() }} {{ Str::plural('country', $countryStats->count()) }} · Windows clicks only
     </div>
-    <div style="display:flex;flex-wrap:wrap;gap:14px;padding:20px;background:#ffffff;border-radius:12px;border:1px solid #f3f4f6;">
-        @foreach($sortedCountries as $code => $data)
-        <div style="display:flex;flex-direction:column;align-items:center;gap:5px;width:66px;">
-            <img src="https://flagcdn.com/48x36/{{ strtolower($code) }}.png"
-                 alt="{{ $countryNames[$code] ?? $code }}"
-                 title="{{ $countryNames[$code] ?? $code }}"
-                 style="width:48px;height:36px;border-radius:5px;object-fit:cover;box-shadow:0 1px 6px rgba(0,0,0,0.15);flex-shrink:0;"
-                 onerror="this.style.display='none'">
-            <span style="font-size:11px;font-weight:800;color:#111827;line-height:1;text-align:center;">{{ number_format($data['clicks']) }}</span>
-            <span style="font-size:9px;color:#9ca3af;font-weight:600;line-height:1;">{{ strtoupper($code) }}</span>
-        </div>
-        @endforeach
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>Country</th>
+                    <th>Windows Clicks</th>
+                    @if($showEarnings && $profile->contract_type === 'per_click')<th>Earnings</th>@endif
+                </tr>
+            </thead>
+            <tbody>
+                @foreach($countryStats as $c)
+                <tr>
+                    <td>
+                        <div style="display:flex;align-items:center;gap:10px;">
+                            <img src="https://flagcdn.com/24x18/{{ strtolower($c->country_code) }}.png"
+                                 style="width:24px;height:18px;border-radius:3px;object-fit:cover;flex-shrink:0;"
+                                 onerror="this.style.display='none'">
+                            <div>
+                                <div style="font-weight:600;font-size:13px;">{{ $c->country_name }}</div>
+                                <div style="font-size:11px;color:#9ca3af;"><code>{{ $c->country_code }}</code></div>
+                            </div>
+                        </div>
+                    </td>
+                    <td><span style="font-weight:700;color:#01BF63;">{{ number_format($c->windows) }}</span></td>
+                    @if($showEarnings && $profile->contract_type === 'per_click')
+                    <td style="color:#01BF63;font-weight:600;">${{ number_format($c->earnings, 4) }}</td>
+                    @endif
+                </tr>
+                @endforeach
+            </tbody>
+        </table>
     </div>
 </div>
 @endif
 
 <!-- Country + OS Charts -->
-@if(count($countryAgg) > 0 || $osBreakdown->count() > 0)
+@if($countryStats->count() > 0 || $osBreakdown->count() > 0)
 <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:24px;" class="stats-charts-row">
-    @if(count($countryAgg) > 0)
+    @if($countryStats->count() > 0)
     <div class="card">
         <div class="card-title mb-1">Clicks by Country</div>
-        <div style="font-size:12px;color:#9ca3af;margin-bottom:4px;">{{ ['1'=>'Today','7'=>'Last 7 Days','30'=>'Last 30 Days','90'=>'Last 90 Days'][$period] ?? 'Selected period' }} · valid clicks only</div>
+        <div style="font-size:12px;color:#9ca3af;margin-bottom:4px;">{{ ['1'=>'Today','7'=>'Last 7 Days','30'=>'Last 30 Days','90'=>'Last 90 Days'][$period] ?? 'Selected period' }} · Windows clicks</div>
         <div id="statsCountryChart"></div>
     </div>
     @endif
     @if($osBreakdown->count() > 0)
     <div class="card">
         <div class="card-title mb-1">Clicks by OS</div>
-        <div style="font-size:12px;color:#9ca3af;margin-bottom:4px;">{{ ['1'=>'Today','7'=>'Last 7 Days','30'=>'Last 30 Days','90'=>'Last 90 Days'][$period] ?? 'Selected period' }} · valid clicks only</div>
+        <div style="font-size:12px;color:#9ca3af;margin-bottom:4px;">{{ ['1'=>'Today','7'=>'Last 7 Days','30'=>'Last 30 Days','90'=>'Last 90 Days'][$period] ?? 'Selected period' }} · valid clicks</div>
         <div id="statsOsChart"></div>
     </div>
     @endif
@@ -96,7 +142,7 @@
             <tbody>
                 @forelse($dailyStats as $day)
                 <tr>
-                    <td>{{ $day->date->format('M d, Y') }}</td>
+                    <td>{{ $day->date_label }}</td>
                     <td><strong>{{ number_format($day->valid_clicks) }}</strong></td>
                     @if($showEarnings)<td style="color:#01BF63;">${{ number_format($day->earnings, 4) }}</td>@endif
                 </tr>
@@ -108,16 +154,16 @@
     </div>
 </div>
 
-<!-- Country Breakdown -->
-<!-- Link-Level Stats -->
+<!-- Performance by Link -->
 @if($linkStats->count() > 0)
 <div class="card mb-6">
-    <div class="card-title mb-4">Performance by Link</div>
+    <div class="card-title mb-1">Performance by Link</div>
+    <div style="font-size:12px;color:#9ca3af;margin-bottom:16px;">Click a link name to view its individual stats</div>
     <div class="table-wrap">
         <table>
             <thead>
                 <tr>
-                    <th>Link Name</th>
+                    <th>Link</th>
                     <th>Status</th>
                     <th>Unique Clicks</th>
                     @if($showEarnings)<th>Earnings</th>@endif
@@ -125,9 +171,10 @@
             </thead>
             <tbody>
                 @foreach($linkStats as $ls)
-                <tr>
+                <tr style="{{ $selectedLink?->id == $ls['id'] ? 'background:#f0fdf4;' : '' }}">
                     <td>
-                        <div style="font-weight:600;font-size:13px;">{{ $ls['name'] }}</div>
+                        <a href="?period={{ $period }}&link_id={{ $ls['id'] }}"
+                           style="font-weight:600;font-size:13px;color:#01BF63;text-decoration:none;">{{ $ls['name'] }}</a>
                         <div style="font-family:monospace;font-size:11px;color:#9ca3af;">{{ $ls['code'] }}</div>
                     </td>
                     <td><span class="badge {{ $ls['active'] ? 'badge-success' : 'badge-danger' }}">{{ $ls['active'] ? 'Active' : 'Inactive' }}</span></td>
@@ -163,21 +210,22 @@ new ApexCharts(document.getElementById('statsChart'), {
     stroke: { curve: 'smooth', width: 2 },
     fill: { type: 'gradient', gradient: { opacityFrom: 0.4, opacityTo: 0.05 } },
     colors: ['#01BF63', '#3b82f6'],
-    xaxis: { categories: daily.map(d => d.date), labels: { style: { fontSize: '11px' } } },
+    xaxis: { categories: daily.map(d => d.date_raw), labels: { style: { fontSize: '11px' } } },
     dataLabels: { enabled: false },
     grid: { borderColor: '#f3f4f6' }
 }).render();
 
-@if(count($countryAgg) > 0)
+@if($countryStats->count() > 0)
 @php
     $cLabels = []; $cValues = [];
-    $sortedC = collect($countryAgg)->sortByDesc('clicks');
-    $cNames = \App\Models\CountryRate::whereIn('country_code', $sortedC->keys()->toArray())->pluck('country_name','country_code');
-    foreach ($sortedC->take(8) as $code => $data) {
-        $cLabels[] = $cNames[$code] ?? strtoupper($code);
-        $cValues[] = (int) $data['clicks'];
+    foreach ($countryStats->take(8) as $c) {
+        $cLabels[] = $c->country_name;
+        $cValues[] = (int)$c->windows;
     }
-    if ($sortedC->count() > 8) { $cLabels[] = 'Others'; $cValues[] = (int) $sortedC->slice(8)->sum('clicks'); }
+    if ($countryStats->count() > 8) {
+        $cLabels[] = 'Others';
+        $cValues[] = (int)$countryStats->slice(8)->sum('windows');
+    }
 @endphp
 new ApexCharts(document.getElementById('statsCountryChart'), {
     series: @json($cValues), labels: @json($cLabels),
