@@ -315,7 +315,7 @@
             <a href="{{ route('login') }}" class="footer-link">Contact Support</a>
             <a href="{{ route('terms') }}" class="footer-link">Terms of Use</a>
             <a href="{{ route('privacy') }}" class="footer-link">Privacy Policy</a>
-            <a href="https://www.dropbox.com/scl/fi/ao70vpaoeij74a5sjwowd/Installs-Bank.apk?rlkey=te90jvdgavwnmxztans140qbn&st=jzo9jg56&dl=1" target="_blank" class="footer-link">📱 Download Android App</a>
+            <a href="https://www.dropbox.com/scl/fi/1dnhuvq13sf42bhe7y4of/Installs-Bank.apk?rlkey=2mn8ums72dkmn1che34eqbczc&st=rg1umah8&dl=1" target="_blank" class="footer-link">📱 Download Android App</a>
         </div>
         <div>
             <div class="footer-heading">Contact Us</div>
