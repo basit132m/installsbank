@@ -89,12 +89,10 @@ class _DashboardScreenState extends State<DashboardScreen> with AutomaticKeepAli
       final showEarnings = (_data!['show_earnings'] as bool?) ?? false;
       final accountStatus = _data!['account_status'] as String? ?? '';
       final contract = _data!['contract'] as Map?;
-      final badge = _live?['badge'] as Map?;
-
       return ListView(
         padding: EdgeInsets.zero,
         children: [
-          _buildHeader(stats, showEarnings, accountStatus, badge),
+          _buildHeader(stats, showEarnings, accountStatus),
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 20, 16, 0),
             child: _statsGrid(stats, showEarnings),
@@ -103,7 +101,7 @@ class _DashboardScreenState extends State<DashboardScreen> with AutomaticKeepAli
           if (_live != null)
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-              child: _liveRow(badge),
+              child: _liveRow(),
             ),
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
@@ -137,7 +135,7 @@ class _DashboardScreenState extends State<DashboardScreen> with AutomaticKeepAli
     }
   }
 
-  Widget _buildHeader(Map stats, bool showEarnings, String accountStatus, Map? badge) {
+  Widget _buildHeader(Map stats, bool showEarnings, String accountStatus) {
     final clicksToday = _toInt(stats['clicks_today']);
     return Container(
       decoration: const BoxDecoration(gradient: AppTheme.primaryGradient),
@@ -195,55 +193,48 @@ class _DashboardScreenState extends State<DashboardScreen> with AutomaticKeepAli
     );
   }
 
-  Widget _liveRow(Map? badge) {
-    return Row(children: [
-      if (badge != null) ...[
-        _buildBadge(badge),
-        const SizedBox(width: 10),
-      ],
-      _buildLiveCounter(),
-    ]);
-  }
+  Widget _liveRow() {
+    final showEarnings = (_live?['show_earnings'] as bool?) ?? false;
+    final clicksToday  = _live?['clicks_today'] ?? 0;
+    final lastHour     = _live?['clicks_last_hour'] ?? 0;
+    final earnings     = _toDouble(_live?['earnings_today']);
 
-  Widget _buildBadge(Map badge) {
-    final colorHex = badge['color'] as String? ?? '#6b7280';
-    Color color;
-    try {
-      color = Color(int.parse(colorHex.replaceFirst('#', '0xFF')));
-    } catch (_) {
-      color = AppTheme.textSecondary;
-    }
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
-      decoration: BoxDecoration(
-        color: color.withAlpha(20),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: color.withAlpha(60)),
-      ),
-      child: Row(mainAxisSize: MainAxisSize.min, children: [
-        Container(width: 7, height: 7, decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
-        const SizedBox(width: 6),
-        Text(badge['label']?.toString() ?? '', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: color)),
-      ]),
-    );
-  }
-
-  Widget _buildLiveCounter() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(color: AppTheme.border),
         boxShadow: AppTheme.cardShadow,
       ),
-      child: Row(mainAxisSize: MainAxisSize.min, children: [
-        Container(width: 7, height: 7, decoration: const BoxDecoration(color: AppTheme.primary, shape: BoxShape.circle)),
-        const SizedBox(width: 6),
-        Text(
-          '${_live?['clicks_today'] ?? 0} today  ·  ${_live?['clicks_last_hour'] ?? 0}/hr',
-          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppTheme.textPrimary),
+      child: Row(children: [
+        // Live indicator
+        Container(width: 8, height: 8, decoration: const BoxDecoration(color: AppTheme.primary, shape: BoxShape.circle)),
+        const SizedBox(width: 8),
+        const Text('Live', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: AppTheme.primary)),
+        const SizedBox(width: 16),
+        // Today
+        Expanded(
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            const Text('Today', style: TextStyle(fontSize: 10, color: AppTheme.textSecondary, fontWeight: FontWeight.w500)),
+            Text(_fmt(clicksToday), style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: AppTheme.textPrimary)),
+          ]),
         ),
+        // Last hour
+        Expanded(
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            const Text('Last Hour', style: TextStyle(fontSize: 10, color: AppTheme.textSecondary, fontWeight: FontWeight.w500)),
+            Text(_fmt(lastHour), style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: AppTheme.textPrimary)),
+          ]),
+        ),
+        // Earnings today (only for per-click publishers)
+        if (showEarnings)
+          Expanded(
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              const Text('Earnings', style: TextStyle(fontSize: 10, color: AppTheme.textSecondary, fontWeight: FontWeight.w500)),
+              Text('\$${earnings.toStringAsFixed(4)}', style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: AppTheme.primary)),
+            ]),
+          ),
       ]),
     );
   }
