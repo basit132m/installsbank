@@ -33,11 +33,11 @@ class TrackingController extends Controller
 
         $redirectUrl = $link->resolveUrlForOs($os);
 
-        // Rate limiter: same IP hitting the same link within 5 seconds is noise
-        // (page auto-reload, prefetch, crawlers). Redirect silently without recording.
+        // Rate limiter: same IP hitting the same link within 30 seconds is noise
+        // (page auto-reload, prefetch, redirect bounce, back-button). Silently redirect.
         $ip = $request->ip();
         $rateLimitKey = "rl_{$link->id}_{$ip}";
-        if (!Cache::add($rateLimitKey, 1, 5)) {
+        if (!Cache::add($rateLimitKey, 1, 30)) {
             return redirect()->away($redirectUrl);
         }
 

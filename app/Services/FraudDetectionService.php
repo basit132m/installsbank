@@ -193,9 +193,13 @@ class FraudDetectionService
 
     private function isDuplicateSession(int $linkId, string $fingerprint): bool
     {
+        // Cache::add is atomic — returns false only if the key already exists.
+        // Non-atomic has()+put() had a race window where two concurrent requests
+        // both missed the cache and both passed as "first" click.
         $cacheKey = "click_fp_{$linkId}_{$fingerprint}";
-        if (Cache::has($cacheKey)) return true;
-        Cache::put($cacheKey, 1, self::DUPLICATE_WINDOW);
+        if (!Cache::add($cacheKey, 1, self::DUPLICATE_WINDOW)) return true;
+
+        // DB fallback for cold cache (server restart / cache flush)
         return Click::where('tracking_link_id', $linkId)
             ->where('fingerprint', $fingerprint)
             ->where('created_at', '>=', now()->subSeconds(self::DUPLICATE_WINDOW))

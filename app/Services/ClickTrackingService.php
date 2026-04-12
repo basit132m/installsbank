@@ -91,6 +91,13 @@ class ClickTrackingService
 
         $fraudResult = $this->fraud->check($clickData, $fraudSettings);
 
+        // Duplicate clicks — silently discard without writing to DB.
+        // They are the same visitor hitting the link again; storing them pollutes
+        // the click log and confuses publishers who see fraud rows they didn't cause.
+        if ($fraudResult['fraud_reason'] === 'duplicate_ip') {
+            return null;
+        }
+
         // Domain restriction: only enforce when admin has it enabled for this publisher
         $enforceDomain = $profile?->enforce_domain_restriction ?? true;
         if (!$fraudResult['is_fraud'] && $link->allowed_domain && $enforceDomain) {
