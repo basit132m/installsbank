@@ -223,80 +223,83 @@
 @endif
 
 <!-- Live Click Counter -->
-<div style="background:linear-gradient(135deg,#01BF63,#00a354);border-radius:16px;padding:20px 24px;margin-bottom:20px;display:flex;align-items:center;gap:16px;flex-wrap:wrap;position:relative;overflow:hidden;">
-    <div style="position:absolute;inset:0;background:radial-gradient(ellipse at 80% 50%,rgba(255,255,255,0.12),transparent 60%);pointer-events:none;"></div>
+<div style="background:linear-gradient(135deg,#01BF63 0%,#019a50 55%,#017840 100%);border-radius:20px;padding:26px 28px;margin-bottom:20px;position:relative;overflow:hidden;">
+    <!-- Decorative blobs -->
+    <div style="position:absolute;top:-50px;right:-50px;width:200px;height:200px;background:rgba(255,255,255,0.07);border-radius:50%;pointer-events:none;"></div>
+    <div style="position:absolute;bottom:-70px;right:80px;width:140px;height:140px;background:rgba(255,255,255,0.05);border-radius:50%;pointer-events:none;"></div>
+    <div style="position:absolute;top:50%;left:-30px;width:80px;height:80px;background:rgba(255,255,255,0.04);border-radius:50%;pointer-events:none;transform:translateY(-50%);"></div>
 
-    <!-- Pulse icon -->
-    <div style="position:relative;flex-shrink:0;">
-        <div style="width:48px;height:48px;background:rgba(255,255,255,0.18);border-radius:12px;display:flex;align-items:center;justify-content:center;border:1px solid rgba(255,255,255,0.3);">
-            <svg width="22" height="22" fill="none" stroke="white" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+    <!-- Header -->
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:22px;">
+        <div style="display:flex;align-items:center;gap:10px;">
+            <div style="width:38px;height:38px;background:rgba(255,255,255,0.18);border-radius:11px;display:flex;align-items:center;justify-content:center;border:1px solid rgba(255,255,255,0.25);">
+                <svg width="18" height="18" fill="none" stroke="white" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+            </div>
+            <span style="font-size:15px;font-weight:700;color:white;letter-spacing:0.01em;">Live Traffic</span>
         </div>
-        <span style="position:absolute;top:-4px;right:-4px;width:12px;height:12px;background:white;border-radius:50%;border:2px solid #01BF63;animation:livePulse 2s infinite;"></span>
-    </div>
-
-    <!-- Today clicks -->
-    <div style="flex-shrink:0;">
-        <div style="font-size:11px;color:rgba(255,255,255,0.7);font-weight:600;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:2px;">Clicks Today</div>
-        <div style="display:flex;align-items:baseline;gap:6px;">
-            <span id="liveClickCount" style="font-size:32px;font-weight:900;color:white;line-height:1;font-variant-numeric:tabular-nums;">—</span>
-            <span style="font-size:12px;color:rgba(255,255,255,0.6);">total</span>
-        </div>
-    </div>
-
-    <!-- Divider -->
-    <div style="width:1px;height:40px;background:rgba(255,255,255,0.25);flex-shrink:0;"></div>
-
-    <!-- Last hour -->
-    <div style="flex-shrink:0;">
-        <div style="font-size:11px;color:rgba(255,255,255,0.7);font-weight:600;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:2px;">Last Hour</div>
-        <div style="display:flex;align-items:baseline;gap:6px;">
-            <span id="liveLastHour" style="font-size:24px;font-weight:800;color:white;line-height:1;font-variant-numeric:tabular-nums;">—</span>
-            <span style="font-size:12px;color:rgba(255,255,255,0.6);">clicks</span>
+        <div style="display:flex;align-items:center;gap:6px;background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.2);padding:5px 13px;border-radius:20px;">
+            <span style="width:7px;height:7px;background:white;border-radius:50%;animation:livePulse 2s infinite;display:block;flex-shrink:0;"></span>
+            <span style="font-size:11px;color:white;font-weight:700;letter-spacing:0.06em;">LIVE</span>
         </div>
     </div>
 
-    <!-- Divider -->
-    <div style="width:1px;height:40px;background:rgba(255,255,255,0.25);flex-shrink:0;"></div>
+    <!-- Stats -->
+    <div style="display:grid;grid-template-columns:1fr 1px 1fr{{ $showEarnings ? ' 1px 1fr' : '' }};align-items:center;gap:0;">
+        <!-- Clicks Today -->
+        <div style="text-align:center;padding:0 12px;">
+            <div style="font-size:10px;color:rgba(255,255,255,0.65);font-weight:700;text-transform:uppercase;letter-spacing:0.07em;margin-bottom:8px;">Clicks Today</div>
+            <div id="liveClickCount" style="font-size:42px;font-weight:900;color:white;line-height:1;font-variant-numeric:tabular-nums;">—</div>
+            <div style="font-size:11px;color:rgba(255,255,255,0.5);margin-top:5px;">valid clicks</div>
+        </div>
 
-    <!-- Performance badge -->
-    <div id="liveBadge" style="display:inline-flex;align-items:center;gap:7px;background:rgba(255,255,255,0.18);border:1px solid rgba(255,255,255,0.3);padding:8px 14px;border-radius:20px;flex-shrink:0;">
-        <span class="live-dot" style="background:white;"></span>
-        <span id="badgeLabel" style="font-size:13px;font-weight:700;color:white;">Loading...</span>
-    </div>
+        <div style="height:64px;background:rgba(255,255,255,0.2);"></div>
 
-    <!-- Live indicator -->
-    <div style="margin-left:auto;display:flex;align-items:center;gap:6px;flex-shrink:0;">
-        <span style="width:8px;height:8px;background:white;border-radius:50%;animation:livePulse 2s infinite;display:block;"></span>
-        <span style="font-size:11px;color:rgba(255,255,255,0.7);font-weight:600;text-transform:uppercase;letter-spacing:0.05em;">Live</span>
+        <!-- Last Hour -->
+        <div style="text-align:center;padding:0 12px;">
+            <div style="font-size:10px;color:rgba(255,255,255,0.65);font-weight:700;text-transform:uppercase;letter-spacing:0.07em;margin-bottom:8px;">Last Hour</div>
+            <div id="liveLastHour" style="font-size:32px;font-weight:800;color:white;line-height:1;font-variant-numeric:tabular-nums;">—</div>
+            <div style="font-size:11px;color:rgba(255,255,255,0.5);margin-top:5px;">clicks</div>
+        </div>
+
+        @if($showEarnings)
+        <div style="height:64px;background:rgba(255,255,255,0.2);"></div>
+
+        <!-- Earnings Today -->
+        <div style="text-align:center;padding:0 12px;">
+            <div style="font-size:10px;color:rgba(255,255,255,0.65);font-weight:700;text-transform:uppercase;letter-spacing:0.07em;margin-bottom:8px;">Earnings Today</div>
+            <div id="liveEarningsCounter" style="font-size:28px;font-weight:800;color:white;line-height:1;font-variant-numeric:tabular-nums;">${{ number_format($todayEarning?->earnings ?? 0, 4) }}</div>
+            <div style="font-size:11px;color:rgba(255,255,255,0.5);margin-top:5px;">USD</div>
+        </div>
+        @endif
     </div>
 </div>
 
 @if(in_array($profile->contract_type ?? '', ['per_click', 'installs_base']))
-<!-- Live Windows Performance Table — below live counter -->
-<div id="liveWindowsTable" style="background:#fff;border:1px solid #e5e7eb;border-radius:14px;padding:18px 22px;margin-bottom:24px;">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
-        <div>
-            <div style="font-size:14px;font-weight:700;color:#111827;">Today's Windows Performance</div>
-            <div style="font-size:11px;color:#9ca3af;margin-top:2px;">Unique Windows clicks after divider · live updating</div>
-        </div>
-        <span style="display:flex;align-items:center;gap:5px;font-size:11px;color:#01BF63;font-weight:600;">
+<!-- Windows + Earnings live panel — below live counter -->
+<div id="liveWindowsTable" style="background:#fff;border:1.5px solid #e5e7eb;border-radius:16px;padding:20px 24px;margin-bottom:24px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+        <div style="font-size:14px;font-weight:700;color:#111827;">Today's Performance</div>
+        <span style="display:flex;align-items:center;gap:5px;font-size:11px;color:#01BF63;font-weight:700;">
             <span style="width:7px;height:7px;background:#01BF63;border-radius:50%;display:inline-block;animation:livePulse 2s infinite;"></span>Live
         </span>
     </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
-        <div style="background:#f0fdf4;border-radius:10px;padding:16px 20px;text-align:center;">
-            <div style="font-size:11px;color:#6b7280;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:6px;">Windows Clicks (Divided)</div>
-            <div id="liveWindowsCount" style="font-size:28px;font-weight:900;color:#01BF63;font-variant-numeric:tabular-nums;">{{ number_format($todayEarning?->windows_clicks_divided ?? 0) }}</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+        <div style="background:linear-gradient(135deg,#f0fdf4,#dcfce7);border-radius:12px;padding:18px 20px;text-align:center;border:1px solid #bbf7d0;">
+            <div style="font-size:10px;color:#6b7280;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:8px;">Windows Clicks</div>
+            <div id="liveWindowsCount" style="font-size:30px;font-weight:900;color:#01BF63;font-variant-numeric:tabular-nums;">{{ number_format($todayEarning?->windows_clicks_divided ?? 0) }}</div>
+            <div style="font-size:11px;color:#9ca3af;margin-top:5px;">today</div>
         </div>
         @if($showEarnings)
-        <div style="background:#eff6ff;border-radius:10px;padding:16px 20px;text-align:center;">
-            <div style="font-size:11px;color:#6b7280;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:6px;">Earnings Today</div>
-            <div id="liveEarningsToday" style="font-size:28px;font-weight:900;color:#3b82f6;font-variant-numeric:tabular-nums;">${{ number_format($todayEarning?->earnings ?? 0, 4) }}</div>
+        <div style="background:linear-gradient(135deg,#eff6ff,#dbeafe);border-radius:12px;padding:18px 20px;text-align:center;border:1px solid #bfdbfe;">
+            <div style="font-size:10px;color:#6b7280;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:8px;">Earnings</div>
+            <div id="liveEarningsToday" style="font-size:30px;font-weight:900;color:#3b82f6;font-variant-numeric:tabular-nums;">${{ number_format($todayEarning?->earnings ?? 0, 4) }}</div>
+            <div style="font-size:11px;color:#9ca3af;margin-top:5px;">today</div>
         </div>
         @else
-        <div style="background:#f9fafb;border-radius:10px;padding:16px 20px;text-align:center;">
-            <div style="font-size:11px;color:#6b7280;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:6px;">All Valid Clicks Today</div>
-            <div style="font-size:28px;font-weight:900;color:#6b7280;font-variant-numeric:tabular-nums;">{{ number_format($stats['clicks_today']) }}</div>
+        <div style="background:linear-gradient(135deg,#f9fafb,#f3f4f6);border-radius:12px;padding:18px 20px;text-align:center;border:1px solid #e5e7eb;">
+            <div style="font-size:10px;color:#6b7280;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:8px;">Valid Clicks</div>
+            <div style="font-size:30px;font-weight:900;color:#374151;font-variant-numeric:tabular-nums;">{{ number_format($stats['clicks_today']) }}</div>
+            <div style="font-size:11px;color:#9ca3af;margin-top:5px;">today</div>
         </div>
         @endif
     </div>
@@ -433,30 +436,30 @@
 </div>
 
 @if(in_array($profile->contract_type ?? '', ['per_click', 'installs_base']))
-<!-- Windows + Earnings Summary below Traffic by Country — live updating -->
+<!-- Windows + Earnings summary below Traffic by Country — live updating -->
 <div class="card mb-6" id="windowsSummaryCard">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
         <div>
-            <div class="card-title">Windows Clicks Summary</div>
-            <div style="font-size:12px;color:#9ca3af;margin-top:2px;">Total unique Windows clicks collected via divider logic · today</div>
+            <div class="card-title">Windows Performance Today</div>
+            <div style="font-size:12px;color:#9ca3af;margin-top:2px;">Updates every 30 seconds</div>
         </div>
-        <span style="display:flex;align-items:center;gap:5px;font-size:11px;color:#01BF63;font-weight:600;">
+        <span style="display:flex;align-items:center;gap:5px;font-size:11px;color:#01BF63;font-weight:700;">
             <span style="width:7px;height:7px;background:#01BF63;border-radius:50%;display:inline-block;animation:livePulse 2s infinite;"></span>Live
         </span>
     </div>
-    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px;">
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;">
         <div style="background:#f0fdf4;border-radius:10px;padding:14px 18px;">
-            <div style="font-size:10px;color:#6b7280;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:5px;">Windows Clicks (Divided)</div>
-            <div id="summaryWindowsCount" style="font-size:22px;font-weight:900;color:#01BF63;font-variant-numeric:tabular-nums;">{{ number_format($todayEarning?->windows_clicks_divided ?? 0) }}</div>
+            <div style="font-size:10px;color:#6b7280;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:6px;">Windows Clicks</div>
+            <div id="summaryWindowsCount" style="font-size:24px;font-weight:900;color:#01BF63;font-variant-numeric:tabular-nums;">{{ number_format($todayEarning?->windows_clicks_divided ?? 0) }}</div>
         </div>
         <div style="background:#f9fafb;border-radius:10px;padding:14px 18px;">
-            <div style="font-size:10px;color:#6b7280;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:5px;">All Valid Clicks Today</div>
-            <div style="font-size:22px;font-weight:900;color:#374151;font-variant-numeric:tabular-nums;">{{ number_format($stats['clicks_today']) }}</div>
+            <div style="font-size:10px;color:#6b7280;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:6px;">Total Valid Clicks</div>
+            <div style="font-size:24px;font-weight:900;color:#374151;font-variant-numeric:tabular-nums;">{{ number_format($stats['clicks_today']) }}</div>
         </div>
         @if($showEarnings)
         <div style="background:#eff6ff;border-radius:10px;padding:14px 18px;">
-            <div style="font-size:10px;color:#6b7280;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:5px;">Earnings Today</div>
-            <div id="summaryEarnings" style="font-size:22px;font-weight:900;color:#3b82f6;font-variant-numeric:tabular-nums;">${{ number_format($todayEarning?->earnings ?? 0, 4) }}</div>
+            <div style="font-size:10px;color:#6b7280;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:6px;">Earnings Today</div>
+            <div id="summaryEarnings" style="font-size:24px;font-weight:900;color:#3b82f6;font-variant-numeric:tabular-nums;">${{ number_format($todayEarning?->earnings ?? 0, 4) }}</div>
         </div>
         @endif
     </div>
@@ -579,32 +582,32 @@
 
 @push('scripts')
 <script>
-// Real-time click counter + badge — polls every 30 seconds
+// Real-time stats — polls every 30 seconds
 function fetchLiveStats() {
     fetch('{{ route('publisher.live-stats') }}')
         .then(r => r.json())
         .then(data => {
-            // Animate clicks today
+            // Clicks today (live banner + stat card)
             const countEl = document.getElementById('liveClickCount');
             const newVal = data.clicks_today.toLocaleString();
             if (countEl && countEl.textContent !== newVal) {
-                countEl.style.transform = 'scale(1.15)';
-                countEl.style.transition = 'transform 0.2s';
+                countEl.style.transform = 'scale(1.12)';
+                countEl.style.transition = 'transform 0.2s ease';
                 countEl.textContent = newVal;
-                setTimeout(() => { countEl.style.transform = 'scale(1)'; }, 200);
+                setTimeout(() => { countEl.style.transform = 'scale(1)'; }, 220);
             }
 
+            // Last hour
             const lastHour = document.getElementById('liveLastHour');
             if (lastHour) lastHour.textContent = data.clicks_last_hour.toLocaleString();
 
-            const badge = document.getElementById('liveBadge');
-            const label = document.getElementById('badgeLabel');
-            if (badge && label) {
-                label.textContent = data.badge.label;
-                badge.querySelector('.live-dot').style.background = data.badge.color;
+            // Earnings in live banner
+            const earnBanner = document.getElementById('liveEarningsCounter');
+            if (earnBanner && data.earnings_today !== null) {
+                earnBanner.textContent = '$' + parseFloat(data.earnings_today).toFixed(4);
             }
 
-            // Update live windows performance table
+            // Today's Performance panel (below counter)
             const winEl = document.getElementById('liveWindowsCount');
             if (winEl && data.windows_today !== undefined) {
                 winEl.textContent = data.windows_today.toLocaleString();
@@ -614,7 +617,7 @@ function fetchLiveStats() {
                 earnEl.textContent = '$' + parseFloat(data.earnings_today).toFixed(4);
             }
 
-            // Update summary card below Traffic by Country
+            // Windows Performance Today (below Traffic by Country)
             const sumWin = document.getElementById('summaryWindowsCount');
             if (sumWin && data.windows_today !== undefined) {
                 sumWin.textContent = data.windows_today.toLocaleString();
