@@ -69,7 +69,11 @@
                                 <span class="badge badge-gray">None</span>
                             @endif
                             @if($pub->publisherProfile->adcode_requested_at)
-                                <span class="badge badge-warning" title="Ad code requested {{ $pub->publisherProfile->adcode_requested_at->diffForHumans() }}">Adcode Req.</span>
+                                @if($pub->trackingLinks->isNotEmpty())
+                                    <span class="badge badge-success" title="Ad code assigned">Ad Assigned</span>
+                                @else
+                                    <span class="badge badge-warning" title="Ad code requested {{ $pub->publisherProfile->adcode_requested_at->diffForHumans() }}">Adcode Req.</span>
+                                @endif
                             @endif
                         @else
                             <span class="badge badge-gray">—</span>

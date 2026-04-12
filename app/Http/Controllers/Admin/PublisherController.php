@@ -20,7 +20,7 @@ class PublisherController extends Controller
 {
     public function index(Request $request)
     {
-        $query = User::where('role', 'publisher')->with('publisherProfile');
+        $query = User::where('role', 'publisher')->with('publisherProfile', 'trackingLinks');
 
         if ($request->filled('search')) {
             $query->where(function($q) use ($request) {
