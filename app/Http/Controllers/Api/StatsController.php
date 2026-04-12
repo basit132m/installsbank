@@ -33,42 +33,52 @@ class StatsController extends Controller
         $selectedLinkId = (int)$request->get('link_id', 0);
         $selectedLink   = $selectedLinkId ? $allLinks->firstWhere('id', $selectedLinkId) : null;
 
-        // Daily stats — per-link uses Click table; aggregate uses DailyEarning
+        // Daily stats — per-link uses Click table; aggregate uses DailyEarning (fast)
         if ($selectedLink) {
             $dailyData = $this->buildPerLinkDaily($selectedLink->id, $startDate, $dividerValue, $showEarnings);
+            $dailyRows = collect(); // not used for country agg in per-link mode
         } else {
-            $dailyData = DailyEarning::where('user_id', $user->id)
+            $dailyRows = DailyEarning::where('user_id', $user->id)
                 ->whereBetween('date', [$startDate->toDateString(), today()->toDateString()])
-                ->orderBy('date')->get()
-                ->map(fn($d) => [
-                    'date'     => $d->date->format('M d'),
-                    'clicks'   => (int)$d->valid_clicks,
-                    'earnings' => $showEarnings ? (float)$d->earnings : 0,
-                ])->values()->all();
+                ->orderBy('date')->get();
+            $dailyData = $dailyRows->map(fn($d) => [
+                'date'     => $d->date->format('M d'),
+                'clicks'   => (int)$d->valid_clicks,
+                'earnings' => $showEarnings ? (float)$d->earnings : 0,
+            ])->values()->all();
         }
 
-        // Country breakdown — Windows clicks with divider applied
-        $countryBreakdown = $this->buildCountryStats(
-            $user->id, $startDate, $dividerValue, $selectedLink?->id
-        )->map(fn($c) => [
-            'country'      => $c->country_code,
-            'country_name' => $c->country_name,
-            'clicks'       => $c->windows,
-            'earnings'     => $showEarnings ? $c->earnings : null,
-        ])->values()->all();
+        // Country breakdown — aggregate from DailyEarning.country_breakdown (fast, no Click scan)
+        // For per-link view, fall back to Click table (narrow query by link + date)
+        if ($selectedLink) {
+            $countryBreakdown = $this->buildCountryStatsForLink(
+                $selectedLink->id, $startDate, $dividerValue, $showEarnings
+            );
+        } else {
+            $countryBreakdown = $this->aggregateCountryFromDailyEarnings($dailyRows, $showEarnings);
+        }
 
-        // Per-link stats with divider applied to windows clicks
-        $linkStats = $allLinks->map(function ($link) use ($startDate, $showEarnings, $dividerValue) {
-            $base       = Click::where('tracking_link_id', $link->id)
-                ->where('created_at', '>=', $startDate->copy()->startOfDay());
-            $windows    = (clone $base)->where('is_counted', true)->where('is_windows', true)->count();
-            $nonWindows = (clone $base)->where('is_counted', true)->where('is_windows', false)->count();
+        // Per-link stats — ONE aggregated Click query instead of N×2 queries
+        $linkAgg = Click::where('user_id', $user->id)
+            ->where('is_counted', true)
+            ->where('created_at', '>=', $startDate->copy()->startOfDay())
+            ->selectRaw('tracking_link_id,
+                SUM(CASE WHEN is_windows = 1 THEN 1 ELSE 0 END) as windows_clicks,
+                SUM(CASE WHEN is_windows = 0 THEN 1 ELSE 0 END) as non_windows_clicks,
+                SUM(click_value) as earnings')
+            ->groupBy('tracking_link_id')
+            ->get()->keyBy('tracking_link_id');
+
+        $linkStats = $allLinks->map(function ($link) use ($linkAgg, $showEarnings, $dividerValue) {
+            $agg        = $linkAgg->get($link->id);
+            $windows    = (int)($agg?->windows_clicks ?? 0);
+            $nonWindows = (int)($agg?->non_windows_clicks ?? 0);
             return [
                 'id'       => $link->id,
                 'name'     => $link->name ?: 'Unnamed Link',
                 'code'     => $link->unique_code,
                 'clicks'   => $nonWindows + (int)floor($windows / $dividerValue),
-                'earnings' => $showEarnings ? (float)(clone $base)->where('is_counted', true)->sum('click_value') : null,
+                'earnings' => $showEarnings ? (float)($agg?->earnings ?? 0) : null,
                 'active'   => (bool)$link->is_active,
             ];
         })->sortByDesc('clicks')->values()->all();
@@ -90,57 +100,82 @@ class StatsController extends Controller
     }
 
     /**
-     * Per-country Windows clicks with divider applied.
+     * Aggregate country breakdown from DailyEarning.country_breakdown JSON field.
+     * Very fast — no Click table scan needed.
      */
-    private function buildCountryStats(int $userId, $startDate, float $dividerValue, ?int $linkId = null): \Illuminate\Support\Collection
+    private function aggregateCountryFromDailyEarnings($dailyRows, bool $showEarnings): array
     {
-        $q = Click::where('user_id', $userId)
+        $agg = [];
+        foreach ($dailyRows as $de) {
+            foreach (($de->country_breakdown ?? []) as $code => $data) {
+                if (!isset($agg[$code])) {
+                    $agg[$code] = ['country' => $code, 'clicks' => 0, 'earnings' => 0.0];
+                }
+                $agg[$code]['clicks']   += (int)($data['clicks'] ?? 0);
+                $agg[$code]['earnings'] += (float)($data['earnings'] ?? 0);
+            }
+        }
+        return collect($agg)
+            ->sortByDesc('clicks')->take(15)
+            ->map(fn($c) => [...$c, 'earnings' => $showEarnings ? $c['earnings'] : null])
+            ->values()->all();
+    }
+
+    /**
+     * Country breakdown from Click table for a specific link (narrow query).
+     */
+    private function buildCountryStatsForLink(int $linkId, $startDate, float $dividerValue, bool $showEarnings): array
+    {
+        return Click::where('tracking_link_id', $linkId)
             ->where('is_counted', true)
             ->where('is_windows', true)
             ->where('created_at', '>=', $startDate->copy()->startOfDay())
-            ->selectRaw('country_code, country_name, COUNT(*) as raw_windows, SUM(click_value) as earnings')
-            ->groupBy('country_code', 'country_name');
-
-        if ($linkId) {
-            $q->where('tracking_link_id', $linkId);
-        }
-
-        return $q->orderByDesc('raw_windows')->get()
-            ->map(fn($r) => (object)[
-                'country_code' => $r->country_code ?: 'XX',
-                'country_name' => $r->country_name ?: 'Unknown',
-                'windows'      => (int)floor($r->raw_windows / $dividerValue),
-                'earnings'     => (float)$r->earnings,
+            ->selectRaw('country_code, COUNT(*) as raw_windows, SUM(click_value) as earnings')
+            ->groupBy('country_code')
+            ->orderByDesc('raw_windows')
+            ->get()
+            ->map(fn($r) => [
+                'country'  => $r->country_code ?: 'XX',
+                'clicks'   => (int)floor($r->raw_windows / $dividerValue),
+                'earnings' => $showEarnings ? (float)$r->earnings : null,
             ])
-            ->filter(fn($r) => $r->windows >= 1 || $r->earnings > 0)
-            ->sortByDesc('windows')
-            ->values();
+            ->filter(fn($r) => $r['clicks'] >= 1)
+            ->values()->all();
     }
 
     /**
      * Build daily stats from Click table for a specific tracking link.
+     * Uses a single query + PHP grouping instead of N separate queries.
      */
     private function buildPerLinkDaily(int $linkId, $startDate, float $dividerValue, bool $showEarnings): array
     {
+        // Single query for all days
+        $rows = Click::where('tracking_link_id', $linkId)
+            ->where('is_counted', true)
+            ->where('created_at', '>=', $startDate->copy()->startOfDay())
+            ->selectRaw('DATE(created_at) as day,
+                SUM(CASE WHEN is_windows = 1 THEN 1 ELSE 0 END) as windows_clicks,
+                SUM(CASE WHEN is_windows = 0 THEN 1 ELSE 0 END) as non_windows_clicks,
+                SUM(click_value) as earnings')
+            ->groupBy('day')
+            ->orderBy('day')
+            ->get()->keyBy('day');
+
         $days    = [];
         $current = $startDate->copy()->startOfDay();
         $end     = today();
 
         while ($current->lte($end)) {
-            $dateStr    = $current->toDateString();
-            $base       = Click::where('tracking_link_id', $linkId)
-                ->whereDate('created_at', $dateStr)
-                ->where('is_counted', true);
-            $windows    = (clone $base)->where('is_windows', true)->count();
-            $nonWindows = (clone $base)->where('is_windows', false)->count();
-            $earnings   = (clone $base)->sum('click_value');
+            $dateStr = $current->toDateString();
+            $row     = $rows->get($dateStr);
+            $windows    = (int)($row?->windows_clicks ?? 0);
+            $nonWindows = (int)($row?->non_windows_clicks ?? 0);
 
             $days[] = [
                 'date'     => $current->format('M d'),
                 'clicks'   => $nonWindows + (int)floor($windows / $dividerValue),
-                'earnings' => $showEarnings ? (float)$earnings : 0,
+                'earnings' => $showEarnings ? (float)($row?->earnings ?? 0) : 0,
             ];
-
             $current->addDay();
         }
 

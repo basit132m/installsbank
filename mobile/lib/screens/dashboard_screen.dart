@@ -369,9 +369,7 @@ class _DashboardScreenState extends State<DashboardScreen> with AutomaticKeepAli
                   const Text('Active Contract', style: TextStyle(fontSize: 12, color: AppTheme.textSecondary, fontWeight: FontWeight.w500)),
                   const SizedBox(height: 3),
                   Text(
-                    contract['type'] == 'per_click'
-                        ? '\$${contract['rate']} per 1,000 clicks'
-                        : '\$${contract['rate']}/day fixed',
+                    _contractLabel(contract),
                     style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: AppTheme.primary),
                   ),
                 ])
@@ -393,6 +391,21 @@ class _DashboardScreenState extends State<DashboardScreen> with AutomaticKeepAli
   }
 
   String _fmtNum(int n) => n.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]},');
+
+  String _contractLabel(Map contract) {
+    final type = contract['type']?.toString() ?? '';
+    final rate = contract['rate'];
+    switch (type) {
+      case 'per_click':
+        return rate != null ? '\$$rate per 1,000 clicks' : 'Per Click';
+      case 'fixed':
+        return rate != null ? '\$$rate / day fixed' : 'Fixed Daily Rate';
+      case 'installs_base':
+        return 'Installs Base Contract';
+      default:
+        return type.isNotEmpty ? type.replaceAll('_', ' ').toUpperCase() : 'Active';
+    }
+  }
 
   int _toInt(dynamic v) => v == null ? 0 : (num.tryParse(v.toString()) ?? 0).toInt();
   double _toDouble(dynamic v) => v == null ? 0.0 : (num.tryParse(v.toString()) ?? 0).toDouble();
