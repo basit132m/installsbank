@@ -11,6 +11,8 @@
         <form method="POST" action="{{ route('admin.publishers.activate', $user) }}" style="display:inline;">@csrf<button class="btn btn-success btn-sm">Activate Publisher</button></form>
     @elseif($user->status === 'active')
         <form method="POST" action="{{ route('admin.publishers.suspend', $user) }}" style="display:inline;" onsubmit="return confirm('Suspend this publisher?')">@csrf<button class="btn btn-danger btn-sm">Suspend</button></form>
+    @elseif($user->status === 'suspended')
+        <form method="POST" action="{{ route('admin.publishers.activate', $user) }}" style="display:inline;" onsubmit="return confirm('Reactivate this publisher?')">@csrf<button class="btn btn-success btn-sm">Reactivate Publisher</button></form>
     @endif
     <form method="POST" action="{{ route('admin.publishers.destroy', $user) }}" style="display:inline;margin-left:auto;"
           onsubmit="return confirm('DELETE {{ addslashes($user->name) }}?\n\nThis will permanently delete the publisher and ALL their data including clicks, earnings, tracking links, withdrawals, and fraud alerts.\n\nThis cannot be undone.')">
