@@ -31,8 +31,8 @@ class StatsController extends Controller
             ->orderBy('date')
             ->get();
 
-        // Fixed rate publishers are paid externally — hide per-click earnings in UI
-        $showEarnings = $profile->payment_enabled && !$profile->isFixedRate();
+        // Show earnings for all per-click publishers; payment_enabled only gates withdrawals
+        $showEarnings = !$profile->isFixedRate();
 
         $totals = [
             'clicks' => $dailyStats->sum('valid_clicks'),

@@ -54,8 +54,8 @@ class LiveStatsController extends Controller
             default                    => ['label' => 'Review Needed',       'color' => '#ef4444'],
         };
 
-        // Only expose earnings/windows for non-fixed-rate publishers
-        $showEarnings = $profile?->payment_enabled && !($profile?->isFixedRate() ?? false);
+        // Show earnings for all per-click publishers; payment_enabled only gates withdrawals
+        $showEarnings = !($profile?->isFixedRate() ?? false);
 
         return response()->json([
             'clicks_today'     => $clicksToday,

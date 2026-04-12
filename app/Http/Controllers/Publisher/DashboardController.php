@@ -21,8 +21,10 @@ class DashboardController extends Controller
         // Publisher sees divided clicks (not actual)
         $todayEarning = DailyEarning::where('user_id', $user->id)->whereDate('date', today())->first();
 
-        // Fixed rate publishers are paid externally — hide per-click earnings in UI
-        $showEarnings = $profile->payment_enabled && !$profile->isFixedRate();
+        // Show earnings for all per-click publishers regardless of payment_enabled.
+        // payment_enabled only gates the ability to request withdrawals.
+        $showEarnings = !$profile->isFixedRate();
+        $canWithdraw  = $profile->payment_enabled && !$profile->isFixedRate();
 
         $stats = [
             'clicks_today' => $todayEarning?->valid_clicks ?? 0,
@@ -86,7 +88,7 @@ class DashboardController extends Controller
         return view('publisher.dashboard', compact(
             'user', 'profile', 'contract', 'divider',
             'stats', 'clicksChart', 'countryBreakdown', 'osBreakdown',
-            'pendingContract', 'pendingContracts', 'hasTestRunning', 'showEarnings',
+            'pendingContract', 'pendingContracts', 'hasTestRunning', 'showEarnings', 'canWithdraw',
             'announcements', 'installsToday', 'publisherNotifications', 'todayEarning'
         ));
     }

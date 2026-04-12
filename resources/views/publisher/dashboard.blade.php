@@ -530,7 +530,7 @@
         <div style="display:flex;flex-direction:column;gap:8px;">
             <a href="{{ route('publisher.adcode') }}" class="btn btn-primary" style="justify-content:center;">Get Ad Code</a>
             <a href="{{ route('publisher.stats') }}" class="btn btn-ghost" style="justify-content:center;">View Detailed Stats</a>
-            @if($showEarnings)
+            @if($canWithdraw)
                 <a href="{{ route('publisher.withdrawals.index') }}" class="btn btn-ghost" style="justify-content:center;">Request Withdrawal</a>
             @endif
             <a href="{{ route('publisher.support.create') }}" class="btn btn-ghost" style="justify-content:center;">Contact Support</a>
