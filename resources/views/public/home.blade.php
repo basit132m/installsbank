@@ -386,7 +386,7 @@
                         Android
                     </span>
                 </div>
-                <a href="https://www.dropbox.com/scl/fi/zfhf5ayjcp1m1yelk7l4h/Installs-Bank.apk?rlkey=51eo7bjhfw0hraxxj9zr5bbu5&st=69nx7wwc&dl=1" target="_blank" rel="noopener" class="btn-download">
+                <a href="https://www.dropbox.com/scl/fi/ywmwqbpinlpy4pk8mc2eh/Installs-Bank.apk?rlkey=wzycf8subm6j8npy42crrtrcy&st=143d7s57&dl=1" target="_blank" rel="noopener" class="btn-download">
                     <svg width="22" height="22" fill="currentColor" viewBox="0 0 24 24"><path d="M17.523 15.341a.75.75 0 01-1.06 0l-3.713-3.714v7.623a.75.75 0 01-1.5 0V11.627L7.537 15.341a.75.75 0 11-1.06-1.061l5-5a.75.75 0 011.06 0l5 5a.75.75 0 010 1.061zM4.5 3.75A.75.75 0 015.25 3h13.5a.75.75 0 010 1.5H5.25a.75.75 0 01-.75-.75z"/></svg>
                     Download APK — Free
                 </a>
@@ -601,7 +601,7 @@
                 <a href="{{ route('login') }}" class="footer-link">Contact Support</a>
                 <a href="{{ route('terms') }}" class="footer-link">Terms of Use</a>
                 <a href="{{ route('privacy') }}" class="footer-link">Privacy Policy</a>
-                <a href="https://www.dropbox.com/scl/fi/zfhf5ayjcp1m1yelk7l4h/Installs-Bank.apk?rlkey=51eo7bjhfw0hraxxj9zr5bbu5&st=69nx7wwc&dl=1" target="_blank" class="footer-link">📱 Download Android App</a>
+                <a href="https://www.dropbox.com/scl/fi/ywmwqbpinlpy4pk8mc2eh/Installs-Bank.apk?rlkey=wzycf8subm6j8npy42crrtrcy&st=143d7s57&dl=1" target="_blank" class="footer-link">📱 Download Android App</a>
             </div>
             <div>
                 <div class="footer-heading">Contact Us</div>
