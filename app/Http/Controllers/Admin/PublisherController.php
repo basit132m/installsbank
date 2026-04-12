@@ -40,14 +40,18 @@ class PublisherController extends Controller
     {
         $user->load(['publisherProfile', 'trackingLinks', 'contracts', 'clickDivider', 'publisherTags']);
 
+        $dailyEarningToday = DailyEarning::where('user_id', $user->id)->whereDate('date', today())->first();
+
         $clickStats = [
-            'today' => Click::where('user_id', $user->id)->whereDate('created_at', today())->where('is_counted', true)->count(),
-            'today_windows' => Click::where('user_id', $user->id)->whereDate('created_at', today())->where('is_counted', true)->where('is_windows', true)->count(),
-            'today_fraud' => Click::where('user_id', $user->id)->whereDate('created_at', today())->where('is_fraud', true)->count(),
-            'this_week' => Click::where('user_id', $user->id)->whereBetween('created_at', [now()->startOfWeek(), now()])->where('is_counted', true)->count(),
-            'this_month' => Click::where('user_id', $user->id)->whereMonth('created_at', now()->month)->where('is_counted', true)->count(),
-            'total' => Click::where('user_id', $user->id)->where('is_counted', true)->count(),
-            'total_actual_windows' => Click::where('user_id', $user->id)->whereDate('created_at', today())->where('is_windows', true)->where('is_counted', true)->count(),
+            'today'                => Click::where('user_id', $user->id)->whereDate('created_at', today())->where('is_counted', true)->count(),
+            // What publisher sees — windows clicks after divider applied
+            'today_windows'        => (int)($dailyEarningToday?->windows_clicks_divided ?? 0),
+            'today_fraud'          => Click::where('user_id', $user->id)->whereDate('created_at', today())->where('is_fraud', true)->count(),
+            'this_week'            => Click::where('user_id', $user->id)->whereBetween('created_at', [now()->startOfWeek(), now()])->where('is_counted', true)->count(),
+            'this_month'           => Click::where('user_id', $user->id)->whereMonth('created_at', now()->month)->where('is_counted', true)->count(),
+            'total'                => Click::where('user_id', $user->id)->where('is_counted', true)->count(),
+            // Raw actual windows count — admin only, never shown to publisher
+            'total_actual_windows' => (int)($dailyEarningToday?->windows_clicks ?? 0),
         ];
 
         // Daily clicks chart (last 14 days)
@@ -90,8 +94,19 @@ class PublisherController extends Controller
     {
         $data = $request->validate([
             'divider_value' => 'required|numeric|min:1|max:100',
-            'is_enabled' => 'boolean',
+            'is_enabled'    => 'boolean',
         ]);
+
+        // Snapshot today's DailyEarning so the new divider only applies to
+        // clicks that arrive AFTER this change, not retroactively to today's old clicks
+        $today         = today()->toDateString();
+        $dailyEarning  = DailyEarning::where('user_id', $user->id)->whereDate('date', $today)->first();
+        if ($dailyEarning) {
+            $dailyEarning->update([
+                'windows_clicks_base_count'   => $dailyEarning->windows_clicks,
+                'windows_clicks_base_divided' => $dailyEarning->windows_clicks_divided,
+            ]);
+        }
 
         ClickDivider::updateOrCreate(
             ['user_id' => $user->id],
@@ -99,6 +114,14 @@ class PublisherController extends Controller
         );
 
         return back()->with('success', 'Click divider updated.');
+    }
+
+    public function updateSettings(Request $request, User $user)
+    {
+        $user->publisherProfile->update([
+            'enforce_domain_restriction' => $request->boolean('enforce_domain_restriction'),
+        ]);
+        return back()->with('success', 'Publisher settings updated.');
     }
 
     public function updateTestResults(Request $request, User $user)

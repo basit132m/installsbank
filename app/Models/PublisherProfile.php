@@ -16,20 +16,24 @@ class PublisherProfile extends Model
         'fraud_headless_browser', 'allowed_countries',
         'install_pending_clicks',
         'adcode_requested_at',
+        'excluded_ips',
+        'enforce_domain_restriction',
     ];
 
     protected $casts = [
-        'last_fixed_credit_date'   => 'date',
-        'test_started_at'          => 'datetime',
-        'test_ended_at'            => 'datetime',
-        'payment_enabled'          => 'boolean',
-        'test_payout_eligible'     => 'boolean',
-        'fraud_country_mismatch'   => 'boolean',
-        'fraud_suspicious_referrer'=> 'boolean',
-        'fraud_headless_browser'   => 'boolean',
-        'allowed_countries'        => 'array',
-        'install_pending_clicks'   => 'array',
-        'adcode_requested_at'      => 'datetime',
+        'last_fixed_credit_date'      => 'date',
+        'test_started_at'             => 'datetime',
+        'test_ended_at'               => 'datetime',
+        'payment_enabled'             => 'boolean',
+        'test_payout_eligible'        => 'boolean',
+        'fraud_country_mismatch'      => 'boolean',
+        'fraud_suspicious_referrer'   => 'boolean',
+        'fraud_headless_browser'      => 'boolean',
+        'allowed_countries'           => 'array',
+        'install_pending_clicks'      => 'array',
+        'adcode_requested_at'         => 'datetime',
+        'excluded_ips'                => 'array',
+        'enforce_domain_restriction'  => 'boolean',
     ];
 
     public function user()

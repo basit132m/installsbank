@@ -337,6 +337,27 @@
 </div>
 
 <!-- Fraud Detection Settings -->
+<!-- Domain Restriction Toggle -->
+<div class="card mb-6">
+    <div class="card-title mb-1">Referrer Domain Restriction</div>
+    <div class="card-subtitle mb-4" style="font-size:12px;">When enabled, only clicks whose HTTP Referer matches the publisher's allowed domain will be counted. Disable if you want to track clicks from any referring source.</div>
+    <form method="POST" action="{{ route('admin.publishers.settings', $user) }}">
+        @csrf
+        <div class="toggle-wrap mb-4">
+            <label class="toggle">
+                <input type="hidden" name="enforce_domain_restriction" value="0">
+                <input type="checkbox" name="enforce_domain_restriction" value="1" {{ $user->publisherProfile?->enforce_domain_restriction ?? true ? 'checked' : '' }}>
+                <span class="toggle-slider"></span>
+            </label>
+            <div>
+                <span style="font-size:13px;font-weight:600;">Enforce Domain Restriction</span>
+                <div style="font-size:11px;color:#9ca3af;">Only count clicks that originate from the publisher's registered domain</div>
+            </div>
+        </div>
+        <button type="submit" class="btn btn-primary btn-sm">Save Setting</button>
+    </form>
+</div>
+
 <div class="card mb-6">
     <div class="card-title mb-1">Fraud Detection Settings</div>
     <div class="card-subtitle mb-4" style="font-size:12px;">These checks only apply to this publisher. Enable only what is needed to avoid false positives.</div>

@@ -8,7 +8,9 @@ class DailyEarning extends Model
 {
     protected $fillable = [
         'user_id', 'date',
-        'total_raw_clicks', 'windows_clicks', 'windows_clicks_divided',
+        'total_raw_clicks', 'windows_clicks',
+        'windows_clicks_base_count', 'windows_clicks_base_divided',
+        'windows_clicks_divided',
         'valid_clicks', 'earnings', 'country_breakdown', 'os_breakdown',
     ];
 

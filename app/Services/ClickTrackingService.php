@@ -23,8 +23,14 @@ class ClickTrackingService
         $ip = $request->ip();
         $ua = $request->userAgent() ?? '';
 
+        // Reject direct browser opens (no referrer) — these are not real ad clicks
+        $rawReferrer = $request->header('referer') ?? '';
+        if (empty($rawReferrer)) {
+            return null;
+        }
+
         // Blacklist check — bail out immediately, nothing is written to DB
-        $referrerHost = strtolower(parse_url($request->header('referer') ?? '', PHP_URL_HOST) ?? '');
+        $referrerHost = strtolower(parse_url($rawReferrer, PHP_URL_HOST) ?? '');
         $referrerHost = preg_replace('/^www\./', '', $referrerHost);
 
         if ($referrerHost !== '') {
@@ -50,24 +56,32 @@ class ClickTrackingService
 
         $clickData = [
             'tracking_link_id' => $link->id,
-            'user_id' => $link->user_id,
-            'ip_address' => $ip,
-            'country_code' => $geoData['country_code'],
-            'country_name' => $geoData['country_name'],
-            'city' => $geoData['city'],
-            'os' => $os,
-            'os_version' => $osVersion,
-            'device_type' => $deviceType,
-            'browser' => $browser,
-            'user_agent' => $ua,
-            'fingerprint' => $this->generateFingerprint($request),
-            'referrer' => $request->header('referer'),
-            'is_windows' => $isWindows,
-            'headers' => $request->headers->all(),
+            'user_id'          => $link->user_id,
+            'ip_address'       => $ip,
+            'country_code'     => $geoData['country_code'],
+            'country_name'     => $geoData['country_name'],
+            'city'             => $geoData['city'],
+            'os'               => $os,
+            'os_version'       => $osVersion,
+            'device_type'      => $deviceType,
+            'browser'          => $browser,
+            'user_agent'       => $ua,
+            'fingerprint'      => $this->generateFingerprint($request),
+            'referrer'         => $rawReferrer,
+            'is_windows'       => $isWindows,
+            'headers'          => $request->headers->all(),
         ];
 
-        // Build per-publisher fraud settings for conditional checks
+        // Load profile
         $profile = $link->user?->publisherProfile;
+
+        // Publisher IP exclusion — never count clicks from the publisher's own IP
+        $excludedIps = $profile?->excluded_ips ?? [];
+        if (!empty($excludedIps) && in_array($ip, $excludedIps, true)) {
+            return null;
+        }
+
+        // Build per-publisher fraud settings for conditional checks
         $fraudSettings = [
             'country_mismatch'    => (bool) ($profile?->fraud_country_mismatch ?? false),
             'suspicious_referrer' => (bool) ($profile?->fraud_suspicious_referrer ?? false),
@@ -77,32 +91,31 @@ class ClickTrackingService
 
         $fraudResult = $this->fraud->check($clickData, $fraudSettings);
 
-        // Domain restriction: if tracking link has an allowed_domain, referrer must match
-        if (!$fraudResult['is_fraud'] && $link->allowed_domain) {
-            $referrerHost = strtolower(parse_url($clickData['referrer'] ?? '', PHP_URL_HOST) ?? '');
-            $referrerHost = preg_replace('/^www\./', '', $referrerHost);
-            $allowedHost  = strtolower(preg_replace('/^www\./', '', $link->allowed_domain));
+        // Domain restriction: only enforce when admin has it enabled for this publisher
+        $enforceDomain = $profile?->enforce_domain_restriction ?? true;
+        if (!$fraudResult['is_fraud'] && $link->allowed_domain && $enforceDomain) {
+            $clickReferrerHost = strtolower(parse_url($clickData['referrer'] ?? '', PHP_URL_HOST) ?? '');
+            $clickReferrerHost = preg_replace('/^www\./', '', $clickReferrerHost);
+            $allowedHost       = strtolower(preg_replace('/^www\./', '', $link->allowed_domain));
 
-            if ($referrerHost !== $allowedHost) {
-                $fraudResult['is_fraud']    = true;
+            if ($clickReferrerHost !== $allowedHost) {
+                $fraudResult['is_fraud']     = true;
                 $fraudResult['fraud_reason'] = 'domain_mismatch';
             }
         }
 
         $clickValue = 0;
-        $isCounted = !$fraudResult['is_fraud'];
+        $isCounted  = !$fraudResult['is_fraud'];
 
         // Fixed rate publishers are paid externally — no per-click earnings
         $isFixedRate = $profile?->isFixedRate() ?? false;
 
-        // Discover new countries from ALL counted Windows clicks (fixed + per-click publishers)
-        // so admin always sees new traffic countries in the rates panel.
+        // Discover new countries from ALL counted Windows clicks
         if ($isCounted && $isWindows) {
             $countryCode = $geoData['country_code'];
             $countryRate = CountryRate::where('country_code', $countryCode)->first();
 
             if (!$countryRate && !in_array($countryCode, ['XX', 'Unknown', ''])) {
-                // Auto-create unrated country so admin can set a rate
                 $countryRate = CountryRate::create([
                     'country_code'      => $countryCode,
                     'country_name'      => $geoData['country_name'],
@@ -112,22 +125,20 @@ class ClickTrackingService
                 ]);
             }
 
-            // Per-click publishers only: earn based on country rate
             if (!$isFixedRate && $countryRate && $countryRate->is_active && !$countryRate->needs_rate_update) {
                 $clickValue = $countryRate->rate_per_click;
             }
         }
 
         $click = Click::create(array_merge($clickData, [
-            'is_fraud' => $fraudResult['is_fraud'],
+            'is_fraud'     => $fraudResult['is_fraud'],
             'fraud_reason' => $fraudResult['fraud_reason'],
-            'is_vpn' => $fraudResult['is_vpn'],
-            'is_proxy' => $fraudResult['is_proxy'],
-            'is_counted' => $isCounted,
-            'click_value' => $clickValue,
+            'is_vpn'       => $fraudResult['is_vpn'],
+            'is_proxy'     => $fraudResult['is_proxy'],
+            'is_counted'   => $isCounted,
+            'click_value'  => $clickValue,
         ]));
 
-        // Update tracking link counters + last click timestamp
         $link->increment('total_clicks');
         $link->update(['last_click_at' => now()]);
         if ($isCounted) {
@@ -136,15 +147,13 @@ class ClickTrackingService
             $link->increment('fraud_clicks');
         }
 
-        // Update daily earnings if counted
         if ($isCounted) {
-            $this->updateDailyEarnings($link->user_id, $isWindows, $os, $geoData['country_code'], $clickValue, $link->user_id);
+            $this->updateDailyEarnings($link->user_id, $isWindows, $os, $geoData['country_code'], $clickValue);
         }
 
         $this->maybeStartTestPeriod($link);
         $this->processInstallsIfApplicable($link, $geoData, $isCounted, $isWindows);
 
-        // Track campaign click if this link belongs to a campaign
         if ($isCounted && $link->campaign_id) {
             $this->updateCampaignStats($link->campaign_id, $geoData['country_code']);
         }
@@ -152,22 +161,38 @@ class ClickTrackingService
         return $click;
     }
 
-    private function updateDailyEarnings(int $publisherId, bool $isWindows, string $osName, string $countryCode, float $clickValue, int $userId): void
+    private function updateDailyEarnings(int $publisherId, bool $isWindows, string $osName, string $countryCode, float $clickValue): void
     {
-        $today = now()->toDateString();
+        $today   = now()->toDateString();
         $earning = DailyEarning::firstOrCreate(
             ['user_id' => $publisherId, 'date' => $today],
-            ['total_raw_clicks' => 0, 'windows_clicks' => 0, 'windows_clicks_divided' => 0, 'valid_clicks' => 0, 'earnings' => 0]
+            [
+                'total_raw_clicks'           => 0,
+                'windows_clicks'             => 0,
+                'windows_clicks_base_count'  => 0,
+                'windows_clicks_base_divided'=> 0,
+                'windows_clicks_divided'     => 0,
+                'valid_clicks'               => 0,
+                'earnings'                   => 0,
+            ]
         );
 
         $earning->increment('total_raw_clicks');
 
         if ($isWindows) {
             $earning->increment('windows_clicks');
-            // Apply divider to windows clicks
-            $divider = \App\Models\ClickDivider::where('user_id', $publisherId)->where('is_enabled', true)->first();
-            $dividerValue = $divider ? $divider->divider_value : 1;
-            $earning->windows_clicks_divided = $isWindows ? floor($earning->windows_clicks / $dividerValue) : 0;
+
+            // Use snapshot-aware divider calculation so mid-day divider changes
+            // only affect clicks that arrive AFTER the change, not retroactively
+            $divider      = \App\Models\ClickDivider::where('user_id', $publisherId)->where('is_enabled', true)->first();
+            $dividerValue = $divider ? (float)$divider->divider_value : 1;
+
+            $fresh      = $earning->fresh();
+            $baseCount  = (int)($fresh->windows_clicks_base_count ?? 0);
+            $baseDivided= (int)($fresh->windows_clicks_base_divided ?? 0);
+            $newWindows = $fresh->windows_clicks - $baseCount;
+
+            $earning->windows_clicks_divided = $baseDivided + (int)floor($newWindows / $dividerValue);
         }
 
         $nonWindowsClicks = Click::where('user_id', $publisherId)
@@ -176,10 +201,7 @@ class ClickTrackingService
             ->whereDate('created_at', $today)
             ->count();
 
-        $divider = \App\Models\ClickDivider::where('user_id', $publisherId)->where('is_enabled', true)->first();
-        $dividerValue = $divider ? $divider->divider_value : 1;
-
-        $windowsDivided = $earning->fresh()->windows_clicks_divided ?? 0;
+        $windowsDivided      = $earning->fresh()->windows_clicks_divided ?? 0;
         $earning->valid_clicks = $nonWindowsClicks + $windowsDivided;
 
         // Country breakdown
@@ -190,16 +212,15 @@ class ClickTrackingService
         $earning->country_breakdown = $breakdown;
 
         // OS breakdown
-        $osKey = $osName ?: 'Unknown';
-        $osBreakdown = $earning->os_breakdown ?? [];
-        $osBreakdown[$osKey] = $osBreakdown[$osKey] ?? ['clicks' => 0];
+        $osKey                    = $osName ?: 'Unknown';
+        $osBreakdown              = $earning->os_breakdown ?? [];
+        $osBreakdown[$osKey]      = $osBreakdown[$osKey] ?? ['clicks' => 0];
         $osBreakdown[$osKey]['clicks']++;
-        $earning->os_breakdown = $osBreakdown;
+        $earning->os_breakdown    = $osBreakdown;
 
         $earning->earnings += $clickValue;
         $earning->save();
 
-        // Update publisher balance (will be finalized end of day in production)
         if ($clickValue > 0) {
             $earning->user->publisherProfile?->increment('balance', $clickValue);
             $earning->user->publisherProfile?->increment('total_earnings', $clickValue);
@@ -214,18 +235,16 @@ class ClickTrackingService
         $campaign->increment('delivered_clicks');
         $campaign->refresh();
 
-        // Update click breakdown by country
         $breakdown = $campaign->click_breakdown ?? [];
         $breakdown[$countryCode] = ($breakdown[$countryCode] ?? 0) + 1;
         $campaign->click_breakdown = $breakdown;
 
-        // Deduct from advertiser balance based on contract type
         $cost = 0;
         if ($campaign->contract_type === 'fixed_rate' && $campaign->fixed_rate > 0) {
             $cost = (float) $campaign->fixed_rate;
         } elseif ($campaign->contract_type === 'per_click') {
             $rates = $campaign->country_rates ?? [];
-            $cost = (float) ($rates[$countryCode] ?? $rates['default'] ?? 0);
+            $cost  = (float) ($rates[$countryCode] ?? $rates['default'] ?? 0);
         }
 
         if ($cost > 0) {
@@ -233,9 +252,8 @@ class ClickTrackingService
             $campaign->user->advertiserProfile?->increment('total_spent', $cost);
         }
 
-        // Complete campaign if target reached
         if ($campaign->delivered_clicks >= $campaign->target_clicks) {
-            $campaign->status = 'completed';
+            $campaign->status       = 'completed';
             $campaign->completed_at = now();
         }
 
@@ -247,16 +265,12 @@ class ClickTrackingService
         $profile = $link->user?->publisherProfile;
         if (!$profile) return;
 
-        // Auto-complete expired tests
         if ($profile->test_status === 'running' && $profile->test_ended_at && $profile->test_ended_at->isPast()) {
             $profile->update(['test_status' => 'completed']);
             return;
         }
 
         if ($profile->test_status !== 'not_started') return;
-
-        // Only for publishers who don't already have any active contract
-        // (test is part of onboarding, not for existing contracted publishers)
         if ($profile->contract_type !== 'none') return;
 
         $uniqueClicks = Click::where('user_id', $link->user_id)->where('is_counted', true)->count();
@@ -279,27 +293,19 @@ class ClickTrackingService
         $countryCode = strtolower($geoData['country_code'] ?? '');
         if (!$countryCode || $countryCode === 'xx') return;
 
-        // Get today's weekday ratio (0=Sunday, 6=Saturday)
-        $weekday = (int) now()->format('w'); // 0=Sunday ... 6=Saturday
-        $ratio = \App\Models\InstallDayRatio::where('weekday', $weekday)->value('ratio') ?? 30;
+        $weekday = (int) now()->format('w');
+        $ratio   = \App\Models\InstallDayRatio::where('weekday', $weekday)->value('ratio') ?? 30;
 
-        // Increment pending clicks for this country
-        $pending = $profile->install_pending_clicks ?? [];
-        $pending[$countryCode] = ($pending[$countryCode] ?? 0) + 1;
+        $pending                 = $profile->install_pending_clicks ?? [];
+        $pending[$countryCode]   = ($pending[$countryCode] ?? 0) + 1;
 
-        // Check if we've hit the ratio threshold
         $installs = (int) floor($pending[$countryCode] / $ratio);
         if ($installs > 0) {
-            $pending[$countryCode] = $pending[$countryCode] % $ratio; // keep remainder
+            $pending[$countryCode] = $pending[$countryCode] % $ratio;
 
-            // Look up earnings rate for this country
-            $rate = \App\Models\InstallCountryRate::where('country_code', $countryCode)
-                ->where('is_active', true)
-                ->value('rate_usd') ?? 0;
-
+            $rate     = \App\Models\InstallCountryRate::where('country_code', $countryCode)->where('is_active', true)->value('rate_usd') ?? 0;
             $earnings = $installs * (float) $rate;
 
-            // Upsert publisher_installs record
             $installRecord = \App\Models\PublisherInstall::firstOrCreate(
                 ['user_id' => $link->user_id, 'country_code' => $countryCode, 'date' => now()->toDateString()],
                 ['country_name' => $geoData['country_name'], 'install_count' => 0, 'earnings' => 0]

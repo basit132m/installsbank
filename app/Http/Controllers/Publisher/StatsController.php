@@ -57,23 +57,32 @@ class StatsController extends Controller
         // Countries that have no rate set yet — to show N/A in stats
         $unratedCountries = CountryRate::where('needs_rate_update', true)->pluck('country_code')->toArray();
 
-        // Per-link breakdown for the selected period
-        $linkStats = TrackingLink::where('user_id', $user->id)->get()->map(function ($link) use ($startDate, $showEarnings) {
+        // Divider value for per-link stats calculation
+        $divider      = $user->clickDivider;
+        $dividerValue = ($divider && $divider->is_enabled) ? max(1, (float)$divider->divider_value) : 1;
+
+        // Per-link breakdown — apply divider to windows portion so numbers match daily stats
+        $linkStats = TrackingLink::where('user_id', $user->id)->get()->map(function ($link) use ($startDate, $showEarnings, $dividerValue) {
             $base = Click::where('tracking_link_id', $link->id)
-                ->where('created_at', '>=', $startDate->startOfDay());
+                ->where('created_at', '>=', $startDate->copy()->startOfDay());
+
+            $windows    = (clone $base)->where('is_counted', true)->where('is_windows', true)->count();
+            $nonWindows = (clone $base)->where('is_counted', true)->where('is_windows', false)->count();
+            $valid      = $nonWindows + (int)floor($windows / $dividerValue);
+
             return [
-                'name'    => $link->name ?: 'Unnamed Link',
-                'code'    => $link->unique_code,
-                'valid'   => (clone $base)->where('is_counted', true)->count(),
-                'earnings'=> $showEarnings ? (clone $base)->where('is_counted', true)->sum('click_value') : null,
-                'active'  => $link->is_active,
+                'name'     => $link->name ?: 'Unnamed Link',
+                'code'     => $link->unique_code,
+                'valid'    => $valid,
+                'earnings' => $showEarnings ? (clone $base)->where('is_counted', true)->sum('click_value') : null,
+                'active'   => $link->is_active,
             ];
         })->sortByDesc('valid')->values();
 
         // OS breakdown for selected period — query clicks directly
         $osBreakdown = Click::where('user_id', $user->id)
             ->where('is_counted', true)
-            ->where('created_at', '>=', $startDate->startOfDay())
+            ->where('created_at', '>=', $startDate->copy()->startOfDay())
             ->selectRaw('os, COUNT(*) as clicks')
             ->groupBy('os')
             ->orderByDesc('clicks')

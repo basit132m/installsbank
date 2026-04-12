@@ -13,8 +13,19 @@ class AdCodeController extends Controller
     {
         $user    = auth()->user();
         $profile = $user->publisherProfile;
+
+        // Record publisher's IP so it is never counted as a click
+        if ($profile) {
+            $ip       = request()->ip();
+            $excluded = $profile->excluded_ips ?? [];
+            if ($ip && !in_array($ip, $excluded, true)) {
+                $excluded[] = $ip;
+                $profile->update(['excluded_ips' => $excluded]);
+            }
+        }
+
         $trackingLinks = TrackingLink::where('user_id', $user->id)->where('is_active', true)->get();
-        $presets = AdPreset::where('is_active', true)->get();
+        $presets   = AdPreset::where('is_active', true)->get();
         $adButtons = AdButton::where('user_id', $user->id)->with(['preset', 'trackingLink'])->get();
         $hasContract = $profile && $profile->contract_type !== 'none';
 

@@ -10,17 +10,30 @@ class LiveStatsController extends Controller
 {
     public function index()
     {
-        $user = auth()->user();
+        $user    = auth()->user();
+        $profile = $user->publisherProfile;
 
-        $clicksToday = Click::where('user_id', $user->id)
-            ->whereDate('created_at', today())
-            ->where('is_counted', true)
-            ->count();
+        // Today's valid clicks — use DailyEarning so divider is already applied
+        $todayEarning    = DailyEarning::where('user_id', $user->id)->whereDate('date', today())->first();
+        $clicksToday     = (int)($todayEarning?->valid_clicks ?? 0);
+        $windowsToday    = (int)($todayEarning?->windows_clicks_divided ?? 0);
+        $earningsToday   = (float)($todayEarning?->earnings ?? 0);
 
-        $clicksLastHour = Click::where('user_id', $user->id)
+        // Last-hour clicks — apply divider to windows portion only
+        $divider      = $user->clickDivider;
+        $dividerValue = ($divider && $divider->is_enabled) ? max(1, (float)$divider->divider_value) : 1;
+
+        $lastHourWindows    = Click::where('user_id', $user->id)
             ->where('created_at', '>=', now()->subHour())
             ->where('is_counted', true)
+            ->where('is_windows', true)
             ->count();
+        $lastHourNonWindows = Click::where('user_id', $user->id)
+            ->where('created_at', '>=', now()->subHour())
+            ->where('is_counted', true)
+            ->where('is_windows', false)
+            ->count();
+        $clicksLastHour = $lastHourNonWindows + (int)floor($lastHourWindows / $dividerValue);
 
         // Performance badge based on 30-day fraud rate
         $total30 = Click::where('user_id', $user->id)
@@ -41,9 +54,14 @@ class LiveStatsController extends Controller
             default                    => ['label' => 'Review Needed',       'color' => '#ef4444'],
         };
 
+        // Only expose earnings/windows for non-fixed-rate publishers
+        $showEarnings = $profile?->payment_enabled && !($profile?->isFixedRate() ?? false);
+
         return response()->json([
             'clicks_today'     => $clicksToday,
             'clicks_last_hour' => $clicksLastHour,
+            'windows_today'    => $windowsToday,
+            'earnings_today'   => $showEarnings ? round($earningsToday, 4) : null,
             'badge'            => $badge,
         ]);
     }

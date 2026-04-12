@@ -270,6 +270,39 @@
         <span style="font-size:11px;color:rgba(255,255,255,0.7);font-weight:600;text-transform:uppercase;letter-spacing:0.05em;">Live</span>
     </div>
 </div>
+
+@if(in_array($profile->contract_type ?? '', ['per_click', 'installs_base']))
+<!-- Live Windows Performance Table — below live counter -->
+<div id="liveWindowsTable" style="background:#fff;border:1px solid #e5e7eb;border-radius:14px;padding:18px 22px;margin-bottom:24px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+        <div>
+            <div style="font-size:14px;font-weight:700;color:#111827;">Today's Windows Performance</div>
+            <div style="font-size:11px;color:#9ca3af;margin-top:2px;">Unique Windows clicks after divider · live updating</div>
+        </div>
+        <span style="display:flex;align-items:center;gap:5px;font-size:11px;color:#01BF63;font-weight:600;">
+            <span style="width:7px;height:7px;background:#01BF63;border-radius:50%;display:inline-block;animation:livePulse 2s infinite;"></span>Live
+        </span>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+        <div style="background:#f0fdf4;border-radius:10px;padding:16px 20px;text-align:center;">
+            <div style="font-size:11px;color:#6b7280;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:6px;">Windows Clicks (Divided)</div>
+            <div id="liveWindowsCount" style="font-size:28px;font-weight:900;color:#01BF63;font-variant-numeric:tabular-nums;">{{ number_format($todayEarning?->windows_clicks_divided ?? 0) }}</div>
+        </div>
+        @if($showEarnings)
+        <div style="background:#eff6ff;border-radius:10px;padding:16px 20px;text-align:center;">
+            <div style="font-size:11px;color:#6b7280;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:6px;">Earnings Today</div>
+            <div id="liveEarningsToday" style="font-size:28px;font-weight:900;color:#3b82f6;font-variant-numeric:tabular-nums;">${{ number_format($todayEarning?->earnings ?? 0, 4) }}</div>
+        </div>
+        @else
+        <div style="background:#f9fafb;border-radius:10px;padding:16px 20px;text-align:center;">
+            <div style="font-size:11px;color:#6b7280;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:6px;">All Valid Clicks Today</div>
+            <div style="font-size:28px;font-weight:900;color:#6b7280;font-variant-numeric:tabular-nums;">{{ number_format($stats['clicks_today']) }}</div>
+        </div>
+        @endif
+    </div>
+</div>
+@endif
+
 <style>
 @keyframes livePulse {
     0%,100%{opacity:1;transform:scale(1);}
@@ -399,6 +432,37 @@
     </div>
 </div>
 
+@if(in_array($profile->contract_type ?? '', ['per_click', 'installs_base']))
+<!-- Windows + Earnings Summary below Traffic by Country — live updating -->
+<div class="card mb-6" id="windowsSummaryCard">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+        <div>
+            <div class="card-title">Windows Clicks Summary</div>
+            <div style="font-size:12px;color:#9ca3af;margin-top:2px;">Total unique Windows clicks collected via divider logic · today</div>
+        </div>
+        <span style="display:flex;align-items:center;gap:5px;font-size:11px;color:#01BF63;font-weight:600;">
+            <span style="width:7px;height:7px;background:#01BF63;border-radius:50%;display:inline-block;animation:livePulse 2s infinite;"></span>Live
+        </span>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px;">
+        <div style="background:#f0fdf4;border-radius:10px;padding:14px 18px;">
+            <div style="font-size:10px;color:#6b7280;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:5px;">Windows Clicks (Divided)</div>
+            <div id="summaryWindowsCount" style="font-size:22px;font-weight:900;color:#01BF63;font-variant-numeric:tabular-nums;">{{ number_format($todayEarning?->windows_clicks_divided ?? 0) }}</div>
+        </div>
+        <div style="background:#f9fafb;border-radius:10px;padding:14px 18px;">
+            <div style="font-size:10px;color:#6b7280;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:5px;">All Valid Clicks Today</div>
+            <div style="font-size:22px;font-weight:900;color:#374151;font-variant-numeric:tabular-nums;">{{ number_format($stats['clicks_today']) }}</div>
+        </div>
+        @if($showEarnings)
+        <div style="background:#eff6ff;border-radius:10px;padding:14px 18px;">
+            <div style="font-size:10px;color:#6b7280;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:5px;">Earnings Today</div>
+            <div id="summaryEarnings" style="font-size:22px;font-weight:900;color:#3b82f6;font-variant-numeric:tabular-nums;">${{ number_format($todayEarning?->earnings ?? 0, 4) }}</div>
+        </div>
+        @endif
+    </div>
+</div>
+@endif
+
 <!-- World Map -->
 <div class="card mb-6" id="worldMapCard">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
@@ -520,21 +584,45 @@ function fetchLiveStats() {
     fetch('{{ route('publisher.live-stats') }}')
         .then(r => r.json())
         .then(data => {
-            // Animate count update
+            // Animate clicks today
             const countEl = document.getElementById('liveClickCount');
             const newVal = data.clicks_today.toLocaleString();
-            if (countEl.textContent !== newVal) {
+            if (countEl && countEl.textContent !== newVal) {
                 countEl.style.transform = 'scale(1.15)';
                 countEl.style.transition = 'transform 0.2s';
                 countEl.textContent = newVal;
                 setTimeout(() => { countEl.style.transform = 'scale(1)'; }, 200);
             }
-            document.getElementById('liveLastHour').textContent = data.clicks_last_hour.toLocaleString();
+
+            const lastHour = document.getElementById('liveLastHour');
+            if (lastHour) lastHour.textContent = data.clicks_last_hour.toLocaleString();
 
             const badge = document.getElementById('liveBadge');
             const label = document.getElementById('badgeLabel');
-            label.textContent = data.badge.label;
-            badge.querySelector('.live-dot').style.background = data.badge.color;
+            if (badge && label) {
+                label.textContent = data.badge.label;
+                badge.querySelector('.live-dot').style.background = data.badge.color;
+            }
+
+            // Update live windows performance table
+            const winEl = document.getElementById('liveWindowsCount');
+            if (winEl && data.windows_today !== undefined) {
+                winEl.textContent = data.windows_today.toLocaleString();
+            }
+            const earnEl = document.getElementById('liveEarningsToday');
+            if (earnEl && data.earnings_today !== null) {
+                earnEl.textContent = '$' + parseFloat(data.earnings_today).toFixed(4);
+            }
+
+            // Update summary card below Traffic by Country
+            const sumWin = document.getElementById('summaryWindowsCount');
+            if (sumWin && data.windows_today !== undefined) {
+                sumWin.textContent = data.windows_today.toLocaleString();
+            }
+            const sumEarn = document.getElementById('summaryEarnings');
+            if (sumEarn && data.earnings_today !== null) {
+                sumEarn.textContent = '$' + parseFloat(data.earnings_today).toFixed(4);
+            }
         })
         .catch(() => {});
 }

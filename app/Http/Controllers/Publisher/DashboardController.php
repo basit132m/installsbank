@@ -87,7 +87,7 @@ class DashboardController extends Controller
             'user', 'profile', 'contract', 'divider',
             'stats', 'clicksChart', 'countryBreakdown', 'osBreakdown',
             'pendingContract', 'pendingContracts', 'hasTestRunning', 'showEarnings',
-            'announcements', 'installsToday', 'publisherNotifications'
+            'announcements', 'installsToday', 'publisherNotifications', 'todayEarning'
         ));
     }
 
