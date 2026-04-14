@@ -102,6 +102,42 @@ class CountryRateController extends Controller
         return back()->with('success', 'Rate deleted.');
     }
 
+    public function bulkUpdate(Request $request)
+    {
+        $request->validate(['rates' => 'required|array']);
+
+        $count  = 0;
+        $retros = [];
+        foreach ($request->input('rates', []) as $id => $row) {
+            $cr = CountryRate::find((int)$id);
+            if (!$cr) continue;
+
+            $wasUnrated = $cr->needs_rate_update;
+            $newRate    = (float)($row['rate_per_click'] ?? 0);
+
+            $cr->update([
+                'rate_per_click'    => $newRate,
+                'is_active'         => array_key_exists('is_active', $row),
+                'needs_rate_update' => false,
+            ]);
+
+            if ($wasUnrated && $newRate > 0) {
+                $retroCount = $this->recalculatePastEarnings($cr->country_code, $newRate);
+                if ($retroCount > 0) {
+                    $retros[] = "{$cr->country_name}: {$retroCount} click(s) credited";
+                }
+            }
+            $count++;
+        }
+
+        $msg = "{$count} click rates saved.";
+        if ($retros) {
+            $msg .= ' Retroactive credits: ' . implode(', ', $retros) . '.';
+        }
+
+        return back()->with('success', $msg);
+    }
+
     public function bulkStore(Request $request)
     {
         $data = $request->validate(['rates' => 'required|array', 'rates.*.country_code' => 'required', 'rates.*.country_name' => 'required', 'rates.*.rate_per_click' => 'required|numeric']);

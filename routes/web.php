@@ -195,6 +195,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin,manager'
         Route::put('/{countryRate}', [Admin\CountryRateController::class, 'update'])->name('update');
         Route::delete('/{countryRate}', [Admin\CountryRateController::class, 'destroy'])->name('destroy');
         Route::post('/bulk', [Admin\CountryRateController::class, 'bulkStore'])->name('bulk');
+        Route::post('/bulk-update', [Admin\CountryRateController::class, 'bulkUpdate'])->name('bulk-update');
     });
 
     // Withdrawals
@@ -229,6 +230,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin,manager'
         Route::put('/{installCountryRate}', [Admin\InstallRateController::class, 'update'])->name('update');
         Route::delete('/{installCountryRate}', [Admin\InstallRateController::class, 'destroy'])->name('destroy');
         Route::post('/sync', [Admin\InstallRateController::class, 'syncFromTracked'])->name('sync');
+        Route::post('/bulk-update', [Admin\InstallRateController::class, 'bulkUpdate'])->name('bulk-update');
     });
 
     // Install settings (clicks-per-install per weekday)

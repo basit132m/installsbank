@@ -50,6 +50,24 @@ class InstallRateController extends Controller
         return back()->with('success', 'Rate updated.');
     }
 
+    public function bulkUpdate(Request $request)
+    {
+        $request->validate(['rates' => 'required|array']);
+
+        $count = 0;
+        foreach ($request->input('rates', []) as $id => $row) {
+            $rate = InstallCountryRate::find((int)$id);
+            if (!$rate) continue;
+            $rate->update([
+                'rate_usd'  => (float)($row['rate_usd'] ?? 0),
+                'is_active' => array_key_exists('is_active', $row),
+            ]);
+            $count++;
+        }
+
+        return back()->with('success', "{$count} install rates saved.");
+    }
+
     public function destroy(InstallCountryRate $installCountryRate)
     {
         $installCountryRate->delete();
