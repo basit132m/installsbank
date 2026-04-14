@@ -8,6 +8,7 @@ use App\Models\Click;
 use App\Models\Contract;
 use App\Models\DailyEarning;
 use App\Models\FraudAlert;
+use App\Models\PublisherInstall;
 use App\Models\PublisherProfile;
 use App\Models\PublisherTag;
 use App\Models\TrackingLink;
@@ -254,8 +255,48 @@ class PublisherController extends Controller
         // Recent 30 clicks
         $recentClicks = ($baseQuery)()->latest()->limit(30)->get();
 
+        // Installs data — only for installs_base contract publishers
+        $installsData = null;
+        if ($user->publisherProfile?->contract_type === 'installs_base') {
+            $installRows = PublisherInstall::where('user_id', $user->id)
+                ->whereBetween('date', [$startDate->toDateString(), $endDate->toDateString()])
+                ->orderBy('date')
+                ->get();
+
+            // Aggregate per country
+            $installsByCountry = $installRows->groupBy('country_code')
+                ->map(fn($rows) => [
+                    'country_code'  => $rows->first()->country_code,
+                    'country_name'  => $rows->first()->country_name ?: $rows->first()->country_code,
+                    'install_count' => (int)$rows->sum('install_count'),
+                    'earnings'      => (float)$rows->sum('earnings'),
+                ])
+                ->sortByDesc('install_count')
+                ->values();
+
+            // Aggregate per day (merge into existing $daily array)
+            $installsByDay = $installRows->groupBy(fn($r) => $r->date->toDateString())
+                ->map(fn($rows) => [
+                    'install_count' => (int)$rows->sum('install_count'),
+                    'earnings'      => (float)$rows->sum('earnings'),
+                ]);
+
+            $installsData = [
+                'total_installs'  => (int)$installRows->sum('install_count'),
+                'total_earnings'  => (float)$installRows->sum('earnings'),
+                'by_country'      => $installsByCountry,
+                'by_day'          => $installsByDay,
+            ];
+
+            // Merge install earnings into daily rows for the chart
+            $daily = array_map(fn($d) => array_merge($d, [
+                'installs'         => $installsByDay->get($d['date_raw'])['install_count'] ?? 0,
+                'install_earnings' => $installsByDay->get($d['date_raw'])['earnings'] ?? 0.0,
+            ]), $daily);
+        }
+
         return view('admin.publishers.stats', compact(
-            'user', 'period', 'summary', 'daily',
+            'user', 'period', 'summary', 'daily', 'installsData',
             'fraudByType', 'topCountries', 'osByType', 'deviceTypes', 'recentClicks'
         ));
     }

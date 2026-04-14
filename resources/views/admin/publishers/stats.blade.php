@@ -59,6 +59,22 @@
         <div class="stat-value" style="color:#f59e0b;">{{ $summary['fraud_rate'] }}%</div>
         <div class="stat-label">Fraud Rate</div>
     </div>
+    @if($installsData)
+    <div class="stat-card">
+        <div class="stat-icon" style="background:#ede9fe;">
+            <svg width="20" height="20" fill="none" stroke="#7c3aed" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+        </div>
+        <div class="stat-value" style="color:#7c3aed;">{{ number_format($installsData['total_installs']) }}</div>
+        <div class="stat-label">Total Installs</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon" style="background:#d1fae5;">
+            <svg width="20" height="20" fill="none" stroke="#059652" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"/></svg>
+        </div>
+        <div class="stat-value" style="color:#01BF63;">${{ number_format($installsData['total_earnings'], 4) }}</div>
+        <div class="stat-label">Install Earnings</div>
+    </div>
+    @else
     <div class="stat-card">
         <div class="stat-icon" style="background:#d1fae5;">
             <svg width="20" height="20" fill="none" stroke="#059652" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"/></svg>
@@ -66,6 +82,7 @@
         <div class="stat-value" style="color:#01BF63;">${{ number_format($summary['earnings'], 4) }}</div>
         <div class="stat-label">Total Earnings</div>
     </div>
+    @endif
 </div>
 
 {{-- Daily Chart --}}
@@ -86,19 +103,29 @@
                     <th style="text-align:right;padding:8px 12px;color:#6b7280;font-weight:600;">Valid Clicks</th>
                     <th style="text-align:right;padding:8px 12px;color:#6b7280;font-weight:600;">Fraud Clicks</th>
                     <th style="text-align:right;padding:8px 12px;color:#6b7280;font-weight:600;">Windows</th>
+                    @if($installsData)
+                    <th style="text-align:right;padding:8px 12px;color:#7c3aed;font-weight:600;">Installs</th>
+                    <th style="text-align:right;padding:8px 12px;color:#6b7280;font-weight:600;">Install Earnings</th>
+                    @else
                     <th style="text-align:right;padding:8px 12px;color:#6b7280;font-weight:600;">Earnings (USD)</th>
+                    @endif
                 </tr>
             </thead>
             <tbody>
                 @php $totalEarnings = 0; @endphp
                 @foreach($daily as $row)
-                @php $totalEarnings += $row['earnings']; @endphp
+                @php $totalEarnings += $installsData ? ($row['install_earnings'] ?? 0) : $row['earnings']; @endphp
                 <tr style="border-bottom:1px solid #f3f4f6;{{ $row['fraud'] > 0 ? 'background:#fffbf5;' : '' }}">
                     <td style="padding:8px 12px;font-weight:600;color:#374151;">{{ $row['date'] }}</td>
                     <td style="padding:8px 12px;text-align:right;color:#01BF63;font-weight:700;">{{ number_format($row['valid']) }}</td>
                     <td style="padding:8px 12px;text-align:right;color:{{ $row['fraud'] > 0 ? '#ef4444' : '#9ca3af' }};font-weight:{{ $row['fraud'] > 0 ? '700' : '400' }};">{{ number_format($row['fraud']) }}</td>
                     <td style="padding:8px 12px;text-align:right;color:#3b82f6;">{{ number_format($row['windows']) }}</td>
+                    @if($installsData)
+                    <td style="padding:8px 12px;text-align:right;color:#7c3aed;font-weight:700;">{{ number_format($row['installs'] ?? 0) }}</td>
+                    <td style="padding:8px 12px;text-align:right;color:#374151;font-family:monospace;">${{ number_format($row['install_earnings'] ?? 0, 4) }}</td>
+                    @else
                     <td style="padding:8px 12px;text-align:right;color:#374151;font-family:monospace;">${{ number_format($row['earnings'], 4) }}</td>
+                    @endif
                 </tr>
                 @endforeach
             </tbody>
@@ -108,13 +135,69 @@
                     <td style="padding:10px 12px;text-align:right;font-weight:700;color:#01BF63;">{{ number_format(array_sum(array_column($daily, 'valid'))) }}</td>
                     <td style="padding:10px 12px;text-align:right;font-weight:700;color:#ef4444;">{{ number_format(array_sum(array_column($daily, 'fraud'))) }}</td>
                     <td style="padding:10px 12px;text-align:right;font-weight:700;color:#3b82f6;">{{ number_format(array_sum(array_column($daily, 'windows'))) }}</td>
+                    @if($installsData)
+                    <td style="padding:10px 12px;text-align:right;font-weight:700;color:#7c3aed;">{{ number_format($installsData['total_installs']) }}</td>
+                    <td style="padding:10px 12px;text-align:right;font-weight:700;font-family:monospace;">${{ number_format($installsData['total_earnings'], 4) }}</td>
+                    @else
                     <td style="padding:10px 12px;text-align:right;font-weight:700;font-family:monospace;">${{ number_format($totalEarnings, 4) }}</td>
+                    @endif
                 </tr>
             </tfoot>
         </table>
     </div>
     @endif
 </div>
+
+{{-- Installs by Country (installs_base only) --}}
+@if($installsData)
+<div class="card mb-6">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+        <div class="card-title">Install Earnings by Country</div>
+        <span style="background:#ede9fe;color:#7c3aed;padding:3px 10px;border-radius:20px;font-size:12px;font-weight:700;">Installs Base Contract</span>
+    </div>
+    @if($installsData['by_country']->isEmpty())
+        <div style="text-align:center;padding:24px;color:#9ca3af;">No install data for this period</div>
+    @else
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>Country</th>
+                    <th style="text-align:right;">Installs</th>
+                    <th style="text-align:right;">Earnings (USD)</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach($installsData['by_country'] as $inst)
+                <tr>
+                    <td>
+                        <div style="display:flex;align-items:center;gap:8px;">
+                            <img src="https://flagcdn.com/24x18/{{ strtolower($inst['country_code']) }}.png"
+                                 style="width:24px;height:18px;border-radius:3px;object-fit:cover;flex-shrink:0;"
+                                 onerror="this.style.display='none'">
+                            <div>
+                                <div style="font-weight:600;font-size:13px;">{{ $inst['country_name'] }}</div>
+                                <div style="font-size:11px;color:#9ca3af;"><code>{{ $inst['country_code'] }}</code></div>
+                            </div>
+                        </div>
+                    </td>
+                    <td style="text-align:right;font-weight:700;color:#7c3aed;">{{ number_format($inst['install_count']) }}</td>
+                    <td style="text-align:right;font-weight:600;color:#01BF63;">${{ number_format($inst['earnings'], 4) }}</td>
+                </tr>
+                @endforeach
+            </tbody>
+            <tfoot>
+                <tr style="border-top:2px solid #e5e7eb;background:#f9fafb;">
+                    <td style="padding:10px 12px;font-weight:700;">Total</td>
+                    <td style="padding:10px 12px;text-align:right;font-weight:700;color:#7c3aed;">{{ number_format($installsData['total_installs']) }}</td>
+                    <td style="padding:10px 12px;text-align:right;font-weight:700;font-family:monospace;color:#01BF63;">${{ number_format($installsData['total_earnings'], 4) }}</td>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+    @endif
+</div>
+@endif
 
 <div class="grid-2 mb-6" style="align-items:start;">
 
@@ -288,20 +371,27 @@
 <script>
 const daily = @json($daily);
 
+@php $isInstallsBase = $installsData !== null; @endphp
+const isInstallsBase = @json($isInstallsBase);
 new ApexCharts(document.getElementById('dailyChart'), {
-    series: [
+    series: isInstallsBase ? [
+        { name: 'Valid Clicks', data: daily.map(d => d.valid) },
+        { name: 'Windows Clicks', data: daily.map(d => d.windows) },
+        { name: 'Fraud Clicks', data: daily.map(d => d.fraud) },
+        { name: 'Installs', data: daily.map(d => d.installs || 0) },
+    ] : [
         { name: 'Valid Clicks', data: daily.map(d => d.valid) },
         { name: 'Windows Clicks', data: daily.map(d => d.windows) },
         { name: 'Fraud Clicks', data: daily.map(d => d.fraud) },
     ],
     chart: { type: 'bar', height: 240, toolbar: { show: false }, stacked: false },
-    colors: ['#01BF63', '#3b82f6', '#ef4444'],
+    colors: isInstallsBase ? ['#01BF63', '#3b82f6', '#ef4444', '#7c3aed'] : ['#01BF63', '#3b82f6', '#ef4444'],
     xaxis: { categories: daily.map(d => d.date), labels: { style: { fontSize: '11px' } } },
     legend: { position: 'top' },
     dataLabels: { enabled: false },
     grid: { borderColor: '#f3f4f6' },
     plotOptions: { bar: { borderRadius: 3, columnWidth: '60%' } },
-    tooltip: { y: { formatter: val => val.toLocaleString() + ' clicks' } },
+    tooltip: { y: { formatter: val => val.toLocaleString() } },
 }).render();
 
 @if(!empty($fraudByType))
