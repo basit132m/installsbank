@@ -65,19 +65,30 @@ class StatsController extends Controller
             $user->id, $startDate, $dividerValue, $selectedLink?->id
         );
 
-        // OS breakdown
+        // OS breakdown — apply divider to Windows OS entries so publisher never
+        // sees raw Windows counts (same logic as the dashboard and country stats)
         $osQuery = Click::where('user_id', $user->id)
             ->where('is_counted', true)
             ->where('created_at', '>=', $startDate->copy()->startOfDay());
         if ($selectedLink) {
             $osQuery->where('tracking_link_id', $selectedLink->id);
         }
-        $osBreakdown = $osQuery
-            ->selectRaw('os, COUNT(*) as clicks')
-            ->groupBy('os')
-            ->orderByDesc('clicks')
-            ->get()
-            ->mapWithKeys(fn($row) => [$row->os ?: 'Unknown' => $row->clicks]);
+        $osRawRows = $osQuery
+            ->selectRaw('os, is_windows, COUNT(*) as raw_count')
+            ->groupBy('os', 'is_windows')
+            ->get();
+
+        $osMap = [];
+        foreach ($osRawRows as $osRow) {
+            $key          = $osRow->os ?: 'Unknown';
+            $cnt          = (bool)$osRow->is_windows
+                ? (int)floor((int)$osRow->raw_count / $dividerValue)
+                : (int)$osRow->raw_count;
+            $osMap[$key]  = ($osMap[$key] ?? 0) + $cnt;
+        }
+        arsort($osMap);
+        $osBreakdown = collect(array_filter($osMap, fn($c) => $c > 0))
+            ->mapWithKeys(fn($c, $os) => [$os => $c]);
 
         // Per-link stats (Performance by Link table) — Windows with divider, earnings, status
         $linkStats = $allLinks->map(function ($link) use ($startDate, $showEarnings, $dividerValue) {

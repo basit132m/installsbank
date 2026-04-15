@@ -73,48 +73,53 @@ class PublisherController extends Controller
         $installStats = null;
         $profile = $user->publisherProfile;
         if ($profile?->contract_type === 'installs_base') {
-            $weekday      = (int) now()->format('w');
-            $ratio        = \App\Models\InstallDayRatio::where('weekday', $weekday)->value('ratio') ?? 30;
-            $dividerValue = ($divider->is_enabled) ? max(1, (float)$divider->divider_value) : 1;
+            try {
+                $weekday      = (int) now()->format('w');
+                $ratio        = \App\Models\InstallDayRatio::where('weekday', $weekday)->value('ratio') ?? 30;
+                $dividerValue = $divider->is_enabled ? max(1, (float)$divider->divider_value) : 1;
 
-            // What the publisher sees (from PublisherInstall — already divider-adjusted)
-            $publisherInstalls = PublisherInstall::where('user_id', $user->id)
-                ->where('date', today()->toDateString())
-                ->get();
+                // What the publisher sees (from PublisherInstall — already divider-adjusted)
+                $publisherInstalls = PublisherInstall::where('user_id', $user->id)
+                    ->where('date', today()->toDateString())
+                    ->get();
 
-            // Actual: raw Windows clicks / base ratio per country (no divider applied)
-            $rawByCountry = Click::where('user_id', $user->id)
-                ->whereDate('created_at', today())
-                ->where('is_counted', true)
-                ->where('is_windows', true)
-                ->selectRaw('country_code, COUNT(*) as raw_windows')
-                ->groupBy('country_code')
-                ->get();
+                // Actual: raw Windows clicks / base ratio per country (no divider applied)
+                $rawByCountry = Click::where('user_id', $user->id)
+                    ->whereDate('created_at', today())
+                    ->where('is_counted', true)
+                    ->where('is_windows', true)
+                    ->selectRaw('LOWER(country_code) as country_code, COUNT(*) as raw_windows')
+                    ->groupBy('country_code')
+                    ->get();
 
-            // Use lowercase for case-insensitive match (install_country_rates stores lowercase codes)
-            $rawCodes = $rawByCountry->pluck('country_code')->map('strtolower')->all();
-            $installRates = \App\Models\InstallCountryRate::whereIn('country_code', $rawCodes)
-                ->where('is_active', true)
-                ->get()
-                ->mapWithKeys(fn($r) => [strtolower($r->country_code) => (float)$r->rate_usd]);
+                // Rates keyed by lowercase country code
+                $rawCodes     = $rawByCountry->pluck('country_code')->filter()->values()->all();
+                $installRates = \App\Models\InstallCountryRate::whereIn('country_code', $rawCodes)
+                    ->where('is_active', true)
+                    ->get()
+                    ->mapWithKeys(fn($r) => [strtolower((string)$r->country_code) => (float)$r->rate_usd]);
 
-            $safeRatio = max(1, (int)$ratio);
-            $actualByCountry = $rawByCountry->map(fn($r) => [
-                'country_code' => $r->country_code,
-                'installs'     => (int)floor($r->raw_windows / $safeRatio),
-                'earnings'     => (float)floor($r->raw_windows / $safeRatio) * ($installRates[strtolower($r->country_code)] ?? 0),
-            ])->filter(fn($r) => $r['installs'] > 0)->values();
+                $safeRatio = max(1, (int)$ratio);
+                $actualByCountry = $rawByCountry->map(fn($r) => [
+                    'country_code' => $r->country_code,
+                    'installs'     => (int)floor((int)$r->raw_windows / $safeRatio),
+                    'earnings'     => (float)floor((int)$r->raw_windows / $safeRatio) * ($installRates[$r->country_code] ?? 0),
+                ])->filter(fn($r) => $r['installs'] > 0)->values();
 
-            $installStats = [
-                'publisher_installs'   => (int)$publisherInstalls->sum('install_count'),
-                'publisher_earnings'   => (float)$publisherInstalls->sum('earnings'),
-                'actual_installs'      => (int)$actualByCountry->sum('installs'),
-                'actual_earnings'      => (float)$actualByCountry->sum('earnings'),
-                'divider_value'        => $dividerValue,
-                'ratio'                => $ratio,
-                'publisher_by_country' => $publisherInstalls,
-                'actual_by_country'    => $actualByCountry,
-            ];
+                $installStats = [
+                    'publisher_installs'   => (int)$publisherInstalls->sum('install_count'),
+                    'publisher_earnings'   => (float)$publisherInstalls->sum('earnings'),
+                    'actual_installs'      => (int)$actualByCountry->sum('installs'),
+                    'actual_earnings'      => (float)$actualByCountry->sum('earnings'),
+                    'divider_value'        => $dividerValue,
+                    'ratio'                => (int)$ratio,
+                    'publisher_by_country' => $publisherInstalls,
+                    'actual_by_country'    => $actualByCountry,
+                ];
+            } catch (\Throwable $e) {
+                // Non-fatal: leave $installStats = null so the page still loads
+                \Illuminate\Support\Facades\Log::warning('installStats failed for user '.$user->id.': '.$e->getMessage());
+            }
         }
 
         return view('admin.publishers.show', compact('user', 'clickStats', 'clicksChart', 'divider', 'installStats'));
