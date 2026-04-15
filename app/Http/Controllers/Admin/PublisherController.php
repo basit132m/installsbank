@@ -39,7 +39,25 @@ class PublisherController extends Controller
 
     public function show(User $user)
     {
-        $user->load(['publisherProfile', 'trackingLinks', 'contracts', 'clickDivider', 'publisherTags']);
+        // Load core relationships — tables that have existed since early migrations
+        $user->load(['publisherProfile', 'trackingLinks', 'contracts', 'clickDivider']);
+
+        // Load publisher tags defensively — table created in a later migration
+        try {
+            $user->load('publisherTags');
+        } catch (\Throwable $e) {
+            $user->setRelation('publisherTags', collect());
+            \Illuminate\Support\Facades\Log::warning('publisherTags load failed (migration pending?): ' . $e->getMessage());
+        }
+
+        // Load publisher websites defensively — table created in a later migration
+        try {
+            $publisherWebsites = \App\Models\PublisherWebsite::where('user_id', $user->id)
+                ->with('trackingLink')->latest()->get();
+        } catch (\Throwable $e) {
+            $publisherWebsites = collect();
+            \Illuminate\Support\Facades\Log::warning('publisherWebsites load failed (migration pending?): ' . $e->getMessage());
+        }
 
         $dailyEarningToday = DailyEarning::where('user_id', $user->id)->whereDate('date', today())->first();
 
@@ -122,7 +140,7 @@ class PublisherController extends Controller
             }
         }
 
-        return view('admin.publishers.show', compact('user', 'clickStats', 'clicksChart', 'divider', 'installStats'));
+        return view('admin.publishers.show', compact('user', 'clickStats', 'clicksChart', 'divider', 'installStats', 'publisherWebsites'));
     }
 
     public function activate(User $user)

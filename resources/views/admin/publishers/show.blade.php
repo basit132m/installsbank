@@ -551,7 +551,7 @@
 </div>
 
 <!-- Publisher Websites -->
-@php $publisherWebsites = $user->publisherWebsites ?? \App\Models\PublisherWebsite::where('user_id',$user->id)->with('trackingLink')->latest()->get(); @endphp
+{{-- $publisherWebsites loaded defensively in controller --}}
 <div class="card mt-6">
     <div class="flex-between mb-4">
         <div>
