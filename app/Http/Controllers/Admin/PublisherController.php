@@ -452,6 +452,114 @@ class PublisherController extends Controller
             ->with('success', "Publisher \"{$name}\" and all related data have been permanently deleted.");
     }
 
+    public function recalculateInstalls(User $user)
+    {
+        $profile = $user->publisherProfile;
+        if ($profile?->contract_type !== 'installs_base') {
+            return back()->with('error', 'This publisher is not on an installs_base contract.');
+        }
+
+        $divider = $user->clickDivider;
+        if (!$divider || !$divider->is_enabled) {
+            return back()->with('error', 'No active divider set for this publisher. Enable the divider first, then recalculate.');
+        }
+
+        $dividerValue = max(1, (float)$divider->divider_value);
+
+        $dayRatios    = \App\Models\InstallDayRatio::pluck('ratio', 'weekday')->toArray();
+        $installRates = \App\Models\InstallCountryRate::where('is_active', true)
+            ->get()
+            ->mapWithKeys(fn($r) => [strtolower($r->country_code) => (float)$r->rate_usd]);
+
+        // Save country names from Click table
+        $countryNames = Click::where('user_id', $user->id)
+            ->where('is_windows', true)
+            ->where('is_counted', true)
+            ->selectRaw('LOWER(country_code) as cc, MAX(country_name) as cn')
+            ->groupBy('cc')
+            ->pluck('cn', 'cc');
+
+        // All counted Windows clicks, grouped by date + country, in date order
+        $clickRows = Click::where('user_id', $user->id)
+            ->where('is_counted', true)
+            ->where('is_windows', true)
+            ->selectRaw('DATE(created_at) as day,
+                         LOWER(country_code) as country_code,
+                         COUNT(*) as raw_clicks,
+                         (DAYOFWEEK(created_at) - 1) as weekday')
+            ->groupBy('day', 'country_code', 'weekday')
+            ->orderBy('day')
+            ->get();
+
+        // Simulate correct install history with divider applied
+        $pending     = [];
+        $correctData = [];
+
+        foreach ($clickRows as $row) {
+            $country        = $row->country_code;
+            $ratio          = $dayRatios[(int)$row->weekday] ?? 30;
+            $effectiveRatio = max(1, (int)round($ratio * $dividerValue));
+
+            $pending[$country] = ($pending[$country] ?? 0) + $row->raw_clicks;
+            $installs          = (int)floor($pending[$country] / $effectiveRatio);
+
+            if ($installs > 0) {
+                $pending[$country] = $pending[$country] % $effectiveRatio;
+                $earnings          = $installs * ($installRates[$country] ?? 0);
+
+                if (!isset($correctData[$row->day][$country])) {
+                    $correctData[$row->day][$country] = ['install_count' => 0, 'earnings' => 0.0];
+                }
+                $correctData[$row->day][$country]['install_count'] += $installs;
+                $correctData[$row->day][$country]['earnings']       += $earnings;
+            }
+        }
+
+        // Current totals before touching anything
+        $currentEarnings = (float)PublisherInstall::where('user_id', $user->id)->sum('earnings');
+        $correctEarnings = 0.0;
+        foreach ($correctData as $countries) {
+            foreach ($countries as $d) {
+                $correctEarnings += $d['earnings'];
+            }
+        }
+        $earningsDiff = round($currentEarnings - $correctEarnings, 6);
+
+        // Rebuild publisher_installs
+        PublisherInstall::where('user_id', $user->id)->delete();
+        foreach ($correctData as $date => $countries) {
+            foreach ($countries as $country => $data) {
+                PublisherInstall::create([
+                    'user_id'       => $user->id,
+                    'country_code'  => $country,
+                    'country_name'  => $countryNames[$country] ?? strtoupper($country),
+                    'install_count' => $data['install_count'],
+                    'earnings'      => $data['earnings'],
+                    'date'          => $date,
+                ]);
+            }
+        }
+
+        // Adjust balance and total_earnings
+        if ($earningsDiff > 0) {
+            $safeDeduct = min($earningsDiff, $profile->balance);
+            $profile->decrement('balance', $safeDeduct);
+            $profile->decrement('total_earnings', $earningsDiff);
+        } elseif ($earningsDiff < 0) {
+            $profile->increment('balance', abs($earningsDiff));
+            $profile->increment('total_earnings', abs($earningsDiff));
+        }
+
+        // Reset pending clicks to correct state
+        $profile->update(['install_pending_clicks' => $pending]);
+
+        $msg = "Installs recalculated with divider ({$dividerValue}×). "
+             . "Earnings adjusted by \$" . number_format(abs($earningsDiff), 6)
+             . ($earningsDiff > 0 ? ' (over-credit removed)' : ($earningsDiff < 0 ? ' (under-credit added)' : ' (no change)'));
+
+        return back()->with('success', $msg);
+    }
+
     public function addTag(Request $request, User $user)
     {
         $data = $request->validate([

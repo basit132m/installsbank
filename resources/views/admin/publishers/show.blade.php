@@ -197,6 +197,26 @@
     @else
     <div style="text-align:center;padding:16px;color:#9ca3af;font-size:13px;">No installs recorded today yet.</div>
     @endif
+
+    {{-- Retroactive recalculation action --}}
+    <div style="margin-top:20px;padding-top:16px;border-top:1px solid #f3f4f6;display:flex;align-items:center;gap:14px;flex-wrap:wrap;">
+        <div style="flex:1;">
+            <div style="font-size:13px;font-weight:700;color:#374151;">Apply Divider Retroactively</div>
+            <div style="font-size:12px;color:#9ca3af;margin-top:2px;">
+                Rebuilds all historical install records using the divider-adjusted threshold. Adjusts balance and earnings accordingly.
+                Run this once to sync existing data with the new calculation.
+            </div>
+        </div>
+        <form method="POST" action="{{ route('admin.publishers.recalculate-installs', $user) }}"
+              onsubmit="return confirm('Recalculate all install history for {{ addslashes($user->name) }} using divider {{ $installStats[\'divider_value\'] }}×?\n\nThis will rebuild publisher_installs from Click data and adjust their balance. This cannot be undone.')">
+            @csrf
+            <button type="submit"
+                    style="padding:9px 18px;background:#7c3aed;color:white;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;display:flex;align-items:center;gap:6px;">
+                <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                Recalculate All History
+            </button>
+        </form>
+    </div>
 </div>
 @endif
 
