@@ -405,94 +405,54 @@
     <div id="pubClickChart"></div>
 </div>
 
-<!-- Country Breakdown -->
-@if($countryBreakdown && $countryBreakdown->count() > 0)
-@php
-    $sortedBreakdown = $countryBreakdown->sortByDesc('clicks');
-    $totalBreakdownClicks = $countryBreakdown->sum('clicks');
-    $countryNames = \App\Models\CountryRate::whereIn('country_code', $countryBreakdown->keys()->toArray())
-        ->pluck('country_name', 'country_code');
-@endphp
+<!-- Traffic by Country — divider-adjusted Windows clicks -->
+@if($windowsByCountry->count() > 0)
 <div class="card mb-6">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
         <div>
             <div class="card-title">Traffic by Country</div>
-            <div style="font-size:12px;color:#9ca3af;margin-top:2px;">{{ $countryBreakdown->count() }} {{ Str::plural('country', $countryBreakdown->count()) }} · {{ number_format($totalBreakdownClicks) }} clicks today</div>
+            <div style="font-size:12px;color:#9ca3af;margin-top:2px;">{{ $windowsByCountry->count() }} {{ Str::plural('country', $windowsByCountry->count()) }} · {{ number_format($windowsByCountry->sum('windows')) }} clicks today</div>
         </div>
     </div>
     <div style="display:flex;flex-wrap:wrap;gap:14px;padding:16px;background:#ffffff;border-radius:12px;border:1px solid #f3f4f6;">
-        @foreach($sortedBreakdown as $code => $data)
+        @foreach($windowsByCountry as $row)
         <div style="display:flex;flex-direction:column;align-items:center;gap:5px;width:66px;">
-            <img src="https://flagcdn.com/48x36/{{ strtolower($code) }}.png"
-                 alt="{{ $countryNames[$code] ?? $code }}"
-                 title="{{ $countryNames[$code] ?? $code }}"
+            <img src="https://flagcdn.com/48x36/{{ strtolower($row->country_code) }}.png"
+                 alt="{{ $row->country_name }}"
+                 title="{{ $row->country_name }}"
                  style="width:48px;height:36px;border-radius:5px;object-fit:cover;box-shadow:0 1px 6px rgba(0,0,0,0.15);flex-shrink:0;"
                  onerror="this.style.display='none'">
-            <span style="font-size:11px;font-weight:800;color:#111827;line-height:1;text-align:center;">{{ number_format($data['clicks']) }}</span>
-            <span style="font-size:9px;color:#9ca3af;font-weight:600;line-height:1;">{{ strtoupper($code) }}</span>
+            <span style="font-size:11px;font-weight:800;color:#111827;line-height:1;text-align:center;">{{ number_format($row->windows) }}</span>
+            <span style="font-size:9px;color:#9ca3af;font-weight:600;line-height:1;">{{ strtoupper($row->country_code) }}</span>
         </div>
         @endforeach
     </div>
 </div>
 
-@if(in_array($profile->contract_type ?? '', ['per_click', 'installs_base']) && $windowsByCountry->count() > 0)
-<!-- Traffic by Country — Windows clicks with divider applied -->
-<div class="card mb-6">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+<!-- World Map — Beautiful Dark Design -->
+<div class="card mb-6" id="worldMapCard" style="background:linear-gradient(135deg,#0f172a 0%,#1a2744 100%);overflow:hidden;position:relative;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
         <div>
-            <div class="card-title">Traffic by Country</div>
-            <div style="font-size:12px;color:#9ca3af;margin-top:2px;">Windows clicks today · {{ $windowsByCountry->count() }} {{ Str::plural('country', $windowsByCountry->count()) }}</div>
+            <div class="card-title" style="color:#f1f5f9;margin-bottom:2px;">Traffic World Map</div>
+            <div style="font-size:12px;color:#64748b;">Windows click distribution by country · today</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:6px;font-size:11px;color:#64748b;">
+            <div style="width:50px;height:7px;border-radius:4px;background:linear-gradient(to right,#1e3a2e,#01BF63);"></div>
+            <span>Low → High</span>
         </div>
     </div>
-    <div class="table-wrap">
-        <table>
-            <thead>
-                <tr>
-                    <th>Country</th>
-                    <th>Windows Clicks</th>
-                    @if($showEarnings && $profile->contract_type === 'per_click')<th>Earnings</th>@endif
-                </tr>
-            </thead>
-            <tbody>
-                @foreach($windowsByCountry as $row)
-                <tr>
-                    <td>
-                        <div style="display:flex;align-items:center;gap:10px;">
-                            <img src="https://flagcdn.com/24x18/{{ strtolower($row->country_code) }}.png"
-                                 style="width:24px;height:18px;border-radius:3px;object-fit:cover;flex-shrink:0;"
-                                 onerror="this.style.display='none'">
-                            <div>
-                                <div style="font-weight:600;font-size:13px;">{{ $row->country_name }}</div>
-                                <div style="font-size:11px;color:#9ca3af;"><code>{{ $row->country_code }}</code></div>
-                            </div>
-                        </div>
-                    </td>
-                    <td><span style="font-weight:700;color:#01BF63;">{{ number_format($row->windows) }}</span></td>
-                    @if($showEarnings && $profile->contract_type === 'per_click')
-                    <td style="color:#01BF63;font-weight:600;">${{ number_format($row->earnings, 4) }}</td>
-                    @endif
-                </tr>
-                @endforeach
-            </tbody>
-        </table>
-    </div>
-</div>
-@endif
-
-<!-- World Map -->
-<div class="card mb-6" id="worldMapCard">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
-        <div>
-            <div class="card-title">Traffic World Map</div>
-            <div style="font-size:12px;color:#9ca3af;margin-top:2px;">Click distribution by country · today</div>
+    <div id="worldMap" style="height:340px;border-radius:10px;overflow:hidden;background:transparent;"></div>
+    <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;padding-top:10px;border-top:1px solid rgba(255,255,255,0.06);">
+        @foreach($windowsByCountry->take(8) as $row)
+        <div style="display:flex;align-items:center;gap:5px;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.10);padding:4px 10px;border-radius:20px;">
+            <img src="https://flagcdn.com/20x15/{{ strtolower($row->country_code) }}.png"
+                 style="width:18px;height:13px;border-radius:2px;object-fit:cover;"
+                 onerror="this.style.display='none'">
+            <span style="font-size:11px;font-weight:700;color:#e2e8f0;">{{ number_format($row->windows) }}</span>
+            <span style="font-size:9px;color:#64748b;font-weight:600;">{{ strtoupper($row->country_code) }}</span>
         </div>
-        <div style="display:flex;align-items:center;gap:6px;font-size:11px;color:#6b7280;">
-            <span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#d1fae5;"></span>Low
-            <span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#6ee7b7;margin-left:4px;"></span>Mid
-            <span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:#01BF63;margin-left:4px;"></span>High
-        </div>
+        @endforeach
     </div>
-    <div id="worldMap" style="height:340px;border-radius:10px;overflow:hidden;background:#f9fafb;"></div>
 </div>
 
 <!-- Country + OS Pie Charts -->
@@ -500,7 +460,7 @@
     <!-- Country donut -->
     <div class="card">
         <div class="card-title mb-1">Clicks by Country</div>
-        <div style="font-size:12px;color:#9ca3af;margin-bottom:4px;">Today · valid clicks only</div>
+        <div style="font-size:12px;color:#9ca3af;margin-bottom:4px;">Today · Windows clicks</div>
         <div id="countryPieChart"></div>
     </div>
     <!-- OS donut -->
@@ -657,17 +617,17 @@ new ApexCharts(document.getElementById('pubClickChart'), {
         return compact('id','labels','values','colors');
     };
 @endphp
-@if($countryBreakdown && $countryBreakdown->count() > 0)
+@if($windowsByCountry->count() > 0)
 @php
     $pieLabels = [];
     $pieValues = [];
-    foreach ($sortedBreakdown->take(8) as $code => $data) {
-        $pieLabels[] = $countryNames[$code] ?? strtoupper($code);
-        $pieValues[] = (int) $data['clicks'];
+    foreach ($windowsByCountry->take(8) as $pieRow) {
+        $pieLabels[] = $pieRow->country_name ?: strtoupper($pieRow->country_code);
+        $pieValues[] = (int) $pieRow->windows;
     }
-    if ($sortedBreakdown->count() > 8) {
+    if ($windowsByCountry->count() > 8) {
         $pieLabels[] = 'Others';
-        $pieValues[] = (int) $sortedBreakdown->slice(8)->sum('clicks');
+        $pieValues[] = (int) $windowsByCountry->skip(8)->sum('windows');
     }
 @endphp
 new ApexCharts(document.getElementById('countryPieChart'), {
@@ -704,23 +664,23 @@ new ApexCharts(document.getElementById('osPieChart'), {
 @endif
 </script>
 
-@if($countryBreakdown && $countryBreakdown->count() > 0)
+@if($windowsByCountry->count() > 0)
 @php
     // jsvectormap world map uses lowercase 2-letter ISO codes
     $mapValues = [];
     $mapLabels = [];
-    $maxClicks  = $countryBreakdown->max('clicks') ?: 1;
-    foreach ($countryBreakdown as $code => $info) {
-        $lower = strtolower($code);
-        $mapValues[$lower] = (int) $info['clicks'];
-        $mapLabels[$lower] = ($countryNames[$code] ?? strtoupper($code)) . ': ' . number_format($info['clicks']) . ' clicks';
+    $maxWinClicks = $windowsByCountry->max('windows') ?: 1;
+    foreach ($windowsByCountry as $mapRow) {
+        $lower = strtolower($mapRow->country_code);
+        $mapValues[$lower] = (int) $mapRow->windows;
+        $mapLabels[$lower] = ($mapRow->country_name ?: strtoupper($lower)) . ': ' . number_format($mapRow->windows) . ' clicks';
     }
 @endphp
 <script>
 (function() {
     const mapValues = @json($mapValues);
     const mapLabels = @json($mapLabels);
-    const maxVal    = {{ $maxClicks }};
+    const maxVal    = {{ $maxWinClicks }};
 
     function loadScript(src, cb) {
         var s = document.createElement('script');
@@ -734,19 +694,19 @@ new ApexCharts(document.getElementById('osPieChart'), {
         new jsVectorMap({
             selector: '#worldMap',
             map: 'world',
-            backgroundColor: '#f9fafb',
+            backgroundColor: 'transparent',
             zoomOnScroll: false,
             zoomButtons: false,
             regionStyle: {
-                initial:  { fill: '#e5e7eb', stroke: '#fff', strokeWidth: 0.5, fillOpacity: 1 },
+                initial:  { fill: '#1e293b', stroke: '#0f172a', strokeWidth: 0.5, fillOpacity: 1 },
                 hover:    { fillOpacity: 0.80, cursor: 'pointer' },
-                selected: { fill: '#e5e7eb' }
+                selected: { fill: '#1e293b' }
             },
             series: {
                 regions: [{
                     attribute: 'fill',
                     values: mapValues,
-                    scale: ['#d1fae5', '#01BF63'],
+                    scale: ['#064e3b', '#10b981'],
                     normalizeFunction: 'polynomial',
                     min: 0,
                     max: maxVal

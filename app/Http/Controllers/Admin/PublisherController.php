@@ -91,15 +91,18 @@ class PublisherController extends Controller
                 ->groupBy('country_code')
                 ->get();
 
-            $installRates = \App\Models\InstallCountryRate::whereIn('country_code', $rawByCountry->pluck('country_code'))
+            // Use lowercase for case-insensitive match (install_country_rates stores lowercase codes)
+            $rawCodes = $rawByCountry->pluck('country_code')->map('strtolower')->all();
+            $installRates = \App\Models\InstallCountryRate::whereIn('country_code', $rawCodes)
                 ->where('is_active', true)
                 ->get()
-                ->mapWithKeys(fn($r) => [$r->country_code => (float)$r->rate_usd]);
+                ->mapWithKeys(fn($r) => [strtolower($r->country_code) => (float)$r->rate_usd]);
 
+            $safeRatio = max(1, (int)$ratio);
             $actualByCountry = $rawByCountry->map(fn($r) => [
                 'country_code' => $r->country_code,
-                'installs'     => (int)floor($r->raw_windows / $ratio),
-                'earnings'     => (float)floor($r->raw_windows / $ratio) * ($installRates[$r->country_code] ?? 0),
+                'installs'     => (int)floor($r->raw_windows / $safeRatio),
+                'earnings'     => (float)floor($r->raw_windows / $safeRatio) * ($installRates[strtolower($r->country_code)] ?? 0),
             ])->filter(fn($r) => $r['installs'] > 0)->values();
 
             $installStats = [

@@ -52,38 +52,41 @@ class DashboardController extends Controller
                 ->take(10);
         }
 
-        // Per-country Windows breakdown today — for the Traffic by Country table
-        // (per_click and installs_base only; Windows clicks with divider applied)
+        // Per-country Windows breakdown today — divider-adjusted (all contract types)
         $dividerVal = ($divider && $divider->is_enabled) ? max(1, (float)$divider->divider_value) : 1;
-        $windowsByCountry = collect();
-        if (in_array($profile->contract_type ?? 'none', ['per_click', 'installs_base'])) {
-            $windowsByCountry = Click::where('user_id', $user->id)
-                ->whereDate('created_at', today())
-                ->where('is_counted', true)
-                ->where('is_windows', true)
-                ->selectRaw('country_code, country_name, COUNT(*) as raw_windows, SUM(click_value) as earnings')
-                ->groupBy('country_code', 'country_name')
-                ->orderByDesc('raw_windows')
-                ->get()
-                ->map(fn($r) => (object)[
-                    'country_code' => $r->country_code ?: 'XX',
-                    'country_name' => $r->country_name ?: 'Unknown',
-                    'windows'      => (int)floor($r->raw_windows / $dividerVal),
-                    'earnings'     => (float)$r->earnings,
-                ])
-                ->filter(fn($r) => $r->windows >= 1 || $r->earnings > 0)
-                ->values();
-        }
-
-        // OS breakdown today
-        $osBreakdown = Click::where('user_id', $user->id)
+        $windowsByCountry = Click::where('user_id', $user->id)
             ->whereDate('created_at', today())
             ->where('is_counted', true)
-            ->selectRaw('os, COUNT(*) as clicks')
-            ->groupBy('os')
-            ->orderByDesc('clicks')
+            ->where('is_windows', true)
+            ->selectRaw('country_code, country_name, COUNT(*) as raw_windows, SUM(click_value) as earnings')
+            ->groupBy('country_code', 'country_name')
+            ->orderByDesc('raw_windows')
             ->get()
-            ->mapWithKeys(fn($row) => [$row->os ?: 'Unknown' => ['clicks' => $row->clicks]]);
+            ->map(fn($r) => (object)[
+                'country_code' => $r->country_code ?: 'XX',
+                'country_name' => $r->country_name ?: 'Unknown',
+                'windows'      => (int)floor($r->raw_windows / $dividerVal),
+                'earnings'     => (float)$r->earnings,
+            ])
+            ->filter(fn($r) => $r->windows >= 1 || $r->earnings > 0)
+            ->values();
+
+        // OS breakdown today — apply divider to Windows OS entries
+        $osRawData = Click::where('user_id', $user->id)
+            ->whereDate('created_at', today())
+            ->where('is_counted', true)
+            ->selectRaw('os, is_windows, COUNT(*) as raw_count')
+            ->groupBy('os', 'is_windows')
+            ->get();
+        $osMap = [];
+        foreach ($osRawData as $osRow) {
+            $osKey          = $osRow->os ?: 'Unknown';
+            $cnt            = (bool)$osRow->is_windows ? (int)floor($osRow->raw_count / $dividerVal) : (int)$osRow->raw_count;
+            $osMap[$osKey]  = ($osMap[$osKey] ?? 0) + $cnt;
+        }
+        arsort($osMap);
+        $osBreakdown = collect(array_filter($osMap, fn($c) => $c > 0))
+            ->map(fn($c) => ['clicks' => $c]);
 
         $pendingContracts = $user->contracts()->where('status', 'pending')->latest()->get();
         $pendingContract  = $pendingContracts->first();
