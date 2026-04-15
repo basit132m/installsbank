@@ -208,7 +208,7 @@
             </div>
         </div>
         <form method="POST" action="{{ route('admin.publishers.recalculate-installs', $user) }}"
-              onsubmit="return confirm('Recalculate all install history for {{ addslashes($user->name) }} using divider {{ $installStats[\'divider_value\'] }}×?\n\nThis will rebuild publisher_installs from Click data and adjust their balance. This cannot be undone.')">
+              onsubmit="return confirm('Recalculate all install history for {{ addslashes($user->name) }} using divider {{ $installStats["divider_value"] }}×?\n\nThis will rebuild publisher_installs from Click data and adjust their balance. This cannot be undone.')">
             @csrf
             <button type="submit"
                     style="padding:9px 18px;background:#7c3aed;color:white;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;display:flex;align-items:center;gap:6px;">
