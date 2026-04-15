@@ -98,6 +98,108 @@
     </div>
 </div>
 
+<!-- Install Earnings Comparison (installs_base only) -->
+@if($installStats)
+<div class="card mb-6" style="border:1.5px solid #ede9fe;">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px;">
+        <div style="width:38px;height:38px;background:#ede9fe;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+            <svg width="18" height="18" fill="none" stroke="#7c3aed" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+        </div>
+        <div>
+            <div class="card-title" style="margin-bottom:2px;">Install Earnings — Today</div>
+            <div style="font-size:12px;color:#6b7280;">Divider: <strong>{{ $installStats['divider_value'] }}×</strong> &nbsp;·&nbsp; Clicks per install (base ratio): <strong>{{ $installStats['ratio'] }}</strong> &nbsp;·&nbsp; Effective threshold: <strong>{{ (int)round($installStats['ratio'] * $installStats['divider_value']) }} raw clicks</strong></div>
+        </div>
+        <span style="margin-left:auto;background:#ede9fe;color:#7c3aed;padding:4px 12px;border-radius:20px;font-size:12px;font-weight:700;">Installs Base</span>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px;">
+        {{-- Publisher View --}}
+        <div style="background:#f0fdf4;border:1.5px solid #bbf7d0;border-radius:12px;padding:16px;">
+            <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:#059669;margin-bottom:10px;">Publisher Sees (Divider Applied)</div>
+            <div style="display:flex;gap:16px;">
+                <div>
+                    <div style="font-size:26px;font-weight:900;color:#059669;">{{ number_format($installStats['publisher_installs']) }}</div>
+                    <div style="font-size:11px;color:#6b7280;">Installs</div>
+                </div>
+                <div>
+                    <div style="font-size:26px;font-weight:900;color:#059669;">${{ number_format($installStats['publisher_earnings'], 4) }}</div>
+                    <div style="font-size:11px;color:#6b7280;">Earnings</div>
+                </div>
+            </div>
+        </div>
+        {{-- Actual (Admin Only) --}}
+        <div style="background:#fff7ed;border:1.5px solid #fed7aa;border-radius:12px;padding:16px;">
+            <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:#c2410c;margin-bottom:10px;">Actual (Admin Only — No Divider)</div>
+            <div style="display:flex;gap:16px;">
+                <div>
+                    <div style="font-size:26px;font-weight:900;color:#ea580c;">{{ number_format($installStats['actual_installs']) }}</div>
+                    <div style="font-size:11px;color:#6b7280;">Installs</div>
+                </div>
+                <div>
+                    <div style="font-size:26px;font-weight:900;color:#ea580c;">${{ number_format($installStats['actual_earnings'], 4) }}</div>
+                    <div style="font-size:11px;color:#6b7280;">Earnings</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {{-- Per-country breakdown --}}
+    @if($installStats['publisher_by_country']->count() > 0 || $installStats['actual_by_country']->count() > 0)
+    <div style="overflow-x:auto;">
+        <table style="width:100%;font-size:13px;border-collapse:collapse;">
+            <thead>
+                <tr style="border-bottom:2px solid #f3f4f6;">
+                    <th style="text-align:left;padding:8px 10px;color:#6b7280;font-weight:600;">Country</th>
+                    <th style="text-align:right;padding:8px 10px;color:#059669;font-weight:600;">Publisher Installs</th>
+                    <th style="text-align:right;padding:8px 10px;color:#059669;font-weight:600;">Publisher Earnings</th>
+                    <th style="text-align:right;padding:8px 10px;color:#c2410c;font-weight:600;">Actual Installs</th>
+                    <th style="text-align:right;padding:8px 10px;color:#c2410c;font-weight:600;">Actual Earnings</th>
+                </tr>
+            </thead>
+            <tbody>
+                @php
+                    // Merge both sets by country_code
+                    $pubMap    = $installStats['publisher_by_country']->keyBy('country_code');
+                    $actualMap = collect($installStats['actual_by_country'])->keyBy('country_code');
+                    $allCodes  = $pubMap->keys()->merge($actualMap->keys())->unique();
+                @endphp
+                @foreach($allCodes as $code)
+                @php
+                    $pub    = $pubMap->get($code);
+                    $actual = $actualMap->get($code);
+                @endphp
+                <tr style="border-bottom:1px solid #f3f4f6;">
+                    <td style="padding:8px 10px;">
+                        <div style="display:flex;align-items:center;gap:8px;">
+                            <img src="https://flagcdn.com/20x15/{{ strtolower($code) }}.png" style="border-radius:2px;" onerror="this.style.display='none'">
+                            <span style="font-weight:600;">{{ $pub?->country_name ?? strtoupper($code) }}</span>
+                            <code style="font-size:11px;color:#9ca3af;">{{ strtoupper($code) }}</code>
+                        </div>
+                    </td>
+                    <td style="padding:8px 10px;text-align:right;font-weight:700;color:#059669;">{{ number_format($pub?->install_count ?? 0) }}</td>
+                    <td style="padding:8px 10px;text-align:right;color:#059669;">${{ number_format($pub?->earnings ?? 0, 4) }}</td>
+                    <td style="padding:8px 10px;text-align:right;font-weight:700;color:#ea580c;">{{ number_format($actual['installs'] ?? 0) }}</td>
+                    <td style="padding:8px 10px;text-align:right;color:#ea580c;">${{ number_format($actual['earnings'] ?? 0, 4) }}</td>
+                </tr>
+                @endforeach
+            </tbody>
+            <tfoot>
+                <tr style="border-top:2px solid #e5e7eb;background:#f9fafb;">
+                    <td style="padding:10px;font-weight:700;">Total</td>
+                    <td style="padding:10px;text-align:right;font-weight:700;color:#059669;">{{ number_format($installStats['publisher_installs']) }}</td>
+                    <td style="padding:10px;text-align:right;font-weight:700;color:#059669;">${{ number_format($installStats['publisher_earnings'], 4) }}</td>
+                    <td style="padding:10px;text-align:right;font-weight:700;color:#ea580c;">{{ number_format($installStats['actual_installs']) }}</td>
+                    <td style="padding:10px;text-align:right;font-weight:700;color:#ea580c;">${{ number_format($installStats['actual_earnings'], 4) }}</td>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+    @else
+    <div style="text-align:center;padding:16px;color:#9ca3af;font-size:13px;">No installs recorded today yet.</div>
+    @endif
+</div>
+@endif
+
 <!-- Click Chart -->
 <div class="card mb-6">
     <div class="card-title mb-4">Click History (Last 14 Days)</div>

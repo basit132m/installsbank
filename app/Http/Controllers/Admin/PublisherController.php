@@ -69,7 +69,52 @@ class PublisherController extends Controller
 
         $divider = $user->clickDivider ?: ClickDivider::firstOrCreate(['user_id' => $user->id], ['divider_value' => 1, 'is_enabled' => false]);
 
-        return view('admin.publishers.show', compact('user', 'clickStats', 'clicksChart', 'divider'));
+        // Installs comparison — only for installs_base publishers
+        $installStats = null;
+        $profile = $user->publisherProfile;
+        if ($profile?->contract_type === 'installs_base') {
+            $weekday      = (int) now()->format('w');
+            $ratio        = \App\Models\InstallDayRatio::where('weekday', $weekday)->value('ratio') ?? 30;
+            $dividerValue = ($divider->is_enabled) ? max(1, (float)$divider->divider_value) : 1;
+
+            // What the publisher sees (from PublisherInstall — already divider-adjusted)
+            $publisherInstalls = PublisherInstall::where('user_id', $user->id)
+                ->where('date', today()->toDateString())
+                ->get();
+
+            // Actual: raw Windows clicks / base ratio per country (no divider applied)
+            $rawByCountry = Click::where('user_id', $user->id)
+                ->whereDate('created_at', today())
+                ->where('is_counted', true)
+                ->where('is_windows', true)
+                ->selectRaw('country_code, COUNT(*) as raw_windows')
+                ->groupBy('country_code')
+                ->get();
+
+            $installRates = \App\Models\InstallCountryRate::whereIn('country_code', $rawByCountry->pluck('country_code'))
+                ->where('is_active', true)
+                ->get()
+                ->mapWithKeys(fn($r) => [$r->country_code => (float)$r->rate_usd]);
+
+            $actualByCountry = $rawByCountry->map(fn($r) => [
+                'country_code' => $r->country_code,
+                'installs'     => (int)floor($r->raw_windows / $ratio),
+                'earnings'     => (float)floor($r->raw_windows / $ratio) * ($installRates[$r->country_code] ?? 0),
+            ])->filter(fn($r) => $r['installs'] > 0)->values();
+
+            $installStats = [
+                'publisher_installs'   => (int)$publisherInstalls->sum('install_count'),
+                'publisher_earnings'   => (float)$publisherInstalls->sum('earnings'),
+                'actual_installs'      => (int)$actualByCountry->sum('installs'),
+                'actual_earnings'      => (float)$actualByCountry->sum('earnings'),
+                'divider_value'        => $dividerValue,
+                'ratio'                => $ratio,
+                'publisher_by_country' => $publisherInstalls,
+                'actual_by_country'    => $actualByCountry,
+            ];
+        }
+
+        return view('admin.publishers.show', compact('user', 'clickStats', 'clicksChart', 'divider', 'installStats'));
     }
 
     public function activate(User $user)

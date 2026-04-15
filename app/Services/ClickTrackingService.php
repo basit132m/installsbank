@@ -303,12 +303,19 @@ class ClickTrackingService
         $weekday = (int) now()->format('w');
         $ratio   = \App\Models\InstallDayRatio::where('weekday', $weekday)->value('ratio') ?? 30;
 
-        $pending                 = $profile->install_pending_clicks ?? [];
-        $pending[$countryCode]   = ($pending[$countryCode] ?? 0) + 1;
+        // Apply divider: publisher sees divider-adjusted clicks, so installs must scale
+        // accordingly. If divider=3 and ratio=30, publisher needs 90 raw Windows clicks
+        // per install (same as 30 divider-adjusted clicks = 1 install).
+        $divider        = \App\Models\ClickDivider::where('user_id', $link->user_id)->where('is_enabled', true)->first();
+        $dividerValue   = $divider ? max(1, (float)$divider->divider_value) : 1;
+        $effectiveRatio = max(1, (int)round($ratio * $dividerValue));
 
-        $installs = (int) floor($pending[$countryCode] / $ratio);
+        $pending               = $profile->install_pending_clicks ?? [];
+        $pending[$countryCode] = ($pending[$countryCode] ?? 0) + 1;
+
+        $installs = (int) floor($pending[$countryCode] / $effectiveRatio);
         if ($installs > 0) {
-            $pending[$countryCode] = $pending[$countryCode] % $ratio;
+            $pending[$countryCode] = $pending[$countryCode] % $effectiveRatio;
 
             $rate     = \App\Models\InstallCountryRate::where('country_code', $countryCode)->where('is_active', true)->value('rate_usd') ?? 0;
             $earnings = $installs * (float) $rate;
