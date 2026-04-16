@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Publisher;
 use App\Http\Controllers\Controller;
 use App\Models\AdButton;
 use App\Models\AdPreset;
+use App\Models\Click;
 use App\Models\TrackingLink;
 
 class AdCodeController extends Controller
@@ -29,7 +30,29 @@ class AdCodeController extends Controller
         $adButtons = AdButton::where('user_id', $user->id)->with(['preset', 'trackingLink'])->get();
         $hasContract = $profile && $profile->contract_type !== 'none';
 
-        return view('publisher.adcode', compact('trackingLinks', 'presets', 'adButtons', 'hasContract', 'profile'));
+        // Compute divider-adjusted click counts per tracking link
+        $divider      = $user->clickDivider;
+        $dividerValue = ($divider && $divider->is_enabled) ? max(1, (float)$divider->divider_value) : 1;
+
+        $linkClickCounts = [];
+        if ($trackingLinks->isNotEmpty()) {
+            $linkIds = $trackingLinks->pluck('id')->all();
+
+            // One query: windows vs non-windows per link
+            $rows = Click::whereIn('tracking_link_id', $linkIds)
+                ->where('is_counted', true)
+                ->selectRaw('tracking_link_id, is_windows, COUNT(*) as cnt')
+                ->groupBy('tracking_link_id', 'is_windows')
+                ->get();
+
+            foreach ($trackingLinks as $link) {
+                $windows    = (int)($rows->where('tracking_link_id', $link->id)->where('is_windows', true)->first()?->cnt ?? 0);
+                $nonWindows = (int)($rows->where('tracking_link_id', $link->id)->where('is_windows', false)->first()?->cnt ?? 0);
+                $linkClickCounts[$link->id] = $nonWindows + (int)floor($windows / $dividerValue);
+            }
+        }
+
+        return view('publisher.adcode', compact('trackingLinks', 'presets', 'adButtons', 'hasContract', 'profile', 'linkClickCounts'));
     }
 
     public function requestAdcode(\Illuminate\Http\Request $request)
