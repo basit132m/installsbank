@@ -12,15 +12,44 @@
 </div>
 
 {{-- Period Filter + Export --}}
-<div style="display:flex;align-items:center;gap:8px;margin-bottom:24px;flex-wrap:wrap;">
+<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap;">
     @foreach(['1' => 'Today', '7' => '7 Days', '30' => '30 Days', '90' => '90 Days', 'all' => 'All Time'] as $val => $label)
-        <a href="?period={{ $val }}" class="btn btn-sm {{ $period == $val ? 'btn-primary' : 'btn-ghost' }}">{{ $label }}</a>
+        <a href="?period={{ $val }}{{ $selectedLink ? '&link_id='.$selectedLink->id : '' }}"
+           class="btn btn-sm {{ $period == $val ? 'btn-primary' : 'btn-ghost' }}">{{ $label }}</a>
     @endforeach
     <a href="{{ route('admin.publishers.stats.export', [$user, 'period' => $period]) }}"
        class="btn btn-sm btn-ghost" style="margin-left:auto;color:#3b82f6;border-color:#3b82f6;">
         ↓ Export CSV
     </a>
 </div>
+
+{{-- Tracking Link Filter --}}
+@if($allLinks->isNotEmpty())
+<div style="display:flex;align-items:center;gap:8px;margin-bottom:20px;flex-wrap:wrap;padding:12px 14px;background:#f9fafb;border:1px solid #e5e7eb;border-radius:10px;">
+    <span style="font-size:12px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:0.05em;flex-shrink:0;">Filter by Link:</span>
+    <a href="?period={{ $period }}"
+       class="btn btn-sm {{ !$selectedLink ? 'btn-primary' : 'btn-ghost' }}"
+       style="font-size:12px;">All Links</a>
+    @foreach($allLinks as $link)
+    <a href="?period={{ $period }}&link_id={{ $link->id }}"
+       class="btn btn-sm {{ $selectedLink?->id === $link->id ? 'btn-primary' : 'btn-ghost' }}"
+       style="font-size:12px;">
+        {{ $link->name ?: $link->unique_code }}
+        <span style="font-size:10px;opacity:0.6;margin-left:3px;">{{ $link->unique_code }}</span>
+    </a>
+    @endforeach
+</div>
+@endif
+
+{{-- Active filter badge --}}
+@if($selectedLink)
+<div style="display:flex;align-items:center;gap:8px;margin-bottom:16px;padding:10px 14px;background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;">
+    <svg width="14" height="14" fill="none" stroke="#3b82f6" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/></svg>
+    <span style="font-size:13px;color:#1e40af;font-weight:600;">Showing stats for: <strong>{{ $selectedLink->name ?: $selectedLink->unique_code }}</strong></span>
+    <code style="font-size:11px;color:#3b82f6;background:#dbeafe;padding:1px 6px;border-radius:4px;">{{ $selectedLink->unique_code }}</code>
+    <a href="?period={{ $period }}" style="margin-left:auto;font-size:12px;color:#6b7280;text-decoration:none;">✕ Clear filter</a>
+</div>
+@endif
 
 {{-- Summary Cards --}}
 <div class="stats-grid mb-6" style="grid-template-columns:repeat(auto-fit,minmax(150px,1fr));">

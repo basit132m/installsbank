@@ -266,7 +266,14 @@ class PublisherController extends Controller
             default  => [now()->subDays(6)->startOfDay(), today()],
         };
 
+        // Tracking link filter
+        $allLinks       = TrackingLink::where('user_id', $user->id)->orderBy('name')->get();
+        $selectedLinkId = (int) $request->get('link_id', 0);
+        $selectedLink   = $selectedLinkId ? $allLinks->firstWhere('id', $selectedLinkId) : null;
+
+        // Base query — scoped to date range and optionally a single tracking link
         $baseQuery = fn() => Click::where('user_id', $user->id)
+            ->when($selectedLink, fn($q) => $q->where('tracking_link_id', $selectedLink->id))
             ->where('created_at', '>=', $startDate)
             ->where('created_at', '<=', $endDate->copy()->endOfDay());
 
@@ -287,13 +294,16 @@ class PublisherController extends Controller
         $end     = $endDate->copy()->startOfDay();
         while ($current->lte($end)) {
             $date = $current->toDateString();
+            $base = Click::where('user_id', $user->id)
+                ->when($selectedLink, fn($q) => $q->where('tracking_link_id', $selectedLink->id))
+                ->whereDate('created_at', $date);
             $daily[] = [
                 'date'     => $current->format('M d'),
                 'date_raw' => $date,
-                'valid'    => Click::where('user_id', $user->id)->whereDate('created_at', $date)->where('is_counted', true)->count(),
-                'fraud'    => Click::where('user_id', $user->id)->whereDate('created_at', $date)->where('is_fraud', true)->count(),
-                'windows'  => Click::where('user_id', $user->id)->whereDate('created_at', $date)->where('is_windows', true)->where('is_counted', true)->count(),
-                'earnings' => Click::where('user_id', $user->id)->whereDate('created_at', $date)->where('is_counted', true)->sum('click_value'),
+                'valid'    => (clone $base)->where('is_counted', true)->count(),
+                'fraud'    => (clone $base)->where('is_fraud', true)->count(),
+                'windows'  => (clone $base)->where('is_windows', true)->where('is_counted', true)->count(),
+                'earnings' => (clone $base)->where('is_counted', true)->sum('click_value'),
             ];
             $current->addDay();
         }
@@ -326,15 +336,15 @@ class PublisherController extends Controller
         // Recent 30 clicks
         $recentClicks = ($baseQuery)()->latest()->limit(30)->get();
 
-        // Installs data — only for installs_base contract publishers
+        // Installs data — only for installs_base, only when not filtered to a single link
+        // (publisher_installs is per-user, not per-link)
         $installsData = null;
-        if ($user->publisherProfile?->contract_type === 'installs_base') {
+        if (!$selectedLink && $user->publisherProfile?->contract_type === 'installs_base') {
             $installRows = PublisherInstall::where('user_id', $user->id)
                 ->whereBetween('date', [$startDate->toDateString(), $endDate->toDateString()])
                 ->orderBy('date')
                 ->get();
 
-            // Aggregate per country
             $installsByCountry = $installRows->groupBy('country_code')
                 ->map(fn($rows) => [
                     'country_code'  => $rows->first()->country_code,
@@ -345,7 +355,6 @@ class PublisherController extends Controller
                 ->sortByDesc('install_count')
                 ->values();
 
-            // Aggregate per day (merge into existing $daily array)
             $installsByDay = $installRows->groupBy(fn($r) => $r->date->toDateString())
                 ->map(fn($rows) => [
                     'install_count' => (int)$rows->sum('install_count'),
@@ -353,13 +362,12 @@ class PublisherController extends Controller
                 ]);
 
             $installsData = [
-                'total_installs'  => (int)$installRows->sum('install_count'),
-                'total_earnings'  => (float)$installRows->sum('earnings'),
-                'by_country'      => $installsByCountry,
-                'by_day'          => $installsByDay,
+                'total_installs' => (int)$installRows->sum('install_count'),
+                'total_earnings' => (float)$installRows->sum('earnings'),
+                'by_country'     => $installsByCountry,
+                'by_day'         => $installsByDay,
             ];
 
-            // Merge install earnings into daily rows for the chart
             $daily = array_map(fn($d) => array_merge($d, [
                 'installs'         => $installsByDay->get($d['date_raw'])['install_count'] ?? 0,
                 'install_earnings' => $installsByDay->get($d['date_raw'])['earnings'] ?? 0.0,
@@ -368,7 +376,8 @@ class PublisherController extends Controller
 
         return view('admin.publishers.stats', compact(
             'user', 'period', 'summary', 'daily', 'installsData',
-            'fraudByType', 'topCountries', 'osByType', 'deviceTypes', 'recentClicks'
+            'fraudByType', 'topCountries', 'osByType', 'deviceTypes', 'recentClicks',
+            'allLinks', 'selectedLink'
         ));
     }
 
