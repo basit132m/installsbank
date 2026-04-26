@@ -429,22 +429,27 @@
     </div>
 </div>
 
-<!-- World Map — Beautiful Dark Design -->
-<div class="card mb-6" id="worldMapCard" style="background:linear-gradient(135deg,#0f172a 0%,#1a2744 100%);overflow:hidden;position:relative;">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+<!-- World Map — Satellite Style -->
+<div class="card mb-6" id="worldMapCard" style="overflow:hidden;padding:0;border:1.5px solid #1a4060;">
+    {{-- Header bar --}}
+    <div style="padding:14px 18px 12px;background:#0f2540;display:flex;align-items:center;justify-content:space-between;">
         <div>
-            <div class="card-title" style="color:#f1f5f9;margin-bottom:2px;">Traffic World Map</div>
-            <div style="font-size:12px;color:#64748b;">Windows click distribution by country · today</div>
+            <div style="font-size:15px;font-weight:700;color:#e2e8f0;letter-spacing:0.01em;">Traffic World Map</div>
+            <div style="font-size:11px;color:#64748b;margin-top:2px;">Windows click distribution by country · today</div>
         </div>
-        <div style="display:flex;align-items:center;gap:6px;font-size:11px;color:#64748b;">
-            <div style="width:50px;height:7px;border-radius:4px;background:linear-gradient(to right,#1e3a2e,#01BF63);"></div>
-            <span>Low → High</span>
+        <div style="display:flex;align-items:center;gap:7px;">
+            <div style="width:54px;height:7px;border-radius:4px;background:linear-gradient(to right,rgba(1,191,99,0.25),#01BF63);"></div>
+            <span style="font-size:11px;color:#94a3b8;">Low → High</span>
         </div>
     </div>
-    <div id="worldMap" style="height:340px;border-radius:10px;overflow:hidden;background:transparent;"></div>
-    <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;padding-top:10px;border-top:1px solid rgba(255,255,255,0.06);">
+    {{-- Satellite image + jsvectormap overlay --}}
+    <div style="position:relative;height:340px;overflow:hidden;background:#1a4a7a;background-image:url('https://upload.wikimedia.org/wikipedia/commons/thumb/2/23/Blue_Marble_2002.png/1280px-Blue_Marble_2002.png');background-size:cover;background-position:center top;">
+        <div id="worldMap" style="position:absolute;inset:0;width:100%;height:100%;"></div>
+    </div>
+    {{-- Country pills strip --}}
+    <div style="padding:10px 14px 14px;background:#0f2540;display:flex;flex-wrap:wrap;gap:6px;">
         @foreach($windowsByCountry->take(8) as $row)
-        <div style="display:flex;align-items:center;gap:5px;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.10);padding:4px 10px;border-radius:20px;">
+        <div style="display:flex;align-items:center;gap:5px;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);padding:4px 10px;border-radius:20px;">
             <img src="https://flagcdn.com/20x15/{{ strtolower($row->country_code) }}.png"
                  style="width:18px;height:13px;border-radius:2px;object-fit:cover;"
                  onerror="this.style.display='none'">
@@ -698,15 +703,15 @@ new ApexCharts(document.getElementById('osPieChart'), {
             zoomOnScroll: false,
             zoomButtons: false,
             regionStyle: {
-                initial:  { fill: '#1e293b', stroke: '#0f172a', strokeWidth: 0.5, fillOpacity: 1 },
-                hover:    { fillOpacity: 0.80, cursor: 'pointer' },
-                selected: { fill: '#1e293b' }
+                initial:  { fill: 'rgba(255,255,255,0.04)', stroke: 'rgba(255,255,255,0.18)', strokeWidth: 0.4, fillOpacity: 1 },
+                hover:    { fill: 'rgba(255,255,255,0.22)', cursor: 'pointer' },
+                selected: { fill: 'rgba(255,255,255,0.04)' }
             },
             series: {
                 regions: [{
                     attribute: 'fill',
                     values: mapValues,
-                    scale: ['#064e3b', '#10b981'],
+                    scale: ['rgba(1,191,99,0.45)', 'rgba(1,191,99,0.92)'],
                     normalizeFunction: 'polynomial',
                     min: 0,
                     max: maxVal
