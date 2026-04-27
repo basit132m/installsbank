@@ -3,99 +3,204 @@
 @section('page-title', $user->name)
 
 @section('content')
-<div style="display:flex;gap:8px;align-items:center;margin-bottom:20px;flex-wrap:wrap;">
-    <a href="{{ route('admin.publishers.index') }}" class="btn btn-ghost btn-sm">← Back</a>
-    <a href="{{ route('admin.publishers.stats', $user) }}" class="btn btn-ghost btn-sm" style="color:#3b82f6;border-color:#3b82f6;">📊 Detailed Stats</a>
-    <span class="badge {{ $user->status === 'active' ? 'badge-success' : ($user->status === 'pending' ? 'badge-warning' : 'badge-danger') }}">{{ ucfirst($user->status) }}</span>
-    @if($user->status === 'pending')
-        <form method="POST" action="{{ route('admin.publishers.activate', $user) }}" style="display:inline;">@csrf<button class="btn btn-success btn-sm">Activate Publisher</button></form>
-    @elseif($user->status === 'active')
-        <form method="POST" action="{{ route('admin.publishers.suspend', $user) }}" style="display:inline;" onsubmit="return confirm('Suspend this publisher?')">@csrf<button class="btn btn-danger btn-sm">Suspend</button></form>
-    @elseif($user->status === 'suspended')
-        <form method="POST" action="{{ route('admin.publishers.activate', $user) }}" style="display:inline;" onsubmit="return confirm('Reactivate this publisher?')">@csrf<button class="btn btn-success btn-sm">Reactivate Publisher</button></form>
-    @endif
-    <form method="POST" action="{{ route('admin.publishers.destroy', $user) }}" style="display:inline;margin-left:auto;"
-          onsubmit="return confirm('DELETE {{ addslashes($user->name) }}?\n\nThis will permanently delete the publisher and ALL their data including clicks, earnings, tracking links, withdrawals, and fraud alerts.\n\nThis cannot be undone.')">
-        @csrf @method('DELETE')
-        <button class="btn btn-danger btn-sm">🗑 Delete Publisher</button>
-    </form>
+@php
+    $statusColor = match($user->status) {
+        'active'    => ['bg'=>'#d1fae5','text'=>'#065f46','dot'=>'#10b981'],
+        'pending'   => ['bg'=>'#fef3c7','text'=>'#92400e','dot'=>'#f59e0b'],
+        'suspended' => ['bg'=>'#fee2e2','text'=>'#991b1b','dot'=>'#ef4444'],
+        default     => ['bg'=>'#f3f4f6','text'=>'#374151','dot'=>'#9ca3af'],
+    };
+    $contractType = $user->publisherProfile?->contract_type ?? 'none';
+    $contractLabel = match($contractType) {
+        'per_click'     => 'Per Click',
+        'fixed'         => 'Fixed Daily',
+        'installs_base' => 'Installs Based',
+        default         => 'No Contract',
+    };
+    $initials = collect(explode(' ', $user->name))->map(fn($w) => strtoupper($w[0] ?? ''))->take(2)->implode('');
+    $tagColors = ['green'=>'#01BF63','blue'=>'#3b82f6','red'=>'#ef4444','amber'=>'#f59e0b','gray'=>'#6b7280','purple'=>'#8b5cf6'];
+@endphp
+
+<!-- Publisher Hero Card -->
+<div class="card mb-5" style="border:1.5px solid #e5e7eb;padding:0;overflow:hidden;">
+    <!-- Top accent bar -->
+    <div style="height:4px;background:linear-gradient(90deg,#01BF63,#3b82f6);"></div>
+    <div style="padding:24px 28px;">
+        <div style="display:flex;gap:20px;align-items:flex-start;flex-wrap:wrap;">
+
+            <!-- Avatar + Name block -->
+            <div style="display:flex;gap:16px;align-items:center;flex:1;min-width:240px;">
+                <div style="width:64px;height:64px;border-radius:16px;background:linear-gradient(135deg,#01BF63,#059669);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:22px;font-weight:900;color:white;letter-spacing:-1px;">
+                    {{ $initials }}
+                </div>
+                <div>
+                    <div style="font-size:20px;font-weight:800;color:#111827;line-height:1.2;margin-bottom:4px;">{{ $user->name }}</div>
+                    <div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center;">
+                        <!-- Status pill -->
+                        <span style="display:inline-flex;align-items:center;gap:5px;background:{{ $statusColor['bg'] }};color:{{ $statusColor['text'] }};padding:3px 10px;border-radius:20px;font-size:12px;font-weight:700;">
+                            <span style="width:6px;height:6px;border-radius:50%;background:{{ $statusColor['dot'] }};display:inline-block;"></span>
+                            {{ ucfirst($user->status) }}
+                        </span>
+                        <!-- Contract pill -->
+                        <span style="display:inline-flex;align-items:center;background:#eff6ff;color:#1d4ed8;padding:3px 10px;border-radius:20px;font-size:12px;font-weight:600;">
+                            {{ $contractLabel }}
+                        </span>
+                        <!-- Payment pill -->
+                        @if($user->publisherProfile?->payment_enabled)
+                        <span style="display:inline-flex;align-items:center;background:#d1fae5;color:#065f46;padding:3px 10px;border-radius:20px;font-size:12px;font-weight:600;">
+                            Payments On
+                        </span>
+                        @else
+                        <span style="display:inline-flex;align-items:center;background:#f3f4f6;color:#6b7280;padding:3px 10px;border-radius:20px;font-size:12px;font-weight:600;">
+                            Payments Off
+                        </span>
+                        @endif
+                        @if($user->publisherProfile?->adcode_requested_at)
+                        <span style="display:inline-flex;align-items:center;background:#fef3c7;color:#92400e;padding:3px 10px;border-radius:20px;font-size:12px;font-weight:600;" title="Requested {{ $user->publisherProfile->adcode_requested_at->format('M d, Y H:i') }}">
+                            Adcode Pending
+                        </span>
+                        @endif
+                        <!-- Tags -->
+                        @foreach($user->publisherTags as $tag)
+                        @php $tc = $tagColors[$tag->color] ?? '#6b7280'; @endphp
+                        <span style="display:inline-flex;align-items:center;background:{{ $tc }}1a;color:{{ $tc }};border:1px solid {{ $tc }}40;padding:3px 10px;border-radius:20px;font-size:12px;font-weight:600;">
+                            {{ $tag->tag }}
+                        </span>
+                        @endforeach
+                    </div>
+                </div>
+            </div>
+
+            <!-- Balance / Earnings -->
+            <div style="display:flex;gap:12px;flex-shrink:0;flex-wrap:wrap;">
+                <div style="background:#f0fdf4;border:1.5px solid #bbf7d0;border-radius:12px;padding:12px 18px;text-align:center;min-width:110px;">
+                    <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:#059669;margin-bottom:2px;">Balance</div>
+                    <div style="font-size:20px;font-weight:900;color:#059669;">${{ number_format($user->publisherProfile?->balance ?? 0, 2) }}</div>
+                </div>
+                <div style="background:#f9fafb;border:1.5px solid #e5e7eb;border-radius:12px;padding:12px 18px;text-align:center;min-width:110px;">
+                    <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:#6b7280;margin-bottom:2px;">Total Earned</div>
+                    <div style="font-size:20px;font-weight:900;color:#374151;">${{ number_format($user->publisherProfile?->total_earnings ?? 0, 2) }}</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Contact info row -->
+        <div style="display:flex;flex-wrap:wrap;gap:20px;margin-top:18px;padding-top:18px;border-top:1px solid #f3f4f6;">
+            <div style="display:flex;align-items:center;gap:7px;font-size:13px;color:#374151;">
+                <svg width="14" height="14" fill="none" stroke="#9ca3af" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+                <span style="color:#6b7280;">{{ $user->email }}</span>
+            </div>
+            @if($user->phone)
+            <div style="display:flex;align-items:center;gap:7px;font-size:13px;color:#374151;">
+                <svg width="14" height="14" fill="none" stroke="#9ca3af" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg>
+                <span style="color:#6b7280;">{{ $user->phone }}</span>
+            </div>
+            @endif
+            @if($user->telegram)
+            <div style="display:flex;align-items:center;gap:7px;font-size:13px;color:#374151;">
+                <svg width="14" height="14" fill="currentColor" viewBox="0 0 24 24" style="color:#9ca3af;"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.894 8.221-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.447 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.12L7.085 13.86l-2.96-.924c-.643-.204-.657-.643.136-.953l11.57-4.461c.537-.194 1.006.131.834.7z"/></svg>
+                <span style="color:#6b7280;">{{ $user->telegram }}</span>
+            </div>
+            @endif
+            @if($user->website)
+            <div style="display:flex;align-items:center;gap:7px;font-size:13px;">
+                <svg width="14" height="14" fill="none" stroke="#9ca3af" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/></svg>
+                <a href="{{ $user->website }}" target="_blank" style="color:#01BF63;font-weight:600;">{{ parse_url($user->website, PHP_URL_HOST) ?: $user->website }}</a>
+            </div>
+            @endif
+            <div style="display:flex;align-items:center;gap:7px;font-size:13px;color:#9ca3af;">
+                <svg width="14" height="14" fill="none" stroke="#9ca3af" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                Joined {{ $user->created_at->format('M d, Y') }}
+            </div>
+            <div style="display:flex;align-items:center;gap:7px;font-size:13px;color:#9ca3af;">
+                <svg width="14" height="14" fill="none" stroke="#9ca3af" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                Last login {{ $user->last_login_at?->diffForHumans() ?? 'never' }}
+            </div>
+        </div>
+
+        <!-- Action buttons row -->
+        <div style="display:flex;gap:8px;align-items:center;margin-top:18px;padding-top:16px;border-top:1px solid #f3f4f6;flex-wrap:wrap;">
+            <a href="{{ route('admin.publishers.index') }}" class="btn btn-ghost btn-sm">← All Publishers</a>
+            <a href="{{ route('admin.publishers.stats', $user) }}" class="btn btn-ghost btn-sm" style="color:#3b82f6;border-color:#bfdbfe;background:#eff6ff;">
+                <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" style="margin-right:5px;vertical-align:-2px;"><path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+                Detailed Stats
+            </a>
+            @if($user->status === 'pending')
+                <form method="POST" action="{{ route('admin.publishers.activate', $user) }}" style="display:inline;">@csrf
+                    <button class="btn btn-success btn-sm">Activate Publisher</button>
+                </form>
+            @elseif($user->status === 'active')
+                <form method="POST" action="{{ route('admin.publishers.suspend', $user) }}" style="display:inline;" onsubmit="return confirm('Suspend this publisher?')">@csrf
+                    <button class="btn btn-danger btn-sm">Suspend</button>
+                </form>
+            @elseif($user->status === 'suspended')
+                <form method="POST" action="{{ route('admin.publishers.activate', $user) }}" style="display:inline;" onsubmit="return confirm('Reactivate this publisher?')">@csrf
+                    <button class="btn btn-success btn-sm">Reactivate Publisher</button>
+                </form>
+            @endif
+            <form method="POST" action="{{ route('admin.publishers.destroy', $user) }}" style="display:inline;margin-left:auto;"
+                  onsubmit="return confirm('DELETE {{ addslashes($user->name) }}?\n\nThis permanently deletes ALL data including clicks, earnings, tracking links, withdrawals, and fraud alerts.\n\nThis cannot be undone.')">
+                @csrf @method('DELETE')
+                <button class="btn btn-danger btn-sm" style="background:#fee2e2;color:#991b1b;border-color:#fca5a5;">
+                    <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" style="margin-right:4px;vertical-align:-2px;"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                    Delete Publisher
+                </button>
+            </form>
+        </div>
+    </div>
 </div>
 
-<!-- Publisher Info + Quick Stats -->
-<div class="grid-2 mb-6">
-    <div class="card">
-        <div class="card-title mb-4">Publisher Information</div>
-        <table style="width:100%;">
-            <tr><td style="color:#6b7280;font-size:13px;padding:6px 0;width:40%;">Email</td><td style="font-size:14px;">{{ $user->email }}</td></tr>
-            <tr><td style="color:#6b7280;font-size:13px;padding:6px 0;">Phone</td><td style="font-size:14px;">{{ $user->phone ?? '—' }}</td></tr>
-            <tr><td style="color:#6b7280;font-size:13px;padding:6px 0;">Telegram</td><td style="font-size:14px;">{{ $user->telegram ?? '—' }}</td></tr>
-            <tr><td style="color:#6b7280;font-size:13px;padding:6px 0;">Website</td><td style="font-size:14px;"><a href="{{ $user->website }}" target="_blank" style="color:#01BF63;">{{ $user->website ?? '—' }}</a></td></tr>
-            <tr><td style="color:#6b7280;font-size:13px;padding:6px 0;">Registered</td><td style="font-size:14px;">{{ $user->created_at->format('M d, Y H:i') }}</td></tr>
-            <tr><td style="color:#6b7280;font-size:13px;padding:6px 0;">Last Login</td><td style="font-size:14px;">{{ $user->last_login_at?->diffForHumans() ?? 'Never' }}</td></tr>
-            <tr><td style="color:#6b7280;font-size:13px;padding:6px 0;">Contract</td><td><span class="badge {{ $user->publisherProfile?->contract_type !== 'none' ? 'badge-primary' : 'badge-gray' }}">{{ ucfirst($user->publisherProfile?->contract_type ?? 'none') }}</span>
-                @if($user->publisherProfile?->adcode_requested_at)
-                <span class="badge badge-warning" style="margin-left:4px;" title="Requested {{ $user->publisherProfile->adcode_requested_at->format('M d, Y H:i') }}">Adcode Requested</span>
-                @endif
-            </td></tr>
-            <tr><td style="color:#6b7280;font-size:13px;padding:6px 0;">Payment Enabled</td><td><span class="badge {{ $user->publisherProfile?->payment_enabled ? 'badge-success' : 'badge-gray' }}">{{ $user->publisherProfile?->payment_enabled ? 'Yes' : 'No' }}</span></td></tr>
-        </table>
-
-        @if($user->stat_screenshots && count($user->stat_screenshots) > 0)
-        <div style="margin-top:20px;padding-top:16px;border-top:1px solid #f3f4f6;">
-            <div style="font-size:13px;font-weight:700;color:#374151;margin-bottom:10px;">
-                📊 Submitted Statistics Screenshots
-                <span style="background:#e6faf2;color:#065f46;font-size:11px;font-weight:600;padding:2px 8px;border-radius:10px;margin-left:6px;">{{ count($user->stat_screenshots) }} file(s)</span>
-            </div>
-            <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px;">
-                @foreach($user->stat_screenshots as $i => $path)
-                <a href="{{ asset('storage/' . $path) }}" target="_blank"
-                   style="display:block;border-radius:8px;overflow:hidden;border:1.5px solid #e5e7eb;transition:border-color 0.15s;position:relative;"
-                   onmouseover="this.style.borderColor='#01BF63'" onmouseout="this.style.borderColor='#e5e7eb'">
-                    <img src="{{ asset('storage/' . $path) }}" alt="Screenshot {{ $i+1 }}"
-                         style="width:100%;height:90px;object-fit:cover;display:block;">
-                    <div style="background:#f9fafb;padding:4px 8px;font-size:11px;color:#6b7280;font-weight:600;">
-                        Screenshot {{ $i+1 }} — click to view full
-                    </div>
-                </a>
-                @endforeach
-            </div>
+<!-- Screenshots (if any) -->
+@if($user->stat_screenshots && count($user->stat_screenshots) > 0)
+<div class="card mb-5">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
+        <div style="width:32px;height:32px;background:#eff6ff;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+            <svg width="16" height="16" fill="none" stroke="#3b82f6" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
         </div>
-        @else
-        <div style="margin-top:16px;padding:10px 14px;background:#fff7ed;border-radius:8px;font-size:12px;color:#92400e;">
-            ⚠️ No statistics screenshots submitted with this application.
-        </div>
-        @endif
-    </div>
-
-    <div class="card">
-        <div class="card-title mb-4">Click Statistics</div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-            <div style="background:#f9fafb;border-radius:8px;padding:14px;">
-                <div style="font-size:22px;font-weight:800;color:#01BF63;">{{ number_format($clickStats['today']) }}</div>
-                <div style="font-size:12px;color:#6b7280;">Valid Clicks Today</div>
-            </div>
-            <div style="background:#fff7ed;border-radius:8px;padding:14px;">
-                <div style="font-size:22px;font-weight:800;color:#f59e0b;">{{ number_format($clickStats['today_windows']) }}</div>
-                <div style="font-size:12px;color:#6b7280;">Windows Clicks Today (shown)</div>
-            </div>
-            <div style="background:#f0fdf4;border-radius:8px;padding:14px;">
-                <div style="font-size:22px;font-weight:800;color:#111827;">{{ number_format($clickStats['total_actual_windows']) }}</div>
-                <div style="font-size:12px;color:#6b7280;font-weight:600;">Actual Windows (Admin View)</div>
-            </div>
-            <div style="background:#fee2e2;border-radius:8px;padding:14px;">
-                <div style="font-size:22px;font-weight:800;color:#ef4444;">{{ number_format($clickStats['today_fraud']) }}</div>
-                <div style="font-size:12px;color:#6b7280;">Fraud Clicks Today</div>
-            </div>
-            <div style="background:#f9fafb;border-radius:8px;padding:14px;">
-                <div style="font-size:22px;font-weight:800;">{{ number_format($clickStats['this_week']) }}</div>
-                <div style="font-size:12px;color:#6b7280;">This Week</div>
-            </div>
-            <div style="background:#f9fafb;border-radius:8px;padding:14px;">
-                <div style="font-size:22px;font-weight:800;">{{ number_format($clickStats['total']) }}</div>
-                <div style="font-size:12px;color:#6b7280;">All Time Valid</div>
-            </div>
+        <div>
+            <div style="font-size:14px;font-weight:700;color:#111827;">Submitted Statistics Screenshots</div>
+            <div style="font-size:12px;color:#6b7280;">{{ count($user->stat_screenshots) }} file(s) submitted with application</div>
         </div>
     </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;">
+        @foreach($user->stat_screenshots as $i => $path)
+        <a href="{{ asset('storage/' . $path) }}" target="_blank"
+           style="display:block;border-radius:10px;overflow:hidden;border:1.5px solid #e5e7eb;transition:all 0.15s;"
+           onmouseover="this.style.borderColor='#01BF63';this.style.transform='translateY(-1px)'" onmouseout="this.style.borderColor='#e5e7eb';this.style.transform=''">
+            <img src="{{ asset('storage/' . $path) }}" alt="Screenshot {{ $i+1 }}"
+                 style="width:100%;height:95px;object-fit:cover;display:block;">
+            <div style="background:#f9fafb;padding:5px 8px;font-size:11px;color:#6b7280;font-weight:600;text-align:center;">
+                Screenshot {{ $i+1 }}
+            </div>
+        </a>
+        @endforeach
+    </div>
+</div>
+@endif
+
+<!-- Click Stats Strip -->
+@php
+    $statCards = [
+        ['label'=>'Valid Clicks Today',        'value'=>number_format($clickStats['today']),                'color'=>'#01BF63','bg'=>'#f0fdf4','border'=>'#bbf7d0','icon'=>'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z'],
+        ['label'=>'This Week',                 'value'=>number_format($clickStats['this_week']),            'color'=>'#3b82f6','bg'=>'#eff6ff','border'=>'#bfdbfe','icon'=>'M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z'],
+        ['label'=>'All Time Valid',            'value'=>number_format($clickStats['total']),                'color'=>'#111827','bg'=>'#f9fafb','border'=>'#e5e7eb','icon'=>'M13 7h8m0 0v8m0-8l-8 8-4-4-6 6'],
+        ['label'=>'Windows Today (Shown)',     'value'=>number_format($clickStats['today_windows']),        'color'=>'#d97706','bg'=>'#fffbeb','border'=>'#fde68a','icon'=>'M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z'],
+        ['label'=>'Actual Windows (Raw)',      'value'=>number_format($clickStats['total_actual_windows']), 'color'=>'#ea580c','bg'=>'#fff7ed','border'=>'#fed7aa','icon'=>'M15 12a3 3 0 11-6 0 3 3 0 016 0z M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z'],
+        ['label'=>'Fraud Clicks Today',        'value'=>number_format($clickStats['today_fraud']),          'color'=>'#ef4444','bg'=>'#fef2f2','border'=>'#fecaca','icon'=>'M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z'],
+    ];
+@endphp
+<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px;">
+    @foreach($statCards as $sc)
+    <div style="background:{{ $sc['bg'] }};border:1.5px solid {{ $sc['border'] }};border-radius:12px;padding:16px 18px;display:flex;align-items:center;gap:14px;">
+        <div style="width:40px;height:40px;background:white;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 1px 3px rgba(0,0,0,0.06);">
+            <svg width="18" height="18" fill="none" stroke="{{ $sc['color'] }}" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="{{ $sc['icon'] }}"/></svg>
+        </div>
+        <div>
+            <div style="font-size:22px;font-weight:800;color:{{ $sc['color'] }};line-height:1;">{{ $sc['value'] }}</div>
+            <div style="font-size:12px;color:#6b7280;margin-top:2px;">{{ $sc['label'] }}</div>
+        </div>
+    </div>
+    @endforeach
 </div>
 
 <!-- Install Earnings Comparison (installs_base only) -->
@@ -222,11 +327,27 @@
 
 <!-- Click Chart -->
 <div class="card mb-6">
-    <div class="card-title mb-4">Click History (Last 14 Days)</div>
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:18px;">
+        <div style="width:36px;height:36px;background:#f0fdf4;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+            <svg width="18" height="18" fill="none" stroke="#01BF63" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z"/></svg>
+        </div>
+        <div>
+            <div class="card-title" style="margin-bottom:1px;">Click History</div>
+            <div style="font-size:12px;color:#9ca3af;">Last 14 days — valid, Windows (actual), and fraud</div>
+        </div>
+        <a href="{{ route('admin.publishers.stats', $user) }}" style="margin-left:auto;font-size:12px;color:#3b82f6;font-weight:600;text-decoration:none;">
+            View full stats →
+        </a>
+    </div>
     <div id="publisherClickChart"></div>
 </div>
 
-<!-- Management Actions Row -->
+<!-- Section: Management -->
+<div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;margin-top:8px;">
+    <div style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:0.08em;color:#9ca3af;white-space:nowrap;">Management</div>
+    <div style="flex:1;height:1px;background:#e5e7eb;"></div>
+</div>
+
 <div class="grid-3 mb-6">
     <!-- Click Divider -->
     <div class="card">
@@ -401,70 +522,114 @@
 </div>
 @endif
 
-<!-- Payment Settings -->
-<div class="card mb-6">
-    <div class="flex-between">
-        <div>
-            <div class="card-title">Payment & Earnings Settings</div>
-            <div class="card-subtitle">Balance: <strong style="color:#01BF63;">${{ number_format($user->publisherProfile?->balance ?? 0, 4) }}</strong> · Total Earned: <strong>${{ number_format($user->publisherProfile?->total_earnings ?? 0, 4) }}</strong></div>
+<!-- Section: Publisher Settings -->
+<div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;margin-top:8px;">
+    <div style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:0.08em;color:#9ca3af;white-space:nowrap;">Publisher Settings</div>
+    <div style="flex:1;height:1px;background:#e5e7eb;"></div>
+</div>
+
+<!-- Payment Settings + Tags side by side -->
+<div class="grid-2 mb-6">
+    <!-- Payment Settings -->
+    <div class="card" style="border:1.5px solid #e5e7eb;">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;">
+            <div style="width:34px;height:34px;background:#f0fdf4;border-radius:9px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                <svg width="16" height="16" fill="none" stroke="#01BF63" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            </div>
+            <div>
+                <div class="card-title" style="margin-bottom:1px;">Payment Settings</div>
+                <div style="font-size:12px;color:#9ca3af;">Control payment processing for this publisher</div>
+            </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;">
+            <div style="background:#f0fdf4;border-radius:10px;padding:12px;text-align:center;">
+                <div style="font-size:18px;font-weight:800;color:#059669;">${{ number_format($user->publisherProfile?->balance ?? 0, 4) }}</div>
+                <div style="font-size:11px;color:#6b7280;margin-top:2px;">Current Balance</div>
+            </div>
+            <div style="background:#f9fafb;border-radius:10px;padding:12px;text-align:center;">
+                <div style="font-size:18px;font-weight:800;color:#374151;">${{ number_format($user->publisherProfile?->total_earnings ?? 0, 4) }}</div>
+                <div style="font-size:11px;color:#6b7280;margin-top:2px;">Total Earned</div>
+            </div>
         </div>
         <form method="POST" action="{{ route('admin.publishers.payment-status', $user) }}">
             @csrf
-            <div style="display:flex;align-items:center;gap:10px;">
-                <span style="font-size:13px;font-weight:500;">Enable Payments:</span>
+            <div class="toggle-wrap">
                 <label class="toggle"><input type="checkbox" name="payment_enabled" value="1" {{ $user->publisherProfile?->payment_enabled ? 'checked' : '' }} onchange="this.form.submit()"><span class="toggle-slider"></span></label>
+                <div>
+                    <span style="font-size:13px;font-weight:600;">Enable Payments</span>
+                    <div style="font-size:11px;color:#9ca3af;">Publisher can receive payouts when enabled</div>
+                </div>
             </div>
+        </form>
+    </div>
+
+    <!-- Publisher Tags -->
+    <div class="card" style="border:1.5px solid #e5e7eb;">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;">
+            <div style="width:34px;height:34px;background:#eff6ff;border-radius:9px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                <svg width="16" height="16" fill="none" stroke="#3b82f6" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/></svg>
+            </div>
+            <div>
+                <div class="card-title" style="margin-bottom:1px;">Publisher Tags</div>
+                <div style="font-size:12px;color:#9ca3af;">Internal labels for categorizing this publisher</div>
+            </div>
+        </div>
+        <div style="display:flex;flex-wrap:wrap;gap:7px;margin-bottom:14px;min-height:32px;">
+            @forelse($user->publisherTags as $tag)
+            @php $tc = $tagColors[$tag->color] ?? '#6b7280'; @endphp
+            <span style="display:inline-flex;align-items:center;gap:5px;background:{{ $tc }}1a;color:{{ $tc }};border:1px solid {{ $tc }}40;padding:4px 10px;border-radius:20px;font-size:12px;font-weight:600;">
+                {{ $tag->tag }}
+                <form method="POST" action="{{ route('admin.publishers.tags.remove', $user) }}" style="display:inline;">
+                    @csrf @method('DELETE')
+                    <input type="hidden" name="tag" value="{{ $tag->tag }}">
+                    <button type="submit" style="background:none;border:none;cursor:pointer;color:{{ $tc }};font-size:15px;line-height:1;padding:0;margin-left:1px;">×</button>
+                </form>
+            </span>
+            @empty
+            <span style="color:#9ca3af;font-size:13px;line-height:32px;">No tags yet</span>
+            @endforelse
+        </div>
+        <form method="POST" action="{{ route('admin.publishers.tags.add', $user) }}" style="display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;">
+            @csrf
+            <div class="form-group" style="margin:0;flex:1;min-width:120px;">
+                <label class="form-label">Tag Name</label>
+                <input type="text" name="tag" class="form-control" placeholder="e.g. VIP, Trusted" maxlength="50" required>
+            </div>
+            <div class="form-group" style="margin:0;width:100px;">
+                <label class="form-label">Color</label>
+                <select name="color" class="form-control form-select">
+                    <option value="green">Green</option>
+                    <option value="blue">Blue</option>
+                    <option value="amber">Amber</option>
+                    <option value="red">Red</option>
+                    <option value="purple">Purple</option>
+                    <option value="gray">Gray</option>
+                </select>
+            </div>
+            <button type="submit" class="btn btn-primary btn-sm" style="height:38px;">Add</button>
         </form>
     </div>
 </div>
 
-<!-- Publisher Tags -->
-<div class="card mb-6">
-    <div class="card-title mb-3">Publisher Tags</div>
-    <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px;">
-        @forelse($user->publisherTags as $tag)
-        @php
-            $tagColors = ['green'=>'#01BF63','blue'=>'#3b82f6','red'=>'#ef4444','amber'=>'#f59e0b','gray'=>'#6b7280','purple'=>'#8b5cf6'];
-            $tc = $tagColors[$tag->color] ?? '#6b7280';
-        @endphp
-        <span style="display:inline-flex;align-items:center;gap:6px;background:{{ $tc }}1a;color:{{ $tc }};border:1px solid {{ $tc }}40;padding:4px 12px;border-radius:20px;font-size:13px;font-weight:600;">
-            {{ $tag->tag }}
-            <form method="POST" action="{{ route('admin.publishers.tags.remove', $user) }}" style="display:inline;">
-                @csrf @method('DELETE')
-                <input type="hidden" name="tag" value="{{ $tag->tag }}">
-                <button type="submit" style="background:none;border:none;cursor:pointer;color:{{ $tc }};font-size:14px;line-height:1;padding:0;">×</button>
-            </form>
-        </span>
-        @empty
-        <span style="color:#9ca3af;font-size:13px;">No tags yet</span>
-        @endforelse
-    </div>
-    <form method="POST" action="{{ route('admin.publishers.tags.add', $user) }}" style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;">
-        @csrf
-        <div class="form-group" style="margin:0;flex:1;min-width:150px;">
-            <label class="form-label">Tag Name</label>
-            <input type="text" name="tag" class="form-control" placeholder="e.g. Trusted, VIP, Review" maxlength="50" required>
-        </div>
-        <div class="form-group" style="margin:0;">
-            <label class="form-label">Color</label>
-            <select name="color" class="form-control form-select">
-                <option value="green">Green</option>
-                <option value="blue">Blue</option>
-                <option value="amber">Amber</option>
-                <option value="red">Red</option>
-                <option value="purple">Purple</option>
-                <option value="gray">Gray</option>
-            </select>
-        </div>
-        <button type="submit" class="btn btn-primary">Add Tag</button>
-    </form>
+<!-- Section: Security -->
+<div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;margin-top:8px;">
+    <div style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:0.08em;color:#9ca3af;white-space:nowrap;">Security & Fraud</div>
+    <div style="flex:1;height:1px;background:#e5e7eb;"></div>
 </div>
 
-<!-- Fraud Detection Settings -->
-<!-- Domain Restriction Toggle -->
-<div class="card mb-6">
-    <div class="card-title mb-1">Referrer Domain Restriction</div>
-    <div class="card-subtitle mb-4" style="font-size:12px;">When enabled, only clicks whose HTTP Referer matches the publisher's allowed domain will be counted. Disable if you want to track clicks from any referring source.</div>
+<!-- Domain Restriction + Fraud Detection side by side -->
+<div class="grid-2 mb-6">
+<!-- Domain Restriction card -->
+<div class="card" style="border:1.5px solid #e5e7eb;">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;">
+        <div style="width:34px;height:34px;background:#fff7ed;border-radius:9px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+            <svg width="16" height="16" fill="none" stroke="#d97706" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/></svg>
+        </div>
+        <div>
+            <div class="card-title" style="margin-bottom:1px;">Domain Restriction</div>
+            <div style="font-size:12px;color:#9ca3af;">Control which referrer sources are accepted</div>
+        </div>
+    </div>
     <form method="POST" action="{{ route('admin.publishers.settings', $user) }}">
         @csrf
         <div class="toggle-wrap mb-4">
@@ -475,109 +640,159 @@
             </label>
             <div>
                 <span style="font-size:13px;font-weight:600;">Enforce Domain Restriction</span>
-                <div style="font-size:11px;color:#9ca3af;">Only count clicks that originate from the publisher's registered domain</div>
+                <div style="font-size:11px;color:#9ca3af;">Only count clicks from the publisher's registered domain. Disable to accept any referrer.</div>
             </div>
         </div>
+        @if($user->website)
+        <div style="background:#f9fafb;border-radius:8px;padding:10px 12px;margin-bottom:14px;font-size:12px;color:#6b7280;">
+            Registered domain: <strong style="color:#374151;">{{ parse_url($user->website, PHP_URL_HOST) ?: $user->website }}</strong>
+        </div>
+        @endif
         <button type="submit" class="btn btn-primary btn-sm">Save Setting</button>
     </form>
 </div>
 
-<div class="card mb-6">
-    <div class="card-title mb-1">Fraud Detection Settings</div>
-    <div class="card-subtitle mb-4" style="font-size:12px;">These checks only apply to this publisher. Enable only what is needed to avoid false positives.</div>
+<!-- Fraud Detection card -->
+<div class="card" style="border:1.5px solid #e5e7eb;">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;">
+        <div style="width:34px;height:34px;background:#fef2f2;border-radius:9px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+            <svg width="16" height="16" fill="none" stroke="#ef4444" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+        </div>
+        <div>
+            <div class="card-title" style="margin-bottom:1px;">Fraud Detection</div>
+            <div style="font-size:12px;color:#9ca3af;">Per-publisher fraud checks — enable only what is needed</div>
+        </div>
+    </div>
     <form method="POST" action="{{ route('admin.publishers.fraud-settings', $user) }}">
         @csrf
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px;">
+        <div class="toggle-wrap mb-3">
+            <label class="toggle"><input type="checkbox" name="fraud_headless_browser" value="1" {{ $user->publisherProfile?->fraud_headless_browser ? 'checked' : '' }}><span class="toggle-slider"></span></label>
             <div>
-                <div class="toggle-wrap mb-3">
-                    <label class="toggle"><input type="checkbox" name="fraud_headless_browser" value="1" {{ $user->publisherProfile?->fraud_headless_browser ? 'checked' : '' }}><span class="toggle-slider"></span></label>
-                    <div>
-                        <span style="font-size:13px;font-weight:600;">Headless Browser Detection</span>
-                        <div style="font-size:11px;color:#9ca3af;">Blocks automation tools (Selenium, Puppeteer, PhantomJS)</div>
-                    </div>
-                </div>
-                <div class="toggle-wrap mb-3">
-                    <label class="toggle"><input type="checkbox" name="fraud_country_mismatch" value="1" {{ $user->publisherProfile?->fraud_country_mismatch ? 'checked' : '' }}><span class="toggle-slider"></span></label>
-                    <div>
-                        <span style="font-size:13px;font-weight:600;">Country Mismatch Detection</span>
-                        <div style="font-size:11px;color:#9ca3af;">Flags clicks where IP country doesn't match browser language</div>
-                    </div>
-                </div>
-                <div class="toggle-wrap">
-                    <label class="toggle"><input type="checkbox" name="fraud_suspicious_referrer" value="1" {{ $user->publisherProfile?->fraud_suspicious_referrer ? 'checked' : '' }}><span class="toggle-slider"></span></label>
-                    <div>
-                        <span style="font-size:13px;font-weight:600;">Suspicious Referrer Detection</span>
-                        <div style="font-size:11px;color:#9ca3af;">Blocks traffic from known exchanges, PTC, and bot farms</div>
-                    </div>
-                </div>
-            </div>
-            <div>
-                <label class="form-label">Country Whitelist (comma-separated codes)</label>
-                <input type="text" name="allowed_countries" class="form-control" style="margin-bottom:6px;"
-                    value="{{ $user->publisherProfile?->allowed_countries ? implode(', ', $user->publisherProfile->allowed_countries) : '' }}"
-                    placeholder="e.g. ID, PK, US — leave empty to allow all">
-                <div style="font-size:11px;color:#9ca3af;">Only clicks from these countries will be accepted. Leave blank to allow all countries.</div>
+                <span style="font-size:13px;font-weight:600;">Headless Browser Detection</span>
+                <div style="font-size:11px;color:#9ca3af;">Blocks Selenium, Puppeteer, PhantomJS</div>
             </div>
         </div>
-        <button type="submit" class="btn btn-primary">Save Fraud Settings</button>
+        <div class="toggle-wrap mb-3">
+            <label class="toggle"><input type="checkbox" name="fraud_country_mismatch" value="1" {{ $user->publisherProfile?->fraud_country_mismatch ? 'checked' : '' }}><span class="toggle-slider"></span></label>
+            <div>
+                <span style="font-size:13px;font-weight:600;">Country Mismatch Detection</span>
+                <div style="font-size:11px;color:#9ca3af;">Flags IP country vs. browser language mismatch</div>
+            </div>
+        </div>
+        <div class="toggle-wrap mb-4">
+            <label class="toggle"><input type="checkbox" name="fraud_suspicious_referrer" value="1" {{ $user->publisherProfile?->fraud_suspicious_referrer ? 'checked' : '' }}><span class="toggle-slider"></span></label>
+            <div>
+                <span style="font-size:13px;font-weight:600;">Suspicious Referrer Detection</span>
+                <div style="font-size:11px;color:#9ca3af;">Blocks known exchanges, PTC, and bot farms</div>
+            </div>
+        </div>
+        <div class="form-group mb-4">
+            <label class="form-label">Country Whitelist <span style="font-weight:400;color:#9ca3af;">(comma-separated, e.g. ID, PK, US)</span></label>
+            <input type="text" name="allowed_countries" class="form-control"
+                value="{{ $user->publisherProfile?->allowed_countries ? implode(', ', $user->publisherProfile->allowed_countries) : '' }}"
+                placeholder="Leave empty to allow all countries">
+        </div>
+        <button type="submit" class="btn btn-primary btn-sm">Save Fraud Settings</button>
     </form>
+</div>
+</div>{{-- end grid-2 --}}
+
+<!-- Section: Assets -->
+<div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;margin-top:24px;">
+    <div style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:0.08em;color:#9ca3af;white-space:nowrap;">Tracking Links & Websites</div>
+    <div style="flex:1;height:1px;background:#e5e7eb;"></div>
 </div>
 
 <!-- Tracking Links -->
-<div class="card">
-    <div class="flex-between mb-4">
-        <div class="card-title">Tracking Links</div>
-        <a href="{{ route('admin.tracking.create') }}" class="btn btn-primary btn-sm">+ Add Link</a>
+@php
+    $maxClicks = $user->trackingLinks->max('unique_clicks') ?: 1;
+@endphp
+<div class="card mb-5">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:18px;">
+        <div style="width:36px;height:36px;background:#f0fdf4;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+            <svg width="18" height="18" fill="none" stroke="#01BF63" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/></svg>
+        </div>
+        <div>
+            <div class="card-title" style="margin-bottom:1px;">Tracking Links</div>
+            <div style="font-size:12px;color:#9ca3af;">{{ $user->trackingLinks->count() }} link(s) assigned to this publisher</div>
+        </div>
+        <a href="{{ route('admin.tracking.create') }}" class="btn btn-primary btn-sm" style="margin-left:auto;">+ Add Link</a>
     </div>
     @forelse($user->trackingLinks as $link)
-    <div style="display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid #f3f4f6;">
-        <div style="flex:1;">
-            <div style="font-size:13px;font-weight:600;">{{ $link->name ?: 'Unnamed Link' }}</div>
-            <div style="font-size:11px;color:#9ca3af;font-family:monospace;">{{ $link->tracking_url }}</div>
+    @php $pct = $maxClicks > 0 ? round(($link->unique_clicks / $maxClicks) * 100) : 0; @endphp
+    <div style="padding:14px 0;border-bottom:1px solid #f3f4f6;">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px;">
+            <!-- Status dot -->
+            <div style="width:8px;height:8px;border-radius:50%;background:{{ $link->is_active ? '#10b981' : '#ef4444' }};flex-shrink:0;margin-top:1px;"></div>
+            <div style="flex:1;min-width:0;">
+                <div style="font-size:13px;font-weight:700;color:#111827;">{{ $link->name ?: 'Unnamed Link' }}</div>
+                <div style="font-size:11px;color:#9ca3af;font-family:monospace;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ $link->tracking_url }}</div>
+            </div>
+            <div style="text-align:right;flex-shrink:0;">
+                <div style="font-size:16px;font-weight:800;color:#111827;">{{ number_format($link->unique_clicks) }}</div>
+                <div style="font-size:10px;color:#9ca3af;text-transform:uppercase;letter-spacing:0.04em;">valid clicks</div>
+            </div>
+            <div style="text-align:right;flex-shrink:0;min-width:52px;">
+                <div style="font-size:14px;font-weight:700;color:#ef4444;">{{ number_format($link->fraud_clicks) }}</div>
+                <div style="font-size:10px;color:#9ca3af;text-transform:uppercase;letter-spacing:0.04em;">fraud</div>
+            </div>
+            <span class="badge {{ $link->is_active ? 'badge-success' : 'badge-danger' }}" style="flex-shrink:0;">{{ $link->is_active ? 'Active' : 'Off' }}</span>
         </div>
-        <div style="text-align:center;">
-            <div style="font-size:16px;font-weight:700;">{{ number_format($link->unique_clicks) }}</div>
-            <div style="font-size:11px;color:#6b7280;">Unique</div>
+        <!-- Click share bar -->
+        <div style="margin-left:20px;">
+            <div style="height:4px;background:#f3f4f6;border-radius:4px;overflow:hidden;">
+                <div style="height:100%;width:{{ $pct }}%;background:linear-gradient(90deg,#01BF63,#3b82f6);border-radius:4px;transition:width 0.4s;"></div>
+            </div>
         </div>
-        <div style="text-align:center;">
-            <div style="font-size:16px;font-weight:700;color:#ef4444;">{{ number_format($link->fraud_clicks) }}</div>
-            <div style="font-size:11px;color:#6b7280;">Fraud</div>
-        </div>
-        <span class="badge {{ $link->is_active ? 'badge-success' : 'badge-danger' }}">{{ $link->is_active ? 'Active' : 'Inactive' }}</span>
     </div>
     @empty
-    <div style="text-align:center;padding:24px;color:#9ca3af;">No tracking links yet</div>
+    <div style="text-align:center;padding:32px;color:#9ca3af;">
+        <svg width="32" height="32" fill="none" stroke="#d1d5db" viewBox="0 0 24 24" stroke-width="1.5" style="margin:0 auto 8px;display:block;"><path stroke-linecap="round" stroke-linejoin="round" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/></svg>
+        No tracking links assigned yet
+    </div>
     @endforelse
 </div>
 
 <!-- Publisher Websites -->
 {{-- $publisherWebsites loaded defensively in controller --}}
-<div class="card mt-6">
-    <div class="flex-between mb-4">
-        <div>
-            <div class="card-title">Submitted Websites</div>
-            <div class="card-subtitle">Websites this publisher has registered for separate ad codes</div>
+<div class="card">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:18px;">
+        <div style="width:36px;height:36px;background:#eff6ff;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+            <svg width="18" height="18" fill="none" stroke="#3b82f6" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"/></svg>
         </div>
-        <a href="{{ route('admin.publisher-websites.index') }}" class="btn btn-ghost btn-sm">View All Requests →</a>
+        <div>
+            <div class="card-title" style="margin-bottom:1px;">Submitted Websites</div>
+            <div style="font-size:12px;color:#9ca3af;">Websites registered by this publisher for additional ad codes</div>
+        </div>
+        <a href="{{ route('admin.publisher-websites.index') }}" class="btn btn-ghost btn-sm" style="margin-left:auto;">View All →</a>
     </div>
     @forelse($publisherWebsites as $website)
     <div style="display:flex;align-items:center;gap:14px;padding:12px 0;border-bottom:1px solid #f3f4f6;flex-wrap:wrap;">
-        <div style="flex:1;min-width:180px;">
-            <div style="font-size:13px;font-weight:600;">{{ $website->domain }}</div>
+        <div style="width:36px;height:36px;background:#f9fafb;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+            <svg width="16" height="16" fill="none" stroke="#9ca3af" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"/></svg>
+        </div>
+        <div style="flex:1;min-width:160px;">
+            <div style="font-size:13px;font-weight:700;color:#111827;">{{ $website->domain }}</div>
             <div style="font-size:11px;color:#9ca3af;">Submitted {{ $website->created_at->format('M d, Y') }}</div>
         </div>
         <span class="badge {{ $website->status === 'approved' ? 'badge-success' : ($website->status === 'rejected' ? 'badge-danger' : 'badge-warning') }}">
             {{ ucfirst($website->status) }}
         </span>
         @if($website->trackingLink)
-        <div style="font-size:11px;font-family:monospace;color:#6b7280;">{{ $website->trackingLink->unique_clicks }} valid clicks</div>
+        <div style="text-align:right;">
+            <div style="font-size:13px;font-weight:700;">{{ number_format($website->trackingLink->unique_clicks) }}</div>
+            <div style="font-size:11px;color:#9ca3af;">valid clicks</div>
+        </div>
         @endif
         @if($website->isPending())
         <a href="{{ route('admin.publisher-websites.index') }}" class="btn btn-primary btn-sm">Review</a>
         @endif
     </div>
     @empty
-    <div style="text-align:center;padding:24px;color:#9ca3af;">No website submissions yet</div>
+    <div style="text-align:center;padding:32px;color:#9ca3af;">
+        <svg width="32" height="32" fill="none" stroke="#d1d5db" viewBox="0 0 24 24" stroke-width="1.5" style="margin:0 auto 8px;display:block;"><path stroke-linecap="round" stroke-linejoin="round" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"/></svg>
+        No website submissions yet
+    </div>
     @endforelse
 </div>
 @endsection
