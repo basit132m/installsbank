@@ -54,6 +54,11 @@
                 <div style="font-size:15px;font-weight:700;">
                     Install Rates
                     <span style="font-size:13px;font-weight:400;color:var(--text-muted);margin-left:8px;">{{ $rates->count() }} countries</span>
+                    @if($noRateCount > 0)
+                    <span style="background:#fff7ed;color:#c2410c;border:1px solid #fed7aa;font-size:12px;font-weight:700;padding:2px 10px;border-radius:20px;margin-left:6px;">
+                        ⚠ {{ $noRateCount }} need rate
+                    </span>
+                    @endif
                 </div>
                 <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:13px;color:#6b7280;user-select:none;">
                     <input type="checkbox" id="selectAll" onchange="toggleAll(this)" style="width:15px;height:15px;cursor:pointer;">
@@ -87,8 +92,36 @@
                         </tr>
                     </thead>
                     <tbody id="ratesTableBody">
+                        @php $shownDivider = false; $hasNoRate = $rates->first() && $rates->first()->rate_usd == 0; @endphp
+                        @if($hasNoRate)
+                        <tr class="divider-row">
+                            <td colspan="6" style="padding:0;border:none;">
+                                <div style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:#fff7ed;border-bottom:2px solid #fed7aa;">
+                                    <svg width="14" height="14" fill="none" stroke="#c2410c" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                                    <span style="font-size:12px;font-weight:700;color:#c2410c;text-transform:uppercase;letter-spacing:0.05em;">Countries needing rates — set rates below and save</span>
+                                    <span style="background:#c2410c;color:white;font-size:11px;font-weight:700;padding:1px 8px;border-radius:10px;">{{ $noRateCount }}</span>
+                                </div>
+                            </td>
+                        </tr>
+                        @endif
                         @foreach($rates as $rate)
-                        <tr class="rate-row" data-name="{{ strtolower($rate->country_name) }}" data-code="{{ strtolower($rate->country_code) }}">
+                        @php $isNoRate = $rate->rate_usd == 0; @endphp
+
+                        {{-- Section divider between zero-rate and rated countries --}}
+                        @if(!$isNoRate && !$shownDivider)
+                        @php $shownDivider = true; @endphp
+                        <tr class="divider-row">
+                            <td colspan="6" style="padding:0;border:none;">
+                                <div style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:#f0fdf4;border-top:2px solid #bbf7d0;border-bottom:2px solid #bbf7d0;">
+                                    <svg width="14" height="14" fill="none" stroke="#059669" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+                                    <span style="font-size:12px;font-weight:700;color:#065f46;text-transform:uppercase;letter-spacing:0.05em;">Countries with rates set</span>
+                                </div>
+                            </td>
+                        </tr>
+                        @endif
+
+                        <tr class="rate-row" data-name="{{ strtolower($rate->country_name) }}" data-code="{{ strtolower($rate->country_code) }}"
+                            style="{{ $isNoRate ? 'background:#fffbeb;' : '' }}">
                             <td>
                                 <input type="checkbox" class="row-check" data-id="{{ $rate->id }}"
                                        onchange="onRowCheck()" style="width:15px;height:15px;cursor:pointer;">
@@ -99,6 +132,9 @@
                                          width="24" height="18" style="border-radius:3px;border:1px solid #e5e7eb;flex-shrink:0;"
                                          onerror="this.style.display='none'">
                                     <span style="font-weight:500;">{{ $rate->country_name }}</span>
+                                    @if($isNoRate)
+                                    <span style="background:#fff7ed;color:#c2410c;border:1px solid #fed7aa;font-size:10px;font-weight:700;padding:1px 6px;border-radius:4px;">No Rate</span>
+                                    @endif
                                 </div>
                             </td>
                             <td><code style="font-size:12px;background:#f3f4f6;padding:2px 6px;border-radius:4px;">{{ strtoupper($rate->country_code) }}</code></td>
@@ -108,8 +144,8 @@
                                     <input type="number" name="rates[{{ $rate->id }}][rate_usd]"
                                            value="{{ $rate->rate_usd }}" step="0.000001" min="0"
                                            class="rate-input"
-                                           style="width:110px;padding:6px 8px;border:1.5px solid #e5e7eb;border-radius:8px;font-size:13px;font-family:inherit;outline:none;transition:border-color .15s;"
-                                           onfocus="this.style.borderColor='#01BF63'" onblur="this.style.borderColor='#e5e7eb'">
+                                           style="width:110px;padding:6px 8px;border:1.5px solid {{ $isNoRate ? '#fed7aa' : '#e5e7eb' }};border-radius:8px;font-size:13px;font-family:inherit;outline:none;transition:border-color .15s;background:{{ $isNoRate ? '#fff7ed' : '' }};"
+                                           onfocus="this.style.borderColor='#01BF63';this.style.background=''" onblur="this.style.borderColor='{{ $isNoRate ? '#fed7aa' : '#e5e7eb' }}';this.style.background='{{ $isNoRate ? '#fff7ed' : '' }}'">
                                 </div>
                             </td>
                             <td>

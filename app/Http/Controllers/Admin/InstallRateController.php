@@ -11,7 +11,10 @@ class InstallRateController extends Controller
 {
     public function index()
     {
-        $rates = InstallCountryRate::orderBy('country_name')->get();
+        // Zero-rate countries (needs attention) first, then alphabetical within each group
+        $rates = InstallCountryRate::orderByRaw('rate_usd = 0 DESC, country_name ASC')->get();
+
+        $noRateCount = $rates->where('rate_usd', 0)->count();
 
         // Countries tracked in publisher click data but not yet in install_country_rates
         $existing = $rates->pluck('country_code')->map('strtoupper');
@@ -19,7 +22,7 @@ class InstallRateController extends Controller
             ->orderBy('country_name')
             ->get(['country_code', 'country_name']);
 
-        return view('admin.install-rates.index', compact('rates', 'unsynced'));
+        return view('admin.install-rates.index', compact('rates', 'unsynced', 'noRateCount'));
     }
 
     public function store(Request $request)
