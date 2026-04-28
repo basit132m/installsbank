@@ -15,8 +15,22 @@ class TrackingLinkController extends Controller
 {
     public function index()
     {
-        $links = TrackingLink::with('user')->latest()->paginate(20);
-        return view('admin.tracking.index', compact('links'));
+        $links      = TrackingLink::with('user')->latest()->paginate(20);
+        $publishers = User::where('role', 'publisher')->orderBy('name')->get(['id', 'name', 'email']);
+        return view('admin.tracking.index', compact('links', 'publishers'));
+    }
+
+    public function reassign(Request $request, TrackingLink $trackingLink)
+    {
+        $data = $request->validate([
+            'user_id' => 'required|exists:users,id',
+        ]);
+
+        $oldPublisher = $trackingLink->user->name ?? 'Unknown';
+        $trackingLink->update(['user_id' => $data['user_id']]);
+        $newPublisher = User::find($data['user_id'])->name;
+
+        return back()->with('success', "Link «{$trackingLink->unique_code}» reassigned from {$oldPublisher} to {$newPublisher}.");
     }
 
     public function create()
