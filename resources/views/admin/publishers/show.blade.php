@@ -342,6 +342,49 @@
     <div id="publisherClickChart"></div>
 </div>
 
+<!-- OS Breakdown Chart -->
+@if($osBreakdown->isNotEmpty())
+<div class="card mb-6">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:18px;">
+        <div style="width:36px;height:36px;background:#f5f3ff;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+            <svg width="18" height="18" fill="none" stroke="#7c3aed" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+        </div>
+        <div>
+            <div class="card-title" style="margin-bottom:1px;">Clicks by OS</div>
+            <div style="font-size:12px;color:#9ca3af;">Last 30 days — counted clicks only</div>
+        </div>
+        <div style="margin-left:auto;font-size:13px;font-weight:700;color:#374151;">
+            {{ number_format($osBreakdown->sum()) }} total
+        </div>
+    </div>
+    <div style="display:flex;gap:24px;align-items:center;flex-wrap:wrap;">
+        <div id="osDonutChart" style="flex-shrink:0;"></div>
+        <div style="flex:1;min-width:200px;">
+            @php
+                $osTotal = $osBreakdown->sum();
+                $osColors = ['#7c3aed','#01BF63','#3b82f6','#f59e0b','#ef4444','#06b6d4','#ec4899','#84cc16','#6b7280'];
+                $i = 0;
+            @endphp
+            @foreach($osBreakdown as $os => $cnt)
+            @php $pct = $osTotal > 0 ? round(($cnt / $osTotal) * 100, 1) : 0; @endphp
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+                <div style="width:10px;height:10px;border-radius:50%;background:{{ $osColors[$i % count($osColors)] }};flex-shrink:0;"></div>
+                <div style="flex:1;font-size:13px;font-weight:600;color:#374151;">{{ $os }}</div>
+                <div style="font-size:13px;color:#6b7280;">{{ number_format($cnt) }}</div>
+                <div style="width:80px;">
+                    <div style="height:5px;background:#f3f4f6;border-radius:4px;overflow:hidden;">
+                        <div style="height:100%;width:{{ $pct }}%;background:{{ $osColors[$i % count($osColors)] }};border-radius:4px;"></div>
+                    </div>
+                </div>
+                <div style="font-size:12px;color:#9ca3af;width:38px;text-align:right;">{{ $pct }}%</div>
+            </div>
+            @php $i++; @endphp
+            @endforeach
+        </div>
+    </div>
+</div>
+@endif
+
 <!-- Section: Management -->
 <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;margin-top:8px;">
     <div style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:0.08em;color:#9ca3af;white-space:nowrap;">Management</div>
@@ -799,6 +842,21 @@
 
 @push('scripts')
 <script>
+// OS Donut Chart
+@if($osBreakdown->isNotEmpty())
+new ApexCharts(document.getElementById('osDonutChart'), {
+    series: @json($osBreakdown->values()),
+    labels: @json($osBreakdown->keys()),
+    chart: { type: 'donut', width: 220, height: 220 },
+    colors: ['#7c3aed','#01BF63','#3b82f6','#f59e0b','#ef4444','#06b6d4','#ec4899','#84cc16','#6b7280'],
+    legend: { show: false },
+    dataLabels: { enabled: false },
+    plotOptions: { pie: { donut: { size: '68%', labels: { show: true, total: { show: true, label: 'Total', fontSize: '13px', color: '#6b7280', formatter: (w) => w.globals.seriesTotals.reduce((a,b)=>a+b,0).toLocaleString() } } } } },
+    stroke: { width: 2 },
+    tooltip: { y: { formatter: (v) => v.toLocaleString() + ' clicks' } }
+}).render();
+@endif
+
 const chartData = @json($clicksChart);
 new ApexCharts(document.getElementById('publisherClickChart'), {
     series: [

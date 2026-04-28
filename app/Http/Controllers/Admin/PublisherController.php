@@ -140,7 +140,17 @@ class PublisherController extends Controller
             }
         }
 
-        return view('admin.publishers.show', compact('user', 'clickStats', 'clicksChart', 'divider', 'installStats', 'publisherWebsites'));
+        // OS breakdown — last 30 days, counted clicks grouped by OS
+        $osBreakdown = Click::where('user_id', $user->id)
+            ->where('is_counted', true)
+            ->where('created_at', '>=', now()->subDays(29)->startOfDay())
+            ->selectRaw('os, COUNT(*) as cnt')
+            ->groupBy('os')
+            ->orderByDesc('cnt')
+            ->get()
+            ->mapWithKeys(fn($r) => [($r->os ?: 'Unknown') => (int)$r->cnt]);
+
+        return view('admin.publishers.show', compact('user', 'clickStats', 'clicksChart', 'divider', 'installStats', 'publisherWebsites', 'osBreakdown'));
     }
 
     public function activate(User $user)
