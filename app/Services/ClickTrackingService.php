@@ -23,9 +23,12 @@ class ClickTrackingService
         $ip = $request->ip();
         $ua = $request->userAgent() ?? '';
 
-        // Reject direct browser opens (no referrer) — these are not real ad clicks
+        // Block no-referrer clicks only when a domain restriction is set on the link.
+        // Without allowed_domain, referrer is not verifiable — blocking it would silently
+        // drop legitimate traffic from publishers whose sites strip the Referer header
+        // (e.g. WordPress buttons with rel="noreferrer").
         $rawReferrer = $request->header('referer') ?? '';
-        if (empty($rawReferrer)) {
+        if (empty($rawReferrer) && $link->allowed_domain) {
             return null;
         }
 
