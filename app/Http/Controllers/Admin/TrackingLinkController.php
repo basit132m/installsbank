@@ -3,13 +3,16 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Mail\DomainChangedMailable;
 use App\Models\AdButton;
 use App\Models\AdPreset;
 use App\Models\Campaign;
+use App\Models\PublisherNotification;
 use App\Models\TrackingDomain;
 use App\Models\TrackingLink;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Mail;
 
 class TrackingLinkController extends Controller
 {
@@ -29,11 +32,39 @@ class TrackingLinkController extends Controller
 
         $oldDomain = $trackingLink->trackingDomain?->domain ?? 'default';
         $trackingLink->update(['tracking_domain_id' => $data['tracking_domain_id'] ?: null]);
-        $newDomain = $data['tracking_domain_id']
-            ? TrackingDomain::find($data['tracking_domain_id'])->domain
-            : 'default';
 
-        return back()->with('success', "Domain for link «{$trackingLink->unique_code}» changed from {$oldDomain} to {$newDomain}.");
+        $newDomainModel = $data['tracking_domain_id']
+            ? TrackingDomain::find($data['tracking_domain_id'])
+            : null;
+        $newDomain      = $newDomainModel?->domain ?? 'default';
+        $newTrackingUrl = $trackingLink->fresh()->tracking_url;
+
+        // Notify publisher
+        $publisher = $trackingLink->user;
+        if ($publisher) {
+            $message = "Your tracking link domain has been updated.\n\nLink Code: {$trackingLink->unique_code}\nPrevious Domain: {$oldDomain}\nNew Domain: {$newDomain}\n\nPlease update your website immediately with the new tracking URL:\n{$newTrackingUrl}";
+
+            PublisherNotification::create([
+                'user_id' => $publisher->id,
+                'type'    => 'domain_changed',
+                'message' => $message,
+            ]);
+
+            try {
+                Mail::to($publisher->email)->send(new DomainChangedMailable(
+                    publisherName:  $publisher->name,
+                    uniqueCode:     $trackingLink->unique_code,
+                    oldDomain:      $oldDomain,
+                    newDomain:      $newDomain,
+                    newTrackingUrl: $newTrackingUrl,
+                ));
+            } catch (\Throwable $e) {
+                // Email failure shouldn't block the domain swap
+                \Log::warning('DomainChanged email failed: ' . $e->getMessage());
+            }
+        }
+
+        return back()->with('success', "Domain for link «{$trackingLink->unique_code}» changed from {$oldDomain} to {$newDomain}. Publisher notified.");
     }
 
     public function reassign(Request $request, TrackingLink $trackingLink)

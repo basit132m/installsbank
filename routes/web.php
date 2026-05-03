@@ -305,6 +305,18 @@ Route::prefix('publisher')->name('publisher.')->middleware(['auth', 'role:publis
         \App\Models\PublisherNotification::where('user_id', auth()->id())->whereNull('read_at')->update(['read_at' => now()]);
         return back();
     })->name('notifications.read-all');
+    Route::post('/notifications/{notification}/read', function (\App\Models\PublisherNotification $notification) {
+        if ($notification->user_id === auth()->id()) {
+            $notification->update(['read_at' => now()]);
+        }
+        return back();
+    })->name('notifications.read');
+    Route::get('/notifications', function () {
+        $notifications = \App\Models\PublisherNotification::where('user_id', auth()->id())
+            ->orderByDesc('created_at')->paginate(20);
+        \App\Models\PublisherNotification::where('user_id', auth()->id())->whereNull('read_at')->update(['read_at' => now()]);
+        return view('publisher.notifications', compact('notifications'));
+    })->name('notifications.index');
 
     // Profile
     Route::get('/profile', [Publisher\ProfileController::class, 'show'])->name('profile');
