@@ -21,9 +21,8 @@ class TrackingDomainGuard
         });
 
         if (in_array($host, $trackingDomains, true)) {
-            // Only /track/{code} is allowed on tracking domains
             if (!$request->is('track/*')) {
-                return redirect('https://installsbank.com', 301);
+                abort(404);
             }
         }
 
