@@ -16,6 +16,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'role'               => \App\Http\Middleware\RoleMiddleware::class,
             'publisher.approved' => \App\Http\Middleware\RequirePublisherApproved::class,
         ]);
+        $middleware->prepend(\App\Http\Middleware\TrackingDomainGuard::class);
         $middleware->statefulApi();
     })
     ->withExceptions(function (Exceptions $exceptions): void {

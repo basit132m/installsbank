@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\TrackingDomain;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 
 class TrackingDomainController extends Controller
 {
@@ -41,12 +42,14 @@ class TrackingDomainController extends Controller
         $data['domain'] = preg_replace('#^https?://#', '', rtrim($data['domain'], '/'));
 
         TrackingDomain::create($data);
+        Cache::forget('tracking_domain_list');
         return back()->with('success', 'Tracking domain added: ' . $data['domain']);
     }
 
     public function toggle(TrackingDomain $trackingDomain)
     {
         $trackingDomain->update(['is_active' => !$trackingDomain->is_active]);
+        Cache::forget('tracking_domain_list');
         return back()->with('success', 'Domain status updated.');
     }
 
@@ -55,6 +58,7 @@ class TrackingDomainController extends Controller
         // Unassign all links using this domain
         $trackingDomain->trackingLinks()->update(['tracking_domain_id' => null]);
         $trackingDomain->delete();
+        Cache::forget('tracking_domain_list');
         return back()->with('success', 'Domain deleted. Affected links reverted to default domain.');
     }
 }
