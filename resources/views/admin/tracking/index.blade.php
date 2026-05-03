@@ -119,14 +119,22 @@
                         @endif
                     </td>
 
-                    {{-- Status --}}
+                    {{-- Status + Domain --}}
                     <td style="padding:13px 16px;vertical-align:middle;">
                         <span class="badge {{ $link->is_active ? 'badge-success' : 'badge-danger' }}">{{ $link->is_active ? 'Active' : 'Inactive' }}</span>
+                        <div style="margin-top:5px;display:flex;align-items:center;gap:5px;">
+                            <svg width="11" height="11" fill="none" stroke="#9ca3af" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9"/></svg>
+                            <span style="font-size:11px;color:#6b7280;font-weight:600;">{{ $link->trackingDomain?->domain ?? 'default' }}</span>
+                        </div>
                     </td>
 
                     {{-- Actions --}}
                     <td style="padding:13px 16px;vertical-align:middle;text-align:right;">
                         <div style="display:flex;gap:6px;justify-content:flex-end;flex-wrap:wrap;">
+                            <button onclick="openSwapDomain({{ $link->id }}, '{{ addslashes($link->unique_code) }}', '{{ addslashes($link->name ?: 'Unnamed Link') }}', {{ $link->tracking_domain_id ?? 'null' }})"
+                                style="padding:5px 10px;background:#fdf4ff;color:#7c3aed;border:1px solid #e9d5ff;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;">
+                                🌐 Domain
+                            </button>
                             <button onclick="openReassign({{ $link->id }}, '{{ addslashes($link->unique_code) }}', '{{ addslashes($link->name ?: 'Unnamed Link') }}', {{ $link->user_id }})"
                                 style="padding:5px 10px;background:#eff6ff;color:#1d4ed8;border:1px solid #bfdbfe;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;">
                                 ↔ Reassign
@@ -202,6 +210,66 @@
     </div>
 </div>
 
+<!-- Swap Domain Modal -->
+<div id="swapDomainModal" style="display:none;position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,0.45);align-items:center;justify-content:center;">
+    <div style="background:white;border-radius:16px;padding:28px;width:100%;max-width:480px;margin:16px;box-shadow:0 20px 60px rgba(0,0,0,0.2);">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
+            <div>
+                <div style="font-size:16px;font-weight:800;color:#111827;">Change Tracking Domain</div>
+                <div style="font-size:12px;color:#9ca3af;margin-top:2px;">Swap the domain for this link — the code stays the same</div>
+            </div>
+            <button onclick="closeSwapDomain()" style="width:32px;height:32px;border-radius:8px;border:1px solid #e5e7eb;background:#f9fafb;cursor:pointer;font-size:18px;color:#6b7280;display:flex;align-items:center;justify-content:center;">×</button>
+        </div>
+
+        <!-- Link info -->
+        <div style="background:#f9fafb;border:1.5px solid #e5e7eb;border-radius:10px;padding:14px;margin-bottom:20px;">
+            <div style="font-size:12px;color:#6b7280;font-weight:600;text-transform:uppercase;letter-spacing:0.04em;margin-bottom:6px;">Link</div>
+            <div style="font-size:14px;font-weight:700;color:#111827;" id="sdModalLinkName"></div>
+            <div style="display:flex;align-items:center;gap:8px;margin-top:4px;">
+                <code style="font-size:12px;color:#6b7280;" id="sdModalLinkCode"></code>
+                <span style="font-size:11px;color:#9ca3af;">→</span>
+                <span style="font-size:12px;color:#7c3aed;font-weight:600;" id="sdModalCurrentDomain"></span>
+            </div>
+        </div>
+
+        <!-- Info notice -->
+        <div style="background:#fdf4ff;border:1px solid #e9d5ff;border-radius:8px;padding:11px 14px;margin-bottom:18px;font-size:12px;color:#6b228e;line-height:1.6;">
+            <strong>How it works:</strong> The tracking code (<code id="sdModalCode2" style="background:#ede9fe;padding:1px 5px;border-radius:3px;"></code>) stays unchanged.
+            Only the domain prefix changes. The new URL takes effect immediately — no cache clearing needed.
+        </div>
+
+        <form id="swapDomainForm" method="POST">
+            @csrf
+            <div class="form-group" style="margin-bottom:20px;">
+                <label class="form-label">New Domain</label>
+                <select name="tracking_domain_id" id="swapDomainSelect" class="form-control form-select" style="font-size:14px;">
+                    <option value="">— Default (installsbank.com) —</option>
+                    @foreach($domains as $domain)
+                    <option value="{{ $domain->id }}" data-url="{{ $domain->base_url }}">
+                        {{ $domain->domain }}{{ $domain->label ? ' — ' . $domain->label : '' }}
+                    </option>
+                    @endforeach
+                </select>
+            </div>
+
+            <!-- Preview of new URL -->
+            <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:10px 14px;margin-bottom:18px;">
+                <div style="font-size:11px;font-weight:700;color:#065f46;text-transform:uppercase;letter-spacing:0.04em;margin-bottom:4px;">New tracking URL will be:</div>
+                <div style="font-size:13px;font-family:monospace;color:#047857;word-break:break-all;" id="sdUrlPreview"></div>
+            </div>
+
+            <div style="display:flex;gap:10px;">
+                <button type="submit" style="flex:1;padding:11px;background:#7c3aed;color:white;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;">
+                    Apply Domain Change
+                </button>
+                <button type="button" onclick="closeSwapDomain()" style="padding:11px 18px;background:#f3f4f6;color:#374151;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;">
+                    Cancel
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
 @endsection
 
 @push('scripts')
@@ -242,9 +310,55 @@ document.getElementById('reassignModal').addEventListener('click', function(e) {
     if (e.target === this) closeReassign();
 });
 
-// Close on Escape
+// ── Swap Domain modal ──────────────────────────────────────────────
+let sdLinkCode = '';
+
+function openSwapDomain(linkId, code, name, currentDomainId) {
+    sdLinkCode = code;
+    document.getElementById('sdModalLinkName').textContent    = name;
+    document.getElementById('sdModalLinkCode').textContent    = code;
+    document.getElementById('sdModalCode2').textContent       = code;
+    document.getElementById('swapDomainForm').action          = '/admin/tracking/' + linkId + '/swap-domain';
+
+    const select = document.getElementById('swapDomainSelect');
+    for (let opt of select.options) {
+        opt.selected = currentDomainId && parseInt(opt.value) === currentDomainId;
+    }
+    if (!currentDomainId) select.selectedIndex = 0;
+
+    updateSwapPreview();
+
+    document.getElementById('swapDomainModal').style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+}
+
+function closeSwapDomain() {
+    document.getElementById('swapDomainModal').style.display = 'none';
+    document.body.style.overflow = '';
+}
+
+function updateSwapPreview() {
+    const select  = document.getElementById('swapDomainSelect');
+    const opt     = select.options[select.selectedIndex];
+    const baseUrl = opt && opt.dataset.url ? opt.dataset.url : window.location.origin;
+    const url     = baseUrl + '/track/' + sdLinkCode;
+
+    const currentDomainEl = document.getElementById('sdModalCurrentDomain');
+    currentDomainEl.textContent = opt && opt.value
+        ? opt.text.split(' —')[0]
+        : 'default (installsbank.com)';
+
+    document.getElementById('sdUrlPreview').textContent = url;
+}
+
+document.getElementById('swapDomainSelect').addEventListener('change', updateSwapPreview);
+
+document.getElementById('swapDomainModal').addEventListener('click', function(e) {
+    if (e.target === this) closeSwapDomain();
+});
+
 document.addEventListener('keydown', function(e) {
-    if (e.key === 'Escape') closeReassign();
+    if (e.key === 'Escape') { closeReassign(); closeSwapDomain(); }
 });
 </script>
 @endpush

@@ -188,6 +188,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin,manager'
         Route::delete('/{trackingLink}', [Admin\TrackingLinkController::class, 'destroy'])->name('destroy');
         Route::post('/{trackingLink}/toggle', [Admin\TrackingLinkController::class, 'toggle'])->name('toggle');
         Route::post('/{trackingLink}/reassign', [Admin\TrackingLinkController::class, 'reassign'])->name('reassign');
+        Route::post('/{trackingLink}/swap-domain', [Admin\TrackingLinkController::class, 'swapDomain'])->name('swap-domain');
     });
 
     // Country rates

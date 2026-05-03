@@ -15,9 +15,25 @@ class TrackingLinkController extends Controller
 {
     public function index()
     {
-        $links      = TrackingLink::with('user')->latest()->paginate(20);
+        $links      = TrackingLink::with(['user', 'trackingDomain'])->latest()->paginate(20);
         $publishers = User::where('role', 'publisher')->orderBy('name')->get(['id', 'name', 'email']);
-        return view('admin.tracking.index', compact('links', 'publishers'));
+        $domains    = TrackingDomain::where('is_active', true)->orderBy('domain')->get();
+        return view('admin.tracking.index', compact('links', 'publishers', 'domains'));
+    }
+
+    public function swapDomain(Request $request, TrackingLink $trackingLink)
+    {
+        $data = $request->validate([
+            'tracking_domain_id' => 'nullable|exists:tracking_domains,id',
+        ]);
+
+        $oldDomain = $trackingLink->trackingDomain?->domain ?? 'default';
+        $trackingLink->update(['tracking_domain_id' => $data['tracking_domain_id'] ?: null]);
+        $newDomain = $data['tracking_domain_id']
+            ? TrackingDomain::find($data['tracking_domain_id'])->domain
+            : 'default';
+
+        return back()->with('success', "Domain for link «{$trackingLink->unique_code}» changed from {$oldDomain} to {$newDomain}.");
     }
 
     public function reassign(Request $request, TrackingLink $trackingLink)
