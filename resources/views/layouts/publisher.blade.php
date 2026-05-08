@@ -221,12 +221,38 @@
     @stack('scripts')
 
 @if(session('show_welcome'))
+{{-- Door panels --}}
+<div id="doorLeft" style="
+    position:fixed;top:0;left:0;width:50%;height:100vh;z-index:100001;
+    background:#01BF63;
+    display:flex;align-items:center;justify-content:flex-end;padding-right:32px;
+    transition:transform 1s cubic-bezier(0.76,0,0.24,1);
+    will-change:transform;
+">
+    <div style="text-align:right;color:rgba(255,255,255,.15);font-size:80px;font-weight:900;letter-spacing:-4px;user-select:none;">IB</div>
+</div>
+<div id="doorRight" style="
+    position:fixed;top:0;right:0;width:50%;height:100vh;z-index:100001;
+    background:#01BF63;
+    display:flex;align-items:center;justify-content:flex-start;padding-left:32px;
+    transition:transform 1s cubic-bezier(0.76,0,0.24,1);
+    will-change:transform;
+">
+    <div style="text-align:left;color:rgba(255,255,255,.15);font-size:80px;font-weight:900;letter-spacing:-4px;user-select:none;">IB</div>
+</div>
+{{-- Thin center line between doors --}}
+<div id="doorLine" style="
+    position:fixed;top:0;left:50%;width:1px;height:100vh;z-index:100002;
+    background:rgba(0,0,0,.12);transform:translateX(-50%);
+    transition:opacity .3s;
+"></div>
+
+{{-- Welcome content (fades in after door opens) --}}
 <div id="welcomeOverlay" style="
     position:fixed;inset:0;z-index:99999;
     background:rgba(255,255,255,0.97);
     display:flex;flex-direction:column;align-items:center;justify-content:center;
-    gap:24px;
-    animation:wFadeIn .4s ease;
+    gap:24px;opacity:0;transition:opacity .4s ease;pointer-events:none;
 ">
     <img src="https://installsbank.com/images/waving-fox.webp"
          alt="Welcome"
@@ -237,18 +263,36 @@
     </div>
 </div>
 <style>
-@keyframes wFadeIn  { from{opacity:0;transform:scale(1.04)} to{opacity:1;transform:scale(1)} }
 @keyframes wBounce  { from{transform:translateY(0)} to{transform:translateY(-10px)} }
-@keyframes wFadeOut { from{opacity:1;transform:scale(1)} to{opacity:0;transform:scale(0.96)} }
+@keyframes wFadeOut { from{opacity:1} to{opacity:0} }
 </style>
 <script>
 (function(){
-    var el = document.getElementById('welcomeOverlay');
-    if(!el) return;
+    var dL  = document.getElementById('doorLeft');
+    var dR  = document.getElementById('doorRight');
+    var dLn = document.getElementById('doorLine');
+    var ov  = document.getElementById('welcomeOverlay');
+    if(!dL || !dR) return;
+
+    // Open the doors after a short pause
     setTimeout(function(){
-        el.style.animation = 'wFadeOut .5s ease forwards';
-        setTimeout(function(){ el.remove(); }, 500);
-    }, 3000);
+        dL.style.transform = 'translateX(-100%)';
+        dR.style.transform = 'translateX(100%)';
+        dLn.style.opacity  = '0';
+
+        // Show welcome overlay as doors finish opening
+        setTimeout(function(){
+            dL.remove(); dR.remove(); dLn.remove();
+            ov.style.opacity        = '1';
+            ov.style.pointerEvents  = 'all';
+
+            // Fade out welcome after 3s
+            setTimeout(function(){
+                ov.style.animation = 'wFadeOut .5s ease forwards';
+                setTimeout(function(){ ov.remove(); }, 500);
+            }, 3000);
+        }, 1000);
+    }, 250);
 })();
 </script>
 @endif
