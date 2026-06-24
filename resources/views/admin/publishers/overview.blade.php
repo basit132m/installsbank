@@ -45,8 +45,8 @@
 {{-- Summary cards --}}
 <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px;">
     @foreach([
-        ['label'=>'Total Valid Clicks','value'=>number_format($totals['valid']),'color'=>'#2563eb','bg'=>'#eff6ff'],
-        ['label'=>'Windows Clicks','value'=>number_format($totals['windows']),'color'=>'#7c3aed','bg'=>'#f5f3ff'],
+        ['label'=>'Total Actual Clicks','value'=>number_format($totals['valid']),'color'=>'#2563eb','bg'=>'#eff6ff'],
+        ['label'=>'Windows Clicks (Actual)','value'=>number_format($totals['windows']),'color'=>'#7c3aed','bg'=>'#f5f3ff'],
         ['label'=>'Other OS Clicks','value'=>number_format($totals['other']),'color'=>'#0891b2','bg'=>'#ecfeff'],
         ['label'=>'Total Earnings','value'=>'$'.number_format($totals['earnings'],2),'color'=>'#16a34a','bg'=>'#f0fdf4'],
     ] as $card)
@@ -65,9 +65,9 @@
                 <tr>
                     <th style="width:40px;">#</th>
                     <th>Publisher</th>
-                    <th style="text-align:right;">Windows Clicks</th>
+                    <th style="text-align:right;">Windows Clicks <span style="font-weight:400;color:#9ca3af;">(Actual)</span></th>
                     <th style="text-align:right;">Other OS Clicks</th>
-                    <th style="text-align:right;">Total Valid Clicks</th>
+                    <th style="text-align:right;">Total Actual Clicks</th>
                     <th style="text-align:right;">Earnings</th>
                     <th style="text-align:center;">Action</th>
                 </tr>

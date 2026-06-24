@@ -25,9 +25,10 @@ class PublisherOverviewController extends Controller
             ->whereBetween('date', [$dateFrom, $dateTo])
             ->select(
                 'user_id',
-                DB::raw('SUM(valid_clicks) as total_valid'),
-                DB::raw('SUM(windows_clicks_divided) as total_windows'),
+                // Actual (no divider): raw windows + non-windows
+                DB::raw('SUM(windows_clicks) as total_windows'),
                 DB::raw('SUM(valid_clicks - windows_clicks_divided) as total_other'),
+                DB::raw('SUM(windows_clicks + (valid_clicks - windows_clicks_divided)) as total_valid'),
                 DB::raw('SUM(earnings) as total_earnings'),
             )
             ->groupBy('user_id')
