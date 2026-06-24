@@ -73,15 +73,21 @@ class PublisherController extends Controller
             'total_actual_windows' => (int)($dailyEarningToday?->windows_clicks ?? 0),
         ];
 
-        // Daily clicks chart (last 14 days)
+        // Daily clicks chart (last 14 days) — use DailyEarning for divider-accurate valid_clicks
+        $dailyEarningsMap = DailyEarning::where('user_id', $user->id)
+            ->whereBetween('date', [now()->subDays(13)->toDateString(), now()->toDateString()])
+            ->get()
+            ->keyBy(fn($r) => $r->date->toDateString());
+
         $clicksChart = [];
         for ($i = 13; $i >= 0; $i--) {
-            $date = now()->subDays($i)->toDateString();
+            $date    = now()->subDays($i)->toDateString();
+            $earning = $dailyEarningsMap[$date] ?? null;
             $clicksChart[] = [
-                'date' => now()->subDays($i)->format('M d'),
-                'actual' => Click::where('user_id', $user->id)->whereDate('created_at', $date)->where('is_counted', true)->count(),
+                'date'    => now()->subDays($i)->format('M d'),
+                'actual'  => (int)($earning?->valid_clicks ?? 0),
                 'windows' => Click::where('user_id', $user->id)->whereDate('created_at', $date)->where('is_windows', true)->where('is_counted', true)->count(),
-                'fraud' => Click::where('user_id', $user->id)->whereDate('created_at', $date)->where('is_fraud', true)->count(),
+                'fraud'   => Click::where('user_id', $user->id)->whereDate('created_at', $date)->where('is_fraud', true)->count(),
             ];
         }
 

@@ -5,7 +5,23 @@
 @section('content')
 
 {{-- Period tabs --}}
-<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:12px;">
+@php
+    $dateFrom = match($period) {
+        'yesterday' => today()->subDay(),
+        '7days'     => today()->subDays(6),
+        '28days'    => today()->subDays(27),
+        default     => today(),
+    };
+    $dateTo = match($period) {
+        'yesterday' => today()->subDay(),
+        default     => today(),
+    };
+    $dateLabel = $dateFrom->isSameDay($dateTo)
+        ? $dateFrom->format('D, M j, Y')
+        : $dateFrom->format('M j') . ' – ' . $dateTo->format('M j, Y');
+@endphp
+
+<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;flex-wrap:wrap;gap:12px;">
     <div style="display:flex;gap:6px;">
         @foreach(['today'=>'Today','yesterday'=>'Yesterday','7days'=>'Last 7 Days','28days'=>'Last 28 Days'] as $key=>$lbl)
             <a href="?period={{ $key }}"
@@ -18,6 +34,12 @@
     <div style="font-size:13px;color:#6b7280;">
         Showing <strong>{{ $rows->count() }}</strong> publisher(s) with activity
     </div>
+</div>
+<div style="margin-bottom:16px;">
+    <span style="font-size:13px;color:#6b7280;">
+        <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" style="vertical-align:-2px;margin-right:4px;"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+        {{ $dateLabel }}
+    </span>
 </div>
 
 {{-- Summary cards --}}
