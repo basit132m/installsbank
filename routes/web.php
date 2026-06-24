@@ -273,6 +273,8 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin,manager'
     Route::get('/email-replies', [Admin\EmailRepliesController::class, 'index'])->name('email-replies.index');
     Route::get('/email-replies/{emailReply}', [Admin\EmailRepliesController::class, 'show'])->name('email-replies.show');
     Route::post('/email-replies/mark-all-read', [Admin\EmailRepliesController::class, 'markAllRead'])->name('email-replies.mark-all-read');
+    Route::delete('/email-replies/{emailReply}', [Admin\EmailRepliesController::class, 'destroy'])->name('email-replies.destroy');
+    Route::post('/email-replies/bulk-delete', [Admin\EmailRepliesController::class, 'destroyBulk'])->name('email-replies.bulk-delete');
 
     // Publisher stats export
     Route::get('/publishers/{user}/stats/export', [Admin\PublisherController::class, 'exportStats'])->name('publishers.stats.export');

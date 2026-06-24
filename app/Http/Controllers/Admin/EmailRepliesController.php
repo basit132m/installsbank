@@ -40,4 +40,19 @@ class EmailRepliesController extends Controller
         EmailReply::where('is_read', false)->update(['is_read' => true]);
         return back()->with('success', 'All replies marked as read.');
     }
+
+    public function destroy(EmailReply $emailReply)
+    {
+        $emailReply->delete();
+        return redirect()->route('admin.email-replies.index')->with('success', 'Email deleted.');
+    }
+
+    public function destroyBulk(\Illuminate\Http\Request $request)
+    {
+        $ids = $request->input('ids', []);
+        if (!empty($ids)) {
+            EmailReply::whereIn('id', $ids)->delete();
+        }
+        return back()->with('success', count($ids) . ' email(s) deleted.');
+    }
 }
