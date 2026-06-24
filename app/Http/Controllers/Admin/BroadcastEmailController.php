@@ -68,7 +68,7 @@ Contact us on WhatsApp at +1 (970) 742-6488 or Telegram @installsbank and we wil
 
         foreach ($valid as $email) {
             try {
-                Mail::mailer('resend_smtp')->to($email)->send(new BroadcastMailable($data['subject'], $data['body']));
+                Mail::to($email)->send(new BroadcastMailable($data['subject'], $data['body']));
                 $sent++;
             } catch (\Throwable $e) {
                 $failed++;
