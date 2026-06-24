@@ -35,6 +35,9 @@ Schedule::call(function () {
         });
 })->monthlyOn(1, '00:10')->name('apply-approved-rate-increases')->withoutOverlapping();
 
+// Fetch email replies from IMAP inbox every 5 minutes
+Schedule::command('email:fetch-replies')->everyFiveMinutes()->withoutOverlapping();
+
 // Purge fraud alerts older than 24 hours — runs every hour
 Schedule::call(function () {
     FraudAlert::where('created_at', '<', now()->subHours(24))->delete();

@@ -268,6 +268,11 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin,manager'
     Route::get('/broadcast-email', [Admin\BroadcastEmailController::class, 'index'])->name('broadcast-email.index');
     Route::post('/broadcast-email', [Admin\BroadcastEmailController::class, 'send'])->name('broadcast-email.send');
 
+    // Email Replies inbox
+    Route::get('/email-replies', [Admin\EmailRepliesController::class, 'index'])->name('email-replies.index');
+    Route::get('/email-replies/{emailReply}', [Admin\EmailRepliesController::class, 'show'])->name('email-replies.show');
+    Route::post('/email-replies/mark-all-read', [Admin\EmailRepliesController::class, 'markAllRead'])->name('email-replies.mark-all-read');
+
     // Publisher stats export
     Route::get('/publishers/{user}/stats/export', [Admin\PublisherController::class, 'exportStats'])->name('publishers.stats.export');
 });

@@ -23,6 +23,12 @@ class SettingsController extends Controller
         'MAIL_FROM_NAME',
         'APP_NAME',
         'APP_URL',
+        // IMAP (incoming email for replies inbox)
+        'IMAP_HOST',
+        'IMAP_PORT',
+        'IMAP_USERNAME',
+        'IMAP_PASSWORD',
+        'IMAP_FOLDER',
     ];
 
     public function index()

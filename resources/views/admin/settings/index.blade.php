@@ -151,6 +151,76 @@
     </form>
 </div>
 
+<!-- IMAP / Incoming Email Settings -->
+<div class="settings-section" style="margin-bottom:24px;">
+    <div class="section-header">
+        <div class="section-icon" style="background:#fef3c7;">
+            <svg width="20" height="20" fill="none" stroke="#d97706" viewBox="0 0 24 24" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/>
+            </svg>
+        </div>
+        <div>
+            <div class="section-title">IMAP / Incoming Email Settings</div>
+            <div class="section-subtitle">Used to fetch replies to broadcast emails. Runs automatically every 5 minutes.</div>
+        </div>
+    </div>
+
+    <form method="POST" action="{{ route('admin.settings.update') }}">
+        @csrf
+        @method('PUT')
+
+        <div class="form-row">
+            <div class="form-group">
+                <label class="form-label">IMAP Host</label>
+                <input type="text" name="IMAP_HOST" class="form-control"
+                       value="{{ $settings['IMAP_HOST'] ?? 'imap.hostinger.com' }}"
+                       placeholder="imap.hostinger.com">
+                <div class="hint">Usually imap.hostinger.com for Hostinger accounts.</div>
+            </div>
+            <div class="form-group">
+                <label class="form-label">IMAP Port</label>
+                <input type="number" name="IMAP_PORT" class="form-control"
+                       value="{{ $settings['IMAP_PORT'] ?? 993 }}"
+                       placeholder="993">
+                <div class="hint">993 for SSL (recommended).</div>
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label class="form-label">IMAP Username</label>
+                <input type="text" name="IMAP_USERNAME" class="form-control"
+                       value="{{ $settings['IMAP_USERNAME'] ?? ($settings['MAIL_USERNAME'] ?? '') }}"
+                       placeholder="contact@installsbank.com">
+                <div class="hint">Usually the same as your SMTP username.</div>
+            </div>
+            <div class="form-group">
+                <label class="form-label">IMAP Password</label>
+                <input type="password" name="IMAP_PASSWORD" class="form-control"
+                       value="{{ $settings['IMAP_PASSWORD'] ?? ($settings['MAIL_PASSWORD'] ?? '') }}"
+                       placeholder="••••••••••">
+                <div class="hint">Usually the same as your SMTP password.</div>
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label class="form-label">Inbox Folder</label>
+                <input type="text" name="IMAP_FOLDER" class="form-control"
+                       value="{{ $settings['IMAP_FOLDER'] ?? 'INBOX' }}"
+                       placeholder="INBOX">
+                <div class="hint">Leave as INBOX unless you use a custom folder.</div>
+            </div>
+            <div class="form-group"></div>
+        </div>
+
+        <button type="submit" class="btn btn-primary">
+            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+            Save IMAP Settings
+        </button>
+    </form>
+</div>
+
 <!-- Test Email -->
 <div class="settings-section" style="margin-bottom:24px;">
     <div class="section-header">
