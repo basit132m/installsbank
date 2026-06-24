@@ -108,6 +108,42 @@ class SettingsController extends Controller
         return back()->with('success', 'Settings saved successfully.');
     }
 
+    public function updateImap(Request $request)
+    {
+        $request->validate([
+            'IMAP_HOST'     => 'required|string|max:255',
+            'IMAP_PORT'     => 'required|integer',
+            'IMAP_USERNAME' => 'required|string|max:255',
+            'IMAP_PASSWORD' => 'nullable|string|max:255',
+            'IMAP_FOLDER'   => 'nullable|string|max:100',
+        ]);
+
+        $envPath = base_path('.env');
+        if (!file_exists($envPath)) {
+            return back()->withErrors(['error' => '.env file not found.']);
+        }
+
+        $envContent = file_get_contents($envPath);
+        $imapKeys   = ['IMAP_HOST', 'IMAP_PORT', 'IMAP_USERNAME', 'IMAP_PASSWORD', 'IMAP_FOLDER'];
+
+        foreach ($imapKeys as $key) {
+            $value          = $request->input($key, '');
+            $needsQuotes    = preg_match('/[\s#&]/', $value);
+            $formattedValue = $needsQuotes ? '"' . addslashes($value) . '"' : $value;
+
+            if (preg_match("/^{$key}=.*/m", $envContent)) {
+                $envContent = preg_replace("/^{$key}=.*/m", "{$key}={$formattedValue}", $envContent);
+            } else {
+                $envContent .= "\n{$key}={$formattedValue}";
+            }
+        }
+
+        file_put_contents($envPath, $envContent);
+        Artisan::call('config:clear');
+
+        return back()->with('success', 'IMAP settings saved successfully.');
+    }
+
     public function updateContactInfo(Request $request)
     {
         $data = $request->validate([

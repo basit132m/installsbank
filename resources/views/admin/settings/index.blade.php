@@ -165,9 +165,8 @@
         </div>
     </div>
 
-    <form method="POST" action="{{ route('admin.settings.update') }}">
+    <form method="POST" action="{{ route('admin.settings.imap') }}">
         @csrf
-        @method('PUT')
 
         <div class="form-row">
             <div class="form-group">
