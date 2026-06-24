@@ -3,7 +3,9 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Click;
 use App\Models\FraudAlert;
+use App\Models\TrackingLink;
 use App\Models\User;
 use Illuminate\Http\Request;
 
@@ -72,5 +74,13 @@ class FraudAlertController extends Controller
     {
         $deleted = FraudAlert::where('created_at', '<', now()->subHours(24))->delete();
         return back()->with('success', "Purged {$deleted} fraud alert(s) older than 24 hours.");
+    }
+
+    public function purgeClicks()
+    {
+        $deleted = Click::where('is_fraud', true)->delete();
+        // Reset fraud_clicks counters on all tracking links
+        TrackingLink::query()->update(['fraud_clicks' => 0]);
+        return back()->with('success', number_format($deleted) . ' fraud click(s) deleted from the database. Tracking link counters reset.');
     }
 }

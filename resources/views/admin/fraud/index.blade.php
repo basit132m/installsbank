@@ -18,6 +18,10 @@
         <form method="POST" action="{{ route('admin.fraud.purge-old') }}" onsubmit="return confirm('Delete all fraud alerts older than 24 hours?')">
             @csrf<button class="btn btn-danger btn-sm">Purge Old (&gt;24h)</button>
         </form>
+        <form method="POST" action="{{ route('admin.fraud.purge-clicks') }}"
+              onsubmit="return confirm('This will permanently delete ALL fraud clicks from the database and reset fraud counters. This cannot be undone. Continue?')">
+            @csrf<button class="btn btn-danger btn-sm" style="background:#7c3aed;border-color:#7c3aed;">🗑 Delete All Fraud Clicks</button>
+        </form>
     </div>
 </div>
 
