@@ -15,6 +15,38 @@
 </div>
 @endif
 
+{{-- Duplicate warning --}}
+@if(session('duplicate_warning'))
+@php $dups = session('duplicate_warning'); @endphp
+<div style="background:#fffbeb;border:1px solid #f59e0b;border-radius:12px;padding:18px 20px;margin-bottom:20px;">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+        <svg width="20" height="20" fill="none" stroke="#b45309" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>
+        <div style="font-size:14px;font-weight:700;color:#92400e;">
+            {{ count($dups) }} email address{{ count($dups) > 1 ? 'es were' : ' was' }} already contacted in the last 30 days
+        </div>
+    </div>
+    <div style="background:#fff;border:1px solid #fde68a;border-radius:8px;padding:10px 14px;margin-bottom:14px;max-height:180px;overflow-y:auto;">
+        @foreach($dups as $dup)
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:5px 0;border-bottom:1px solid #fef3c7;font-size:13px;">
+            <span style="font-weight:600;color:#374151;">{{ $dup['recipient_email'] }}</span>
+            <span style="color:#9ca3af;font-size:12px;">
+                Last sent: {{ \Carbon\Carbon::parse($dup['created_at'])->diffForHumans() }}
+                &nbsp;·&nbsp; Subject: {{ Str::limit($dup['subject'], 40) }}
+            </span>
+        </div>
+        @endforeach
+    </div>
+    <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+        <div style="font-size:13px;color:#78350f;">Do you want to send to these addresses again anyway?</div>
+        <button type="button" onclick="forceResendSubmit()"
+                style="background:#d97706;color:#fff;border:none;border-radius:8px;padding:8px 18px;font-size:13px;font-weight:700;cursor:pointer;">
+            Yes, Send Anyway
+        </button>
+        <span style="font-size:12px;color:#9ca3af;">or edit your recipient list above and resubmit.</span>
+    </div>
+</div>
+@endif
+
 <div style="display:grid;grid-template-columns:1fr 340px;gap:24px;align-items:start;">
 
     {{-- Compose Form --}}
@@ -22,17 +54,16 @@
         <div class="card-title" style="margin-bottom:4px;">Compose Email</div>
         <p style="font-size:13px;color:#6b7280;margin-bottom:24px;">Sent from <strong>contact@installsbank.com</strong>. Add one or multiple email addresses below.</p>
 
-        <form method="POST" action="{{ route('admin.broadcast-email.send') }}">
+        <form method="POST" action="{{ route('admin.broadcast-email.send') }}" id="broadcastForm">
             @csrf
+            <input type="hidden" name="force_resend" id="forceResend" value="0">
 
             {{-- Email addresses input --}}
             <div class="form-group" style="margin-bottom:20px;">
                 <label class="form-label">Recipient Email Addresses</label>
-                <div style="position:relative;">
-                    <textarea name="emails" id="emailsInput" class="form-control" rows="4"
-                              placeholder="Enter email addresses separated by comma, semicolon, or new line:&#10;john@example.com, jane@example.com&#10;another@example.com"
-                              style="font-family:monospace;font-size:13px;resize:vertical;">{{ old('emails') }}</textarea>
-                </div>
+                <textarea name="emails" id="emailsInput" class="form-control" rows="4"
+                          placeholder="Enter email addresses separated by comma, semicolon, or new line:&#10;john@example.com, jane@example.com&#10;another@example.com"
+                          style="font-family:monospace;font-size:13px;resize:vertical;">{{ old('emails') }}</textarea>
                 <div style="display:flex;align-items:center;justify-content:space-between;margin-top:6px;">
                     <div style="font-size:12px;color:#9ca3af;">Separate with comma, semicolon, or new line. Duplicates are removed automatically.</div>
                     <div style="font-size:12px;font-weight:600;color:#374151;white-space:nowrap;margin-left:12px;">
@@ -107,8 +138,73 @@
     </div>
 </div>
 
+{{-- Send History --}}
+<div class="card" style="padding:0;overflow:hidden;margin-top:28px;">
+    <div style="padding:16px 20px;border-bottom:1px solid #f3f4f6;display:flex;align-items:center;justify-content:space-between;">
+        <div>
+            <div style="font-size:15px;font-weight:700;color:#111827;">Send History</div>
+            <div style="font-size:12px;color:#9ca3af;margin-top:2px;">Most recent 50 sends shown. Each row is one recipient.</div>
+        </div>
+        <div style="font-size:13px;color:#6b7280;">
+            Total: <strong>{{ $history->total() }}</strong> records
+        </div>
+    </div>
+
+    @if($history->isEmpty())
+    <div style="text-align:center;padding:48px;color:#9ca3af;font-size:14px;">
+        No emails sent yet.
+    </div>
+    @else
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>Date & Time</th>
+                    <th>Recipient</th>
+                    <th>Subject</th>
+                    <th style="text-align:center;">Status</th>
+                    <th>Sent By</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach($history as $log)
+                <tr>
+                    <td style="white-space:nowrap;font-size:12px;color:#6b7280;">
+                        {{ $log->created_at->format('M j, Y') }}<br>
+                        <span style="color:#9ca3af;">{{ $log->created_at->format('g:i A') }}</span>
+                    </td>
+                    <td style="font-size:13px;font-weight:600;color:#111827;">
+                        {{ $log->recipient_email }}
+                    </td>
+                    <td style="font-size:13px;color:#374151;max-width:260px;">
+                        {{ Str::limit($log->subject, 50) }}
+                    </td>
+                    <td style="text-align:center;">
+                        @if($log->status === 'sent')
+                            <span style="background:#f0fdf4;color:#166534;border:1px solid #bbf7d0;border-radius:20px;padding:3px 10px;font-size:11px;font-weight:700;">Sent</span>
+                        @else
+                            <span style="background:#fff1f2;color:#991b1b;border:1px solid #fca5a5;border-radius:20px;padding:3px 10px;font-size:11px;font-weight:700;"
+                                  title="{{ $log->error_message }}">Failed</span>
+                        @endif
+                    </td>
+                    <td style="font-size:13px;color:#6b7280;">
+                        {{ $log->sender?->name ?? 'Unknown' }}
+                    </td>
+                </tr>
+                @endforeach
+            </tbody>
+        </table>
+    </div>
+
+    @if($history->hasPages())
+    <div style="padding:14px 20px;border-top:1px solid #f3f4f6;">
+        {{ $history->links() }}
+    </div>
+    @endif
+    @endif
+</div>
+
 <script>
-// Count valid emails as user types
 const emailsInput = document.getElementById('emailsInput');
 const emailCount  = document.getElementById('emailCount');
 
@@ -120,7 +216,6 @@ function countEmails() {
 emailsInput.addEventListener('input', countEmails);
 countEmails();
 
-// Char counter for body
 const ta      = document.getElementById('emailBody');
 const counter = document.getElementById('charCount');
 function updateCount() { counter.textContent = ta.value.length.toLocaleString(); }
@@ -131,6 +226,12 @@ function confirmSend() {
     const count = parseInt(emailCount.textContent) || 0;
     if (count === 0) { alert('Please enter at least one email address.'); return false; }
     return confirm('Send this email to ' + count + ' address(es)?\n\nThis cannot be undone.');
+}
+
+function forceResendSubmit() {
+    if (!confirm('This will send to all addresses including those contacted recently. Continue?')) return;
+    document.getElementById('forceResend').value = '1';
+    document.getElementById('broadcastForm').submit();
 }
 </script>
 @endsection
