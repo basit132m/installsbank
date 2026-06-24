@@ -81,6 +81,7 @@ class ManagerController extends Controller
             'can_view_fraud_alerts', 'can_resolve_fraud_alerts',
             'can_manage_support', 'can_manage_live_chat',
             'can_view_stats',
+            'can_send_broadcast_emails',
         ];
         $result = [];
         foreach ($perms as $perm) {
