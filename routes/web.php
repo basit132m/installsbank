@@ -58,6 +58,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin,manager'
     // Publishers
     Route::prefix('publishers')->name('publishers.')->group(function () {
         Route::get('/', [Admin\PublisherController::class, 'index'])->name('index');
+        Route::get('/overview', [Admin\PublisherOverviewController::class, 'index'])->name('overview');
         Route::get('/{user}', [Admin\PublisherController::class, 'show'])->name('show');
         Route::get('/{user}/stats', [Admin\PublisherController::class, 'stats'])->name('stats');
         Route::post('/{user}/activate', [Admin\PublisherController::class, 'activate'])->name('activate');
