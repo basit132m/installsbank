@@ -17,7 +17,7 @@ class PublisherOverviewController extends Controller
             '7days'     => [today()->subDays(6), today(), 'Last 7 Days'],
             '28days'    => [today()->subDays(27), today(), 'Last 28 Days'],
             default     => [today(), today(), 'Today'],
-        ];
+        };
 
         $earningRows = DailyEarning::query()
             ->whereBetween('date', [$dateFrom, $dateTo])
