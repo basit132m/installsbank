@@ -13,18 +13,32 @@ class BroadcastEmailController extends Controller
 {
     private string $defaultBody = "We are reaching out about a publisher partnership opportunity with Installs Bank.
 
-Installs Bank is a pay-per-install network where publishers place our download buttons on their websites and get paid for every click and install generated.
+Hello Admin,
 
-What we offer:
-- Click-based and install-based contracts
-- Real-time statistics dashboard
-- Built-in Android app for publishers
-- Crypto withdrawals
-- Fixed contract option for stable income
+We've analyzed your website and noticed strong traffic potential. You could be earning significantly more with the right ad network.
 
-If you have website traffic and are interested in monetizing it, we would love to discuss a partnership.
+Here's what we offer:
 
-Contact us on WhatsApp at +1 (970) 742-6488 or Telegram @installsbank and we will get back to you shortly.";
+✅ Advance Payment Guarantee — No delays, no waiting
+✅ 24-Hour Paid Testing — We'll pay you upfront to test (RISK-FREE)
+✅ Best Rates in Market — Earn 40%+ more than competitors
+✅ Fast Payouts — Weekly payments, guaranteed
+✅ 24/7 Support — Always here to help
+
+How It Works:
+
+We send that amount as advance payment immediately
+You test our ads for 24 hours (you keep the advance!)
+See the results yourself
+Join our top publishers earning 5-10x more
+
+We're Confident:
+
+You'll make MORE money with us. If not, you've already earned the advance payment. That's a WIN for you either way!
+
+Ready to earn more?
+
+Contact us on WhatsApp at +1 (970) 742-6488 or email contact@installsbank.com or Telegram @installsbank and we will get back to you shortly.";
 
     public function index()
     {
