@@ -140,6 +140,130 @@
 </div>
 
 {{-- ═══════════════════════════════════════════════
+     CHARTS ROW
+═══════════════════════════════════════════════ --}}
+@if($rows->count() > 0)
+@php
+    $pubLabels  = $rows->map(fn($r) => $r['user'] ? $r['user']->name : 'Deleted')->toJson();
+    $pubTotals  = $rows->map(fn($r) => $r['total'])->toJson();
+    $pubWindows = $rows->map(fn($r) => $r['windows'])->toJson();
+    $pubAndroid = $rows->map(fn($r) => $r['android'])->toJson();
+    $pubMac     = $rows->map(fn($r) => $r['mac'])->toJson();
+    $pubOther   = $rows->map(fn($r) => $r['other'])->toJson();
+@endphp
+
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:24px;">
+
+    {{-- Donut: OS Distribution --}}
+    <div style="background:#fff;border:1px solid #e5e7eb;border-radius:20px;padding:24px;">
+        <div style="font-size:15px;font-weight:700;color:#111827;margin-bottom:4px;">OS Distribution</div>
+        <div style="font-size:12px;color:#9ca3af;margin-bottom:20px;">Click share by operating system</div>
+        <div style="display:flex;align-items:center;gap:24px;">
+            <div style="position:relative;width:160px;height:160px;flex-shrink:0;">
+                <canvas id="osDonut" width="160" height="160"></canvas>
+                <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:none;">
+                    <div style="font-size:22px;font-weight:900;color:#111827;">{{ number_format($totals['total']) }}</div>
+                    <div style="font-size:11px;color:#9ca3af;font-weight:500;">total</div>
+                </div>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:12px;flex:1;">
+                @foreach([
+                    ['label'=>'Windows','value'=>$totals['windows'],'pct'=>$winGlob,'color'=>'#7c3aed','bg'=>'#ede9fe'],
+                    ['label'=>'Android','value'=>$totals['android'],'pct'=>$andGlob,'color'=>'#16a34a','bg'=>'#dcfce7'],
+                    ['label'=>'Mac / iOS','value'=>$totals['mac'],'pct'=>$macGlob,'color'=>'#0891b2','bg'=>'#e0f2fe'],
+                    ['label'=>'Other','value'=>$totals['other'],'pct'=>$othGlob,'color'=>'#d97706','bg'=>'#fef3c7'],
+                ] as $os)
+                <div>
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;">
+                        <div style="display:flex;align-items:center;gap:7px;">
+                            <div style="width:10px;height:10px;border-radius:3px;background:{{ $os['color'] }};flex-shrink:0;"></div>
+                            <span style="font-size:13px;font-weight:600;color:#374151;">{{ $os['label'] }}</span>
+                        </div>
+                        <div style="font-size:13px;font-weight:700;color:#111827;">{{ number_format($os['value']) }}
+                            <span style="font-size:11px;font-weight:500;color:#9ca3af;">{{ $os['pct'] }}%</span>
+                        </div>
+                    </div>
+                    <div style="height:6px;background:#f3f4f6;border-radius:4px;">
+                        <div style="height:6px;background:{{ $os['color'] }};border-radius:4px;width:{{ $os['pct'] }}%;transition:width .6s;"></div>
+                    </div>
+                </div>
+                @endforeach
+            </div>
+        </div>
+    </div>
+
+    {{-- Horizontal bar: Publisher Rankings --}}
+    <div style="background:#fff;border:1px solid #e5e7eb;border-radius:20px;padding:24px;">
+        <div style="font-size:15px;font-weight:700;color:#111827;margin-bottom:4px;">Publisher Rankings</div>
+        <div style="font-size:12px;color:#9ca3af;margin-bottom:20px;">Stacked clicks by OS per publisher</div>
+        <canvas id="pubBar" style="max-height:200px;"></canvas>
+    </div>
+</div>
+@endif
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+(function() {
+    const labels  = {!! $pubLabels !!};
+    const windows = {!! $pubWindows !!};
+    const android = {!! $pubAndroid !!};
+    const mac     = {!! $pubMac !!};
+    const other   = {!! $pubOther !!};
+    const totals  = {!! $pubTotals !!};
+
+    // ── Donut ──────────────────────────────────────────
+    new Chart(document.getElementById('osDonut'), {
+        type: 'doughnut',
+        data: {
+            labels: ['Windows','Android','Mac / iOS','Other'],
+            datasets: [{
+                data: [{{ $totals['windows'] }}, {{ $totals['android'] }}, {{ $totals['mac'] }}, {{ $totals['other'] }}],
+                backgroundColor: ['#7c3aed','#16a34a','#0891b2','#d97706'],
+                borderWidth: 3,
+                borderColor: '#fff',
+                hoverOffset: 6,
+            }]
+        },
+        options: {
+            cutout: '70%',
+            plugins: { legend: { display: false }, tooltip: {
+                callbacks: { label: ctx => ' ' + ctx.label + ': ' + ctx.formattedValue }
+            }},
+            animation: { duration: 800 },
+        }
+    });
+
+    // ── Stacked horizontal bar ─────────────────────────
+    new Chart(document.getElementById('pubBar'), {
+        type: 'bar',
+        data: {
+            labels,
+            datasets: [
+                { label:'Windows', data: windows, backgroundColor:'#7c3aed', borderRadius:3, stack:'s' },
+                { label:'Android', data: android, backgroundColor:'#16a34a', borderRadius:3, stack:'s' },
+                { label:'Mac/iOS', data: mac,     backgroundColor:'#0891b2', borderRadius:3, stack:'s' },
+                { label:'Other',   data: other,   backgroundColor:'#d97706', borderRadius:3, stack:'s' },
+            ]
+        },
+        options: {
+            indexAxis: 'y',
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { position:'bottom', labels:{ boxWidth:10, padding:14, font:{ size:11 } } },
+                tooltip: { mode:'index', intersect:false }
+            },
+            scales: {
+                x: { stacked:true, grid:{ color:'#f3f4f6' }, ticks:{ font:{ size:11 } } },
+                y: { stacked:true, grid:{ display:false }, ticks:{ font:{ size:12, weight:'600' } } }
+            },
+            animation: { duration:800 }
+        }
+    });
+})();
+</script>
+
+{{-- ═══════════════════════════════════════════════
      PUBLISHER TABLE
 ═══════════════════════════════════════════════ --}}
 <div style="background:#fff;border:1px solid #e5e7eb;border-radius:20px;overflow:hidden;">
@@ -252,15 +376,9 @@
             <div style="font-size:11px;color:#fcd34d;margin-top:1px;">{{ $othPct }}%</div>
         </div>
 
-        {{-- Total + split bar --}}
+        {{-- Total (no bar) --}}
         <div style="text-align:right;">
             <div style="font-weight:900;font-size:16px;color:#111827;">{{ number_format($total) }}</div>
-            <div style="display:flex;gap:1px;margin-top:5px;height:5px;border-radius:4px;overflow:hidden;margin-left:auto;width:100%;">
-                @if($winPct > 0)<div style="width:{{ $winPct }}%;background:#7c3aed;"></div>@endif
-                @if($andPct > 0)<div style="width:{{ $andPct }}%;background:#16a34a;"></div>@endif
-                @if($macPct > 0)<div style="width:{{ $macPct }}%;background:#0891b2;"></div>@endif
-                @if($othPct > 0)<div style="width:{{ $othPct }}%;background:#d97706;"></div>@endif
-            </div>
             <div style="font-size:10px;color:#9ca3af;margin-top:3px;">{{ $shareOfTotal }}% of all</div>
         </div>
 
