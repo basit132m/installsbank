@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\LanderHop;
 use App\Models\LanderSetting;
 use App\Models\MegaUrl;
 use App\Models\TrackingDomain;
@@ -13,11 +14,12 @@ class LanderController extends Controller
     public function index()
     {
         $settings = LanderSetting::current();
-        $settings->load('activeLanderDomain', 'redirectFrontDomain');
+        $settings->load('activeLanderDomain');
+        $hops            = LanderHop::with('domain')->orderBy('position')->get();
         $megaUrls        = MegaUrl::orderByDesc('created_at')->get();
         $trackingDomains = TrackingDomain::orderByDesc('is_active')->orderBy('domain')->get();
 
-        return view('admin.lander.index', compact('settings', 'megaUrls', 'trackingDomains'));
+        return view('admin.lander.index', compact('settings', 'hops', 'megaUrls', 'trackingDomains'));
     }
 
     public function update(Request $request)
@@ -47,29 +49,53 @@ class LanderController extends Controller
         LanderSetting::current()->update(['active_lander_domain_id' => $request->domain_id]);
 
         $domain = TrackingDomain::find($request->domain_id);
-        return back()->with('success', "Active lander domain switched to {$domain->domain}. All redirect links now point here.");
+        return back()->with('success', "Active lander domain switched to {$domain->domain}. All redirect chains now point here.");
     }
 
-    public function generateRedirectLink(Request $request)
+    // ── Hop chain management ──────────────────────────────────────────────
+
+    public function addHop(Request $request)
     {
-        $request->validate(['front_domain_id' => 'required|exists:tracking_domains,id']);
+        $request->validate(['domain_id' => 'required|exists:tracking_domains,id']);
 
-        $code = $this->freshCode();
+        $maxPosition = LanderHop::max('position') ?? -1;
 
-        LanderSetting::current()->update([
-            'redirect_front_domain_id' => $request->front_domain_id,
-            'redirect_code'            => $code,
+        LanderHop::create([
+            'code'      => LanderHop::generateCode(),
+            'domain_id' => $request->domain_id,
+            'position'  => $maxPosition + 1,
         ]);
 
-        return back()->with('success', 'New redirect link generated. Share the new URL.');
+        return back()->with('success', 'Hop added to chain.');
     }
 
-    public function rotateRedirectCode()
+    public function deleteHop(LanderHop $hop)
     {
-        LanderSetting::current()->update(['redirect_code' => $this->freshCode()]);
+        $position = $hop->position;
+        $hop->delete();
 
-        return back()->with('success', 'Code rotated. Old shareable link is now dead — use the new one.');
+        // Close the gap — decrement all positions above deleted hop
+        LanderHop::where('position', '>', $position)
+            ->decrement('position');
+
+        return back()->with('success', 'Hop removed from chain.');
     }
+
+    public function clearChain()
+    {
+        LanderHop::truncate();
+
+        return back()->with('success', 'Redirect chain cleared.');
+    }
+
+    public function rotateHopCode(LanderHop $hop)
+    {
+        $hop->update(['code' => LanderHop::generateCode()]);
+
+        return back()->with('success', 'Hop code rotated. Update any shared URLs using this hop.');
+    }
+
+    // ── MEGA URL vault ────────────────────────────────────────────────────
 
     public function storeMegaUrl(Request $request)
     {
@@ -96,14 +122,5 @@ class LanderController extends Controller
         LanderSetting::current()->update(['mega_url' => $megaUrl->url]);
 
         return back()->with('success', "Now using \"{$megaUrl->nickname}\" as the active MEGA link.");
-    }
-
-    private function freshCode(): string
-    {
-        do {
-            $code = strtoupper(substr(str_replace(['+', '/', '='], '', base64_encode(random_bytes(8))), 0, 10));
-        } while (LanderSetting::where('redirect_code', $code)->exists());
-
-        return $code;
     }
 }

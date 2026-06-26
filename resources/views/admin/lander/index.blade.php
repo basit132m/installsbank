@@ -5,7 +5,7 @@
 
 @section('content')
 
-{{-- Hero strip --}}
+{{-- Hero --}}
 <div style="background:linear-gradient(135deg,#0f172a 0%,#1e1b4b 50%,#0f172a 100%);border-radius:18px;padding:32px 36px;margin-bottom:28px;position:relative;overflow:hidden;">
     <div style="position:absolute;top:-60px;right:-60px;width:200px;height:200px;background:radial-gradient(circle,rgba(99,102,241,0.18) 0%,transparent 70%);border-radius:50%;pointer-events:none;"></div>
     <div style="position:absolute;bottom:-40px;left:30%;width:160px;height:160px;background:radial-gradient(circle,rgba(16,185,129,0.12) 0%,transparent 70%);border-radius:50%;pointer-events:none;"></div>
@@ -17,7 +17,7 @@
                 </div>
                 <h2 style="font-size:22px;font-weight:800;color:#fff;letter-spacing:-0.02em;">Lander Page Manager</h2>
             </div>
-            <p style="color:rgba(255,255,255,0.5);font-size:14px;margin-left:58px;">Domain rotation system — keep your links alive by rotating when one gets flagged</p>
+            <p style="color:rgba(255,255,255,0.5);font-size:14px;margin-left:58px;">Multi-hop redirect chain — every domain in the chain can be rotated independently</p>
         </div>
         @if($settings->activeLanderDomain)
         <a href="https://{{ $settings->activeLanderDomain->domain }}/download" target="_blank"
@@ -30,20 +30,16 @@
 
     <div style="display:flex;gap:16px;margin-top:24px;flex-wrap:wrap;">
         <div style="background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.1);border-radius:12px;padding:16px 22px;min-width:160px;">
-            <div style="font-size:11px;font-weight:600;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:4px;">Active Lander Domain</div>
+            <div style="font-size:11px;font-weight:600;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:4px;">Active Lander</div>
             @if($settings->activeLanderDomain)
                 <div style="font-size:15px;font-weight:700;color:#6ee7b7;">{{ $settings->activeLanderDomain->domain }}</div>
             @else
                 <div style="font-size:14px;color:rgba(255,255,255,0.3);">Not set</div>
             @endif
         </div>
-        <div style="background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.1);border-radius:12px;padding:16px 22px;min-width:160px;">
-            <div style="font-size:11px;font-weight:600;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:4px;">Shareable Redirect</div>
-            @if($settings->redirect_code && $settings->redirectFrontDomain)
-                <div style="font-size:12px;font-weight:600;color:#a5b4fc;font-family:monospace;">{{ $settings->redirectFrontDomain->domain }}/go/{{ $settings->redirect_code }}</div>
-            @else
-                <div style="font-size:14px;color:rgba(255,255,255,0.3);">Not generated</div>
-            @endif
+        <div style="background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.1);border-radius:12px;padding:16px 22px;min-width:140px;">
+            <div style="font-size:11px;font-weight:600;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:4px;">Redirect Hops</div>
+            <div style="font-size:26px;font-weight:800;color:#a5b4fc;">{{ $hops->count() }}</div>
         </div>
         <div style="background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.1);border-radius:12px;padding:16px 22px;min-width:140px;">
             <div style="font-size:11px;font-weight:600;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:4px;">MEGA URLs Saved</div>
@@ -56,25 +52,35 @@
     </div>
 </div>
 
-{{-- ═══════════════════════════════════════════════════════════
+{{-- ═══════════════════════════════════════
      DOMAIN ROTATION SYSTEM
-═══════════════════════════════════════════════════════════ --}}
+═══════════════════════════════════════ --}}
 <div style="background:#fff;border-radius:16px;border:1px solid #e5e7eb;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,0.04);margin-bottom:24px;">
 
-    {{-- Panel header --}}
-    <div style="display:flex;align-items:center;gap:12px;padding:20px 24px;border-bottom:1px solid #f3f4f6;background:linear-gradient(135deg,#f8faff,#f0f4ff);">
-        <div style="width:38px;height:38px;background:linear-gradient(135deg,#f59e0b,#ef4444);border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-            <svg width="20" height="20" fill="none" stroke="white" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:20px 24px;border-bottom:1px solid #f3f4f6;background:linear-gradient(135deg,#f8faff,#f0f4ff);">
+        <div style="display:flex;align-items:center;gap:12px;">
+            <div style="width:38px;height:38px;background:linear-gradient(135deg,#f59e0b,#ef4444);border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                <svg width="20" height="20" fill="none" stroke="white" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+            </div>
+            <div>
+                <div style="font-size:15px;font-weight:700;color:#111827;">Domain Rotation System</div>
+                <div style="font-size:12px;color:#9ca3af;">When a domain is flagged: swap it — all links update instantly</div>
+            </div>
         </div>
-        <div>
-            <div style="font-size:15px;font-weight:700;color:#111827;">Domain Rotation System</div>
-            <div style="font-size:12px;color:#9ca3af;">When a domain gets flagged: switch the active lander domain → all redirect links instantly point to the new domain</div>
-        </div>
+        @if($hops->count() > 0)
+        <form method="POST" action="{{ route('admin.lander.hops.clear') }}" onsubmit="return confirm('Delete the entire redirect chain? All hop links will stop working.')">
+            @csrf
+            <button type="submit" style="display:inline-flex;align-items:center;gap:6px;padding:8px 14px;background:#fee2e2;border:1px solid #fca5a5;border-radius:8px;font-size:13px;font-weight:600;color:#dc2626;cursor:pointer;">
+                <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                Clear Entire Chain
+            </button>
+        </form>
+        @endif
     </div>
 
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:0;">
 
-        {{-- STEP 1: Active Lander Domain --}}
+        {{-- LEFT: Active Lander Domain --}}
         <div style="padding:24px;border-right:1px solid #f3f4f6;">
             <div style="display:flex;align-items:center;gap:8px;margin-bottom:16px;">
                 <div style="width:24px;height:24px;background:linear-gradient(135deg,#10b981,#3b82f6);border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
@@ -82,7 +88,7 @@
                 </div>
                 <div>
                     <div style="font-size:14px;font-weight:700;color:#111827;">Active Lander Domain</div>
-                    <div style="font-size:12px;color:#9ca3af;">Where <code style="background:#f3f4f6;padding:1px 5px;border-radius:4px;">/download</code> is served from</div>
+                    <div style="font-size:12px;color:#9ca3af;">Where <code style="background:#f3f4f6;padding:1px 5px;border-radius:4px;font-size:11px;">/download</code> is served — the final destination</div>
                 </div>
             </div>
 
@@ -94,42 +100,33 @@
                 <div style="display:flex;flex-direction:column;gap:8px;">
                     @foreach($trackingDomains as $td)
                         @php $isActive = $settings->active_lander_domain_id === $td->id; @endphp
-                        <div style="border:2px solid {{ $isActive ? '#10b981' : '#e5e7eb' }};border-radius:10px;padding:12px 14px;background:{{ $isActive ? '#f0fdf4' : '#fff' }};transition:all 0.15s;">
+                        <div style="border:2px solid {{ $isActive ? '#10b981' : '#e5e7eb' }};border-radius:10px;padding:11px 14px;background:{{ $isActive ? '#f0fdf4' : '#fff' }};">
                             <div style="display:flex;align-items:center;gap:10px;">
-                                {{-- Status dot --}}
-                                <div style="width:9px;height:9px;border-radius:50%;background:{{ $td->is_active ? '#10b981' : '#d1d5db' }};box-shadow:{{ $td->is_active ? '0 0 6px rgba(16,185,129,0.5)' : 'none' }};flex-shrink:0;"></div>
-
+                                <div style="width:8px;height:8px;border-radius:50%;background:{{ $td->is_active ? '#10b981' : '#9ca3af' }};flex-shrink:0;"></div>
                                 <div style="flex:1;min-width:0;">
                                     <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
                                         <span style="font-size:13px;font-weight:700;color:{{ $isActive ? '#065f46' : '#374151' }};">{{ $td->domain }}</span>
                                         @if($isActive)
-                                            <span style="display:inline-flex;align-items:center;gap:3px;padding:2px 8px;background:#d1fae5;color:#065f46;border-radius:20px;font-size:11px;font-weight:700;">
-                                                <span style="width:5px;height:5px;background:#10b981;border-radius:50%;display:inline-block;"></span>
-                                                LIVE
-                                            </span>
+                                            <span style="padding:2px 8px;background:#d1fae5;color:#065f46;border-radius:20px;font-size:11px;font-weight:700;">✓ LIVE</span>
                                         @endif
                                         @if(!$td->is_active)
                                             <span style="padding:2px 8px;background:#fee2e2;color:#991b1b;border-radius:20px;font-size:11px;font-weight:700;">BURNED</span>
                                         @endif
                                     </div>
                                     @if($isActive)
-                                        <div style="font-size:12px;color:#10b981;margin-top:2px;font-family:monospace;">https://{{ $td->domain }}/download</div>
+                                        <div style="font-size:11px;color:#10b981;margin-top:2px;font-family:monospace;">https://{{ $td->domain }}/download</div>
                                     @endif
                                 </div>
-
-                                <div style="display:flex;gap:5px;flex-shrink:0;">
-                                    @if($isActive)
-                                        <button onclick="copyText('https://{{ $td->domain }}/download', this)" style="padding:5px 10px;background:#d1fae5;border:1px solid #6ee7b7;border-radius:6px;font-size:11px;font-weight:600;color:#065f46;cursor:pointer;">Copy URL</button>
-                                    @else
-                                        @if($td->is_active)
-                                        <form method="POST" action="{{ route('admin.lander.set-active-domain') }}">
-                                            @csrf
-                                            <input type="hidden" name="domain_id" value="{{ $td->id }}">
-                                            <button type="submit" style="padding:5px 12px;background:linear-gradient(135deg,#10b981,#3b82f6);color:#fff;border:none;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;">Set Active</button>
-                                        </form>
-                                        @endif
-                                    @endif
-                                </div>
+                                @if($td->is_active && !$isActive)
+                                    <form method="POST" action="{{ route('admin.lander.set-active-domain') }}" style="flex-shrink:0;">
+                                        @csrf
+                                        <input type="hidden" name="domain_id" value="{{ $td->id }}">
+                                        <button type="submit" style="padding:5px 12px;background:linear-gradient(135deg,#10b981,#3b82f6);color:#fff;border:none;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;">Set Active</button>
+                                    </form>
+                                @endif
+                                @if($isActive)
+                                    <button onclick="copyText('https://{{ $td->domain }}/download', this)" style="padding:5px 10px;background:#d1fae5;border:1px solid #6ee7b7;border-radius:6px;font-size:11px;font-weight:600;color:#065f46;cursor:pointer;flex-shrink:0;">Copy</button>
+                                @endif
                             </div>
                         </div>
                     @endforeach
@@ -137,105 +134,128 @@
 
                 @if($settings->activeLanderDomain && !$settings->activeLanderDomain->is_active)
                     <div style="margin-top:12px;padding:10px 14px;background:#fef3c7;border:1px solid #fde68a;border-radius:8px;font-size:13px;color:#92400e;font-weight:500;">
-                        ⚠️ Active domain is burned! Pick a new one above.
+                        ⚠️ Active domain is burned — pick a new one above.
                     </div>
                 @endif
             @endif
         </div>
 
-        {{-- STEP 2: Shareable Redirect Link --}}
+        {{-- RIGHT: Redirect Chain --}}
         <div style="padding:24px;">
             <div style="display:flex;align-items:center;gap:8px;margin-bottom:16px;">
                 <div style="width:24px;height:24px;background:linear-gradient(135deg,#6366f1,#8b5cf6);border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
                     <span style="font-size:11px;font-weight:800;color:#fff;">2</span>
                 </div>
                 <div>
-                    <div style="font-size:14px;font-weight:700;color:#111827;">Shareable Redirect Link</div>
-                    <div style="font-size:12px;color:#9ca3af;">Two-hop: share this URL, never the lander directly</div>
+                    <div style="font-size:14px;font-weight:700;color:#111827;">Redirect Chain</div>
+                    <div style="font-size:12px;color:#9ca3af;">Share Hop 1 — each hop redirects to the next, last hop goes to lander</div>
                 </div>
             </div>
 
-            {{-- Diagram --}}
-            <div style="background:#f8faff;border:1px solid #e0e7ff;border-radius:10px;padding:14px 16px;margin-bottom:16px;">
-                <div style="font-size:11px;font-weight:700;color:#6366f1;text-transform:uppercase;letter-spacing:0.07em;margin-bottom:10px;">How it works</div>
-                <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-                    <div style="background:#ede9fe;border-radius:8px;padding:6px 10px;font-size:12px;font-weight:600;color:#6d28d9;font-family:monospace;">
-                        @if($settings->redirect_code && $settings->redirectFrontDomain)
-                            {{ $settings->redirectFrontDomain->domain }}/go/{{ $settings->redirect_code }}
-                        @else
-                            front-domain.com/go/CODE
-                        @endif
-                    </div>
-                    <svg width="16" height="16" fill="none" stroke="#9ca3af" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg>
-                    <div style="background:#d1fae5;border-radius:8px;padding:6px 10px;font-size:12px;font-weight:600;color:#065f46;font-family:monospace;">
-                        @if($settings->activeLanderDomain)
-                            {{ $settings->activeLanderDomain->domain }}/download
-                        @else
-                            active-domain.com/download
-                        @endif
-                    </div>
-                    <svg width="16" height="16" fill="none" stroke="#9ca3af" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg>
-                    <div style="background:#fef3c7;border-radius:8px;padding:6px 10px;font-size:12px;font-weight:600;color:#92400e;">Lander Page</div>
-                </div>
-            </div>
-
-            {{-- Generator form --}}
-            <form method="POST" action="{{ route('admin.lander.generate-redirect') }}">
-                @csrf
-                <div style="margin-bottom:12px;">
-                    <label style="display:block;font-size:13px;font-weight:600;color:#374151;margin-bottom:5px;">Front Domain <span style="color:#9ca3af;font-weight:400;">(use a different domain than the lander)</span></label>
-                    <select name="front_domain_id"
-                            style="width:100%;padding:9px 13px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;color:#1f2937;outline:none;background:#fff;appearance:none;background-image:url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236b7280' d='M6 8L1 3h10z'/%3E%3C/svg%3E\");background-repeat:no-repeat;background-position:right 12px center;padding-right:32px;"
-                            required>
-                        <option value="">— Select front domain —</option>
-                        @foreach($trackingDomains->where('is_active', true) as $td)
-                            <option value="{{ $td->id }}" {{ $settings->redirect_front_domain_id === $td->id ? 'selected' : '' }}>
-                                {{ $td->domain }}{{ $td->id === $settings->active_lander_domain_id ? ' (current lander)' : '' }}
-                            </option>
-                        @endforeach
-                    </select>
-                </div>
-                <button type="submit"
-                        style="width:100%;padding:10px;background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;">
-                    Generate New Link
-                </button>
-            </form>
-
-            {{-- Show active link --}}
-            @if($settings->redirect_code && $settings->redirectFrontDomain)
-                @php $shareUrl = 'https://' . $settings->redirectFrontDomain->domain . '/go/' . $settings->redirect_code; @endphp
-                <div style="margin-top:16px;background:#f0fdf4;border:2px solid #6ee7b7;border-radius:10px;padding:14px 16px;">
-                    <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:#065f46;margin-bottom:8px;">📤 SHARE THIS LINK</div>
-                    <div style="display:flex;align-items:center;gap:8px;">
-                        <code style="flex:1;font-size:13px;color:#065f46;font-family:monospace;word-break:break-all;">{{ $shareUrl }}</code>
-                        <button onclick="copyText('{{ $shareUrl }}', this)"
-                                style="padding:6px 12px;background:#10b981;color:#fff;border:none;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer;flex-shrink:0;white-space:nowrap;">
-                            Copy
-                        </button>
-                    </div>
-                    <div style="margin-top:10px;display:flex;align-items:center;gap:8px;">
-                        <span style="font-size:12px;color:#6b7280;">Rotate code (burns old link):</span>
-                        <form method="POST" action="{{ route('admin.lander.rotate-code') }}" style="display:inline;" onsubmit="return confirm('This will invalidate the current shareable link. Anyone using the old URL will get a 404. Continue?')">
-                            @csrf
-                            <button type="submit" style="padding:4px 10px;background:#fef3c7;border:1px solid #fde68a;border-radius:6px;font-size:12px;font-weight:600;color:#92400e;cursor:pointer;">🔄 Rotate Code</button>
-                        </form>
-                    </div>
+            {{-- Chain visualization --}}
+            @if($hops->isEmpty())
+                <div style="padding:20px;background:#f9fafb;border:1px dashed #d1d5db;border-radius:10px;text-align:center;margin-bottom:16px;">
+                    <div style="font-size:13px;color:#9ca3af;margin-bottom:4px;">No hops yet</div>
+                    <div style="font-size:12px;color:#d1d5db;">Add hops below to build your redirect chain</div>
                 </div>
             @else
-                <div style="margin-top:12px;padding:12px 14px;background:#f9fafb;border:1px dashed #d1d5db;border-radius:8px;text-align:center;font-size:13px;color:#9ca3af;">
-                    No redirect link yet — pick a front domain and generate one above
+                <div style="margin-bottom:16px;">
+                    @foreach($hops as $i => $hop)
+                        @php $shareUrl = $hop->domain ? 'https://' . $hop->domain->domain . '/go/' . $hop->code : ''; @endphp
+
+                        {{-- Hop card --}}
+                        <div style="border:2px solid {{ $i === 0 ? '#6366f1' : '#e5e7eb' }};border-radius:10px;padding:12px 14px;background:{{ $i === 0 ? '#f5f3ff' : '#fff' }};position:relative;">
+
+                            {{-- Hop label --}}
+                            <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+                                <span style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:{{ $i === 0 ? '#6d28d9' : '#6b7280' }};">
+                                    @if($i === 0) 📤 Hop {{ $i + 1 }} — Share This @else Hop {{ $i + 1 }} @endif
+                                </span>
+                                @if($hop->domain && !$hop->domain->is_active)
+                                    <span style="padding:2px 7px;background:#fee2e2;color:#991b1b;border-radius:20px;font-size:10px;font-weight:700;">BURNED</span>
+                                @endif
+                            </div>
+
+                            {{-- URL --}}
+                            @if($hop->domain)
+                                <div style="display:flex;align-items:center;gap:8px;">
+                                    <code style="flex:1;font-size:12px;color:#1f2937;font-family:monospace;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;background:#f3f4f6;padding:6px 10px;border-radius:6px;">{{ $shareUrl }}</code>
+                                    <button onclick="copyText('{{ $shareUrl }}', this)" style="padding:5px 10px;background:#e0e7ff;border:1px solid #c7d2fe;border-radius:6px;font-size:11px;font-weight:600;color:#4338ca;cursor:pointer;white-space:nowrap;flex-shrink:0;">Copy</button>
+                                </div>
+                            @else
+                                <div style="font-size:12px;color:#ef4444;background:#fee2e2;padding:6px 10px;border-radius:6px;">Domain deleted — rotate this hop</div>
+                            @endif
+
+                            {{-- Actions --}}
+                            <div style="display:flex;align-items:center;gap:6px;margin-top:8px;">
+                                <form method="POST" action="{{ route('admin.lander.hops.rotate', $hop) }}">
+                                    @csrf
+                                    <button type="submit" title="Generate new code for this hop" style="display:inline-flex;align-items:center;gap:4px;padding:4px 9px;background:#fef3c7;border:1px solid #fde68a;border-radius:6px;font-size:11px;font-weight:600;color:#92400e;cursor:pointer;">
+                                        <svg width="11" height="11" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                                        Rotate Code
+                                    </button>
+                                </form>
+                                <form method="POST" action="{{ route('admin.lander.hops.delete', $hop) }}" onsubmit="return confirm('Delete this hop? Its URL will stop working.')">
+                                    @csrf @method('DELETE')
+                                    <button type="submit" title="Delete this hop" style="display:inline-flex;align-items:center;gap:4px;padding:4px 9px;background:#fee2e2;border:1px solid #fca5a5;border-radius:6px;font-size:11px;font-weight:600;color:#dc2626;cursor:pointer;">
+                                        <svg width="11" height="11" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                                        Delete
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+
+                        {{-- Arrow between hops --}}
+                        <div style="display:flex;justify-content:center;align-items:center;height:24px;">
+                            <div style="width:1px;height:100%;background:{{ $loop->last ? '#10b981' : '#c7d2fe' }};"></div>
+                            <svg width="14" height="14" fill="none" stroke="{{ $loop->last ? '#10b981' : '#6366f1' }}" viewBox="0 0 24 24" style="position:absolute;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/></svg>
+                        </div>
+
+                    @endforeach
+
+                    {{-- Final destination --}}
+                    <div style="border:2px solid #10b981;border-radius:10px;padding:12px 14px;background:#f0fdf4;">
+                        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:#065f46;margin-bottom:6px;">🏁 Final Destination — Lander</div>
+                        @if($settings->activeLanderDomain)
+                            <code style="font-size:12px;color:#065f46;font-family:monospace;">https://{{ $settings->activeLanderDomain->domain }}/download</code>
+                        @else
+                            <span style="font-size:12px;color:#9ca3af;">Set an active lander domain in Step 1</span>
+                        @endif
+                    </div>
                 </div>
             @endif
+
+            {{-- Add hop form --}}
+            <form method="POST" action="{{ route('admin.lander.hops.add') }}" style="background:#f8faff;border:1px solid #e0e7ff;border-radius:10px;padding:14px 16px;">
+                @csrf
+                <div style="font-size:12px;font-weight:700;color:#4338ca;margin-bottom:10px;text-transform:uppercase;letter-spacing:0.06em;">+ Add Hop to Chain</div>
+                <div style="display:flex;gap:8px;align-items:center;">
+                    <select name="domain_id"
+                            style="flex:1;padding:9px 13px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;color:#1f2937;outline:none;background:#fff;appearance:none;background-image:url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236b7280' d='M6 8L1 3h10z'/%3E%3C/svg%3E\");background-repeat:no-repeat;background-position:right 12px center;padding-right:32px;"
+                            onfocus="this.style.borderColor='#6366f1'" onblur="this.style.borderColor='#d1d5db'"
+                            required>
+                        <option value="">— Pick domain for this hop —</option>
+                        @foreach($trackingDomains->where('is_active', true) as $td)
+                            <option value="{{ $td->id }}">{{ $td->domain }}</option>
+                        @endforeach
+                    </select>
+                    <button type="submit"
+                            style="padding:9px 16px;background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;flex-shrink:0;">
+                        Add Hop
+                    </button>
+                </div>
+                <p style="font-size:11px;color:#9ca3af;margin-top:8px;">Each hop gets a unique code automatically. Hops are added to the end of the chain.</p>
+            </form>
         </div>
     </div>
 </div>
 
-{{-- ═══════════════════════════════════════════════════════════
-     SETTINGS + VAULT (2-col grid)
-═══════════════════════════════════════════════════════════ --}}
+{{-- ═══════════════════════════════════════
+     SETTINGS + VAULT
+═══════════════════════════════════════ --}}
 <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;align-items:start;">
 
-    {{-- Left: Settings form --}}
+    {{-- Settings form --}}
     <div>
         <div style="background:#fff;border-radius:16px;border:1px solid #e5e7eb;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,0.04);">
             <div style="display:flex;align-items:center;gap:12px;padding:20px 24px;border-bottom:1px solid #f3f4f6;">
@@ -259,16 +279,15 @@
                 <div style="margin-bottom:14px;">
                     <label style="display:block;font-size:13px;font-weight:600;color:#374151;margin-bottom:6px;">Page Title</label>
                     <input type="text" name="page_title" value="{{ old('page_title', $settings->page_title) }}"
-                           style="width:100%;padding:10px 14px;border:1px solid #d1d5db;border-radius:8px;font-size:14px;color:#1f2937;outline:none;transition:border-color 0.15s;"
+                           style="width:100%;padding:10px 14px;border:1px solid #d1d5db;border-radius:8px;font-size:14px;color:#1f2937;outline:none;"
                            onfocus="this.style.borderColor='#6366f1';this.style.boxShadow='0 0 0 3px rgba(99,102,241,0.12)'"
-                           onblur="this.style.borderColor='#d1d5db';this.style.boxShadow='none'"
-                           required>
+                           onblur="this.style.borderColor='#d1d5db';this.style.boxShadow='none'" required>
                 </div>
 
                 <div style="margin-bottom:14px;">
                     <label style="display:block;font-size:13px;font-weight:600;color:#374151;margin-bottom:6px;">Download Count (displayed number)</label>
                     <input type="number" name="download_count" value="{{ old('download_count', $settings->download_count) }}"
-                           style="width:100%;padding:10px 14px;border:1px solid #d1d5db;border-radius:8px;font-size:14px;color:#1f2937;outline:none;transition:border-color 0.15s;"
+                           style="width:100%;padding:10px 14px;border:1px solid #d1d5db;border-radius:8px;font-size:14px;color:#1f2937;outline:none;"
                            onfocus="this.style.borderColor='#6366f1';this.style.boxShadow='0 0 0 3px rgba(99,102,241,0.12)'"
                            onblur="this.style.borderColor='#d1d5db';this.style.boxShadow='none'"
                            min="0" required>
@@ -282,7 +301,7 @@
                 <div style="margin-bottom:14px;">
                     <label style="display:block;font-size:13px;font-weight:600;color:#374151;margin-bottom:6px;">Active MEGA URL</label>
                     <textarea name="mega_url" rows="3"
-                              style="width:100%;padding:10px 14px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;color:#1f2937;outline:none;resize:vertical;font-family:monospace;transition:border-color 0.15s;"
+                              style="width:100%;padding:10px 14px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;color:#1f2937;outline:none;resize:vertical;font-family:monospace;"
                               onfocus="this.style.borderColor='#6366f1';this.style.boxShadow='0 0 0 3px rgba(99,102,241,0.12)'"
                               onblur="this.style.borderColor='#d1d5db';this.style.boxShadow='none'"
                               placeholder="https://mega.nz/file/...">{{ old('mega_url', $settings->mega_url) }}</textarea>
@@ -293,10 +312,10 @@
                     <span style="font-size:12px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:0.07em;">Archive Password</span>
                 </div>
 
-                <div style="margin-bottom:14px;">
+                <div style="margin-bottom:20px;">
                     <label style="display:block;font-size:13px;font-weight:600;color:#374151;margin-bottom:6px;">Password</label>
                     <input type="text" name="archive_password" value="{{ old('archive_password', $settings->archive_password) }}"
-                           style="width:100%;padding:10px 14px;border:1px solid #d1d5db;border-radius:8px;font-size:14px;color:#1f2937;outline:none;font-family:monospace;transition:border-color 0.15s;"
+                           style="width:100%;padding:10px 14px;border:1px solid #d1d5db;border-radius:8px;font-size:14px;color:#1f2937;outline:none;font-family:monospace;"
                            onfocus="this.style.borderColor='#6366f1';this.style.boxShadow='0 0 0 3px rgba(99,102,241,0.12)'"
                            onblur="this.style.borderColor='#d1d5db';this.style.boxShadow='none'"
                            placeholder="Leave blank if no password">
@@ -305,7 +324,7 @@
                 <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
                     <div>
                         <div style="font-size:13px;font-weight:600;color:#374151;">Show Password on Lander</div>
-                        <div style="font-size:12px;color:#9ca3af;">Display the archive password to visitors</div>
+                        <div style="font-size:12px;color:#9ca3af;">Display archive password to visitors</div>
                     </div>
                     <label style="position:relative;width:44px;height:24px;flex-shrink:0;">
                         <input type="hidden" name="show_password" value="0">
@@ -317,15 +336,10 @@
                     </label>
                 </div>
 
-                <div style="display:flex;align-items:center;gap:8px;margin:20px 0 16px;">
-                    <div style="width:4px;height:18px;background:linear-gradient(180deg,#6366f1,#06b6d4);border-radius:2px;"></div>
-                    <span style="font-size:12px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:0.07em;">Display Options</span>
-                </div>
-
                 <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
                     <div>
                         <div style="font-size:13px;font-weight:600;color:#374151;">Show System Checks</div>
-                        <div style="font-size:12px;color:#9ca3af;">Display the virus scan / security check badges</div>
+                        <div style="font-size:12px;color:#9ca3af;">Display virus scan / security check badges</div>
                     </div>
                     <label style="position:relative;width:44px;height:24px;flex-shrink:0;">
                         <input type="hidden" name="show_checks" value="0">
@@ -364,14 +378,14 @@
                 </div>
 
                 <button type="submit"
-                        style="width:100%;padding:13px;background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;box-shadow:0 4px 14px rgba(99,102,241,0.35);">
+                        style="width:100%;padding:13px;background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;">
                     Save Settings
                 </button>
             </form>
         </div>
     </div>
 
-    {{-- Right: URL Vault --}}
+    {{-- MEGA URL Vault --}}
     <div style="display:flex;flex-direction:column;gap:20px;">
 
         <div style="background:#fff;border-radius:16px;border:1px solid #e5e7eb;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,0.04);">
@@ -384,34 +398,27 @@
                     <div style="font-size:12px;color:#9ca3af;">Save a MEGA URL with a nickname for reuse</div>
                 </div>
             </div>
-
             <form method="POST" action="{{ route('admin.mega-urls.store') }}" style="padding:20px;">
                 @csrf
                 <div style="margin-bottom:12px;">
                     <label style="display:block;font-size:13px;font-weight:600;color:#374151;margin-bottom:5px;">Nickname</label>
                     <input type="text" name="nickname" placeholder="e.g. v2.1 Release June"
                            style="width:100%;padding:9px 13px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;color:#1f2937;outline:none;"
-                           onfocus="this.style.borderColor='#10b981';this.style.boxShadow='0 0 0 3px rgba(16,185,129,0.12)'"
-                           onblur="this.style.borderColor='#d1d5db';this.style.boxShadow='none'" required>
+                           onfocus="this.style.borderColor='#10b981'" onblur="this.style.borderColor='#d1d5db'" required>
                 </div>
                 <div style="margin-bottom:12px;">
                     <label style="display:block;font-size:13px;font-weight:600;color:#374151;margin-bottom:5px;">MEGA URL</label>
                     <input type="text" name="url" placeholder="https://mega.nz/file/..."
                            style="width:100%;padding:9px 13px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;color:#1f2937;outline:none;font-family:monospace;"
-                           onfocus="this.style.borderColor='#10b981';this.style.boxShadow='0 0 0 3px rgba(16,185,129,0.12)'"
-                           onblur="this.style.borderColor='#d1d5db';this.style.boxShadow='none'" required>
+                           onfocus="this.style.borderColor='#10b981'" onblur="this.style.borderColor='#d1d5db'" required>
                 </div>
                 <div style="margin-bottom:16px;">
                     <label style="display:block;font-size:13px;font-weight:600;color:#374151;margin-bottom:5px;">Notes <span style="color:#9ca3af;font-weight:400;">(optional)</span></label>
                     <input type="text" name="notes" placeholder="e.g. Windows 10/11 compatible"
                            style="width:100%;padding:9px 13px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;color:#1f2937;outline:none;"
-                           onfocus="this.style.borderColor='#10b981';this.style.boxShadow='0 0 0 3px rgba(16,185,129,0.12)'"
-                           onblur="this.style.borderColor='#d1d5db';this.style.boxShadow='none'">
+                           onfocus="this.style.borderColor='#10b981'" onblur="this.style.borderColor='#d1d5db'">
                 </div>
-                <button type="submit"
-                        style="width:100%;padding:11px;background:linear-gradient(135deg,#10b981,#3b82f6);color:#fff;border:none;border-radius:9px;font-size:13px;font-weight:700;cursor:pointer;">
-                    Save to Vault
-                </button>
+                <button type="submit" style="width:100%;padding:11px;background:linear-gradient(135deg,#10b981,#3b82f6);color:#fff;border:none;border-radius:9px;font-size:13px;font-weight:700;cursor:pointer;">Save to Vault</button>
             </form>
         </div>
 
@@ -425,13 +432,9 @@
                     <div style="font-size:12px;color:#9ca3af;">{{ $megaUrls->count() }} saved {{ Str::plural('link', $megaUrls->count()) }}</div>
                 </div>
             </div>
-
             @if($megaUrls->isEmpty())
-                <div style="padding:40px 24px;text-align:center;">
-                    <div style="width:52px;height:52px;background:#f3f4f6;border-radius:14px;display:flex;align-items:center;justify-content:center;margin:0 auto 12px;">
-                        <svg width="24" height="24" fill="none" stroke="#9ca3af" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"/></svg>
-                    </div>
-                    <p style="font-size:14px;color:#9ca3af;font-weight:500;">No URLs in vault yet</p>
+                <div style="padding:36px 24px;text-align:center;">
+                    <p style="font-size:14px;color:#9ca3af;">No URLs in vault yet</p>
                 </div>
             @else
                 <div>
@@ -439,17 +442,16 @@
                         @php $isActive = trim($settings->mega_url) === trim($mu->url); @endphp
                         <div style="padding:16px 20px;border-bottom:1px solid #f3f4f6;" onmouseover="this.style.background='#f9fafb'" onmouseout="this.style.background=''">
                             <div style="display:flex;align-items:flex-start;gap:12px;">
-                                <div style="margin-top:3px;width:8px;height:8px;border-radius:50%;background:{{ $isActive ? '#10b981' : '#d1d5db' }};box-shadow:{{ $isActive ? '0 0 8px rgba(16,185,129,0.6)' : 'none' }};flex-shrink:0;"></div>
+                                <div style="margin-top:3px;width:8px;height:8px;border-radius:50%;background:{{ $isActive ? '#10b981' : '#d1d5db' }};flex-shrink:0;"></div>
                                 <div style="flex:1;min-width:0;">
                                     <div style="display:flex;align-items:center;gap:8px;margin-bottom:2px;">
                                         <span style="font-size:14px;font-weight:700;color:#111827;">{{ $mu->nickname }}</span>
-                                        @if($isActive)<span style="display:inline-flex;align-items:center;padding:2px 8px;background:#d1fae5;color:#065f46;border-radius:20px;font-size:11px;font-weight:700;">Active</span>@endif
+                                        @if($isActive)<span style="padding:2px 8px;background:#d1fae5;color:#065f46;border-radius:20px;font-size:11px;font-weight:700;">Active</span>@endif
                                     </div>
-                                    <div style="font-size:12px;color:#9ca3af;font-family:monospace;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:260px;" title="{{ $mu->url }}">{{ $mu->url }}</div>
-                                    @if($mu->notes)<div style="font-size:12px;color:#6b7280;margin-top:3px;">{{ $mu->notes }}</div>@endif
-                                    <div style="font-size:11px;color:#d1d5db;margin-top:3px;">Added {{ $mu->created_at->diffForHumans() }}</div>
+                                    <div style="font-size:12px;color:#9ca3af;font-family:monospace;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:260px;">{{ $mu->url }}</div>
+                                    @if($mu->notes)<div style="font-size:12px;color:#6b7280;margin-top:2px;">{{ $mu->notes }}</div>@endif
                                 </div>
-                                <div style="display:flex;gap:6px;flex-shrink:0;align-items:center;">
+                                <div style="display:flex;gap:6px;flex-shrink:0;">
                                     @if(!$isActive)
                                         <form method="POST" action="{{ route('admin.mega-urls.use', $mu) }}">
                                             @csrf
@@ -469,6 +471,7 @@
                 </div>
             @endif
         </div>
+
     </div>
 </div>
 
@@ -483,11 +486,16 @@ function copyText(text, btn) {
         document.execCommand('copy'); document.body.removeChild(ta);
     });
     const orig = btn.textContent;
-    btn.textContent = 'Copied!';
     const origBg = btn.style.background;
+    const origColor = btn.style.color;
+    btn.textContent = 'Copied!';
     btn.style.background = '#10b981';
     btn.style.color = '#fff';
-    setTimeout(() => { btn.textContent = orig; btn.style.background = origBg; }, 2000);
+    setTimeout(() => {
+        btn.textContent = orig;
+        btn.style.background = origBg;
+        btn.style.color = origColor;
+    }, 2000);
 }
 
 function wireToggle(cbId, sliderId, knobId) {

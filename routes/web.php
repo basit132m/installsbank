@@ -287,8 +287,13 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin,manager'
     Route::get('/lander', [Admin\LanderController::class, 'index'])->name('lander.index');
     Route::post('/lander', [Admin\LanderController::class, 'update'])->name('lander.update');
     Route::post('/lander/set-active-domain', [Admin\LanderController::class, 'setActiveDomain'])->name('lander.set-active-domain');
-    Route::post('/lander/generate-redirect', [Admin\LanderController::class, 'generateRedirectLink'])->name('lander.generate-redirect');
-    Route::post('/lander/rotate-code', [Admin\LanderController::class, 'rotateRedirectCode'])->name('lander.rotate-code');
+    // Hop chain
+    Route::prefix('lander/hops')->name('lander.hops.')->group(function () {
+        Route::post('/', [Admin\LanderController::class, 'addHop'])->name('add');
+        Route::post('/clear', [Admin\LanderController::class, 'clearChain'])->name('clear');
+        Route::post('/{hop}/rotate', [Admin\LanderController::class, 'rotateHopCode'])->name('rotate');
+        Route::delete('/{hop}', [Admin\LanderController::class, 'deleteHop'])->name('delete');
+    });
     Route::prefix('mega-urls')->name('mega-urls.')->group(function () {
         Route::post('/', [Admin\LanderController::class, 'storeMegaUrl'])->name('store');
         Route::post('/{megaUrl}/use', [Admin\LanderController::class, 'useMegaUrl'])->name('use');
