@@ -4,6 +4,7 @@ namespace App\Mail;
 
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
+use Illuminate\Mail\Mailables\Address;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Mail\Mailables\Headers;
@@ -15,16 +16,19 @@ class BroadcastMailable extends Mailable
 
     public string $emailSubject;
     public string $bodyContent;
+    public string $fromEmail;
 
-    public function __construct(string $emailSubject, string $bodyContent)
+    public function __construct(string $emailSubject, string $bodyContent, string $fromEmail = 'contact@installsbank.com')
     {
         $this->emailSubject = $emailSubject;
         $this->bodyContent  = $bodyContent;
+        $this->fromEmail    = $fromEmail;
     }
 
     public function envelope(): Envelope
     {
         return new Envelope(
+            from: new Address($this->fromEmail, 'Installs Bank'),
             subject: $this->emailSubject,
         );
     }
@@ -33,7 +37,7 @@ class BroadcastMailable extends Mailable
     {
         return new Headers(
             text: [
-                'List-Unsubscribe'       => '<mailto:contact@installsbank.com?subject=unsubscribe>',
+                'List-Unsubscribe'       => "<mailto:{$this->fromEmail}?subject=unsubscribe>",
                 'List-Unsubscribe-Post'  => 'List-Unsubscribe=One-Click',
                 'Precedence'             => 'bulk',
                 'X-Mailer'               => 'Installs Bank Mailer',

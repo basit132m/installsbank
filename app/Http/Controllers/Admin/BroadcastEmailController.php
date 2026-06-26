@@ -60,6 +60,7 @@ Contact us on WhatsApp at +1 (970) 742-6488 or email contact@installsbank.com or
 
         $data = $request->validate([
             'emails'       => 'required|string',
+            'from_email'   => 'required|in:contact@installsbank.com,info@installsbank.com,admin@installsbank.com,team@installsbank.com,manager@installsbank.com',
             'subject'      => 'required|string|max:200',
             'body'         => 'required|string|max:10000',
             'force_resend' => 'nullable|in:0,1',
@@ -111,10 +112,11 @@ Contact us on WhatsApp at +1 (970) 742-6488 or email contact@installsbank.com or
 
         foreach ($valid as $email) {
             try {
-                Mail::to($email)->send(new BroadcastMailable($data['subject'], $data['body']));
+                Mail::to($email)->send(new BroadcastMailable($data['subject'], $data['body'], $data['from_email']));
                 BroadcastEmailLog::create([
                     'sent_by'         => $sentBy,
                     'batch_id'        => $batchId,
+                    'from_email'      => $data['from_email'],
                     'recipient_email' => $email,
                     'subject'         => $data['subject'],
                     'status'          => 'sent',
@@ -126,6 +128,7 @@ Contact us on WhatsApp at +1 (970) 742-6488 or email contact@installsbank.com or
                 BroadcastEmailLog::create([
                     'sent_by'         => $sentBy,
                     'batch_id'        => $batchId,
+                    'from_email'      => $data['from_email'],
                     'recipient_email' => $email,
                     'subject'         => $data['subject'],
                     'status'          => 'failed',

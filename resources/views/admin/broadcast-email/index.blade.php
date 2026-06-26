@@ -52,11 +52,32 @@
     {{-- Compose Form --}}
     <div class="card">
         <div class="card-title" style="margin-bottom:4px;">Compose Email</div>
-        <p style="font-size:13px;color:#6b7280;margin-bottom:24px;">Sent from <strong>contact@installsbank.com</strong>. Add one or multiple email addresses below.</p>
+        <p style="font-size:13px;color:#6b7280;margin-bottom:20px;">Select a sender address then add recipient emails below.</p>
 
         <form method="POST" action="{{ route('admin.broadcast-email.send') }}" id="broadcastForm">
             @csrf
             <input type="hidden" name="force_resend" id="forceResend" value="0">
+
+            {{-- From Email selector --}}
+            <div class="form-group" style="margin-bottom:20px;">
+                <label class="form-label">From Email Address</label>
+                <select name="from_email" class="form-control" style="font-size:13px;">
+                    @php
+                        $fromEmails = [
+                            'contact@installsbank.com',
+                            'info@installsbank.com',
+                            'admin@installsbank.com',
+                            'team@installsbank.com',
+                            'manager@installsbank.com',
+                        ];
+                        $selectedFrom = old('from_email', 'contact@installsbank.com');
+                    @endphp
+                    @foreach($fromEmails as $fe)
+                        <option value="{{ $fe }}" {{ $selectedFrom === $fe ? 'selected' : '' }}>{{ $fe }}</option>
+                    @endforeach
+                </select>
+                @error('from_email')<div style="color:#ef4444;font-size:12px;margin-top:4px;">{{ $message }}</div>@enderror
+            </div>
 
             {{-- Email addresses input --}}
             <div class="form-group" style="margin-bottom:20px;">
@@ -160,6 +181,7 @@
             <thead>
                 <tr>
                     <th>Date & Time</th>
+                    <th>From</th>
                     <th>Recipient</th>
                     <th>Subject</th>
                     <th style="text-align:center;">Status</th>
@@ -172,6 +194,9 @@
                     <td style="white-space:nowrap;font-size:12px;color:#6b7280;">
                         {{ $log->created_at->format('M j, Y') }}<br>
                         <span style="color:#9ca3af;">{{ $log->created_at->format('g:i A') }}</span>
+                    </td>
+                    <td style="font-size:12px;color:#6b7280;white-space:nowrap;">
+                        {{ $log->from_email ?? 'contact@installsbank.com' }}
                     </td>
                     <td style="font-size:13px;font-weight:600;color:#111827;">
                         {{ $log->recipient_email }}
