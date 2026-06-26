@@ -35,58 +35,122 @@
     ];
 @endphp
 
-{{-- Period breakdown: Today / Yesterday / Last 28 Days / All Time --}}
+{{-- Period filter: Today / Yesterday / Last 28 Days / All Time --}}
+@php
+    $periodData = [
+        'today'     => $periodTotals[1]['today']     + $periodTotals[2]['today']     + $periodTotals[3]['today'],
+        'yesterday' => $periodTotals[1]['yesterday'] + $periodTotals[2]['yesterday'] + $periodTotals[3]['yesterday'],
+        'last28'    => $periodTotals[1]['last28']    + $periodTotals[2]['last28']    + $periodTotals[3]['last28'],
+        'all_time'  => $periodTotals[1]['all_time']  + $periodTotals[2]['all_time']  + $periodTotals[3]['all_time'],
+    ];
+@endphp
+
 <div style="background:white;border:1px solid #e5e7eb;border-radius:14px;overflow:hidden;margin-bottom:24px;box-shadow:0 1px 6px rgba(0,0,0,0.04);">
-    <div style="padding:14px 20px;border-bottom:1px solid #f3f4f6;display:flex;align-items:center;gap:8px;background:#f8fafc;">
-        <svg width="16" height="16" fill="none" stroke="#6366f1" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
-        <span style="font-size:14px;font-weight:700;color:#111827;">Clicks by Tier &amp; Period</span>
-        <span style="font-size:12px;color:#9ca3af;margin-left:4px;">Valid Windows clicks only · no earnings</span>
+    {{-- Header + Tab buttons --}}
+    <div style="padding:16px 20px;border-bottom:1px solid #f3f4f6;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;">
+        <div style="display:flex;align-items:center;gap:8px;">
+            <svg width="16" height="16" fill="none" stroke="#6366f1" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+            <span style="font-size:14px;font-weight:700;color:#111827;">Clicks by Tier</span>
+            <span style="font-size:12px;color:#9ca3af;">Valid Windows clicks only</span>
+        </div>
+        <div style="display:flex;gap:6px;" id="periodTabs">
+            @foreach([
+                'today'     => 'Today',
+                'yesterday' => 'Yesterday',
+                'last28'    => 'Last 28 Days',
+                'all_time'  => 'All Time',
+            ] as $key => $label)
+            <button onclick="switchPeriod('{{ $key }}')" id="tab-{{ $key }}"
+                    style="padding:7px 14px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;border:1.5px solid #e5e7eb;background:#f9fafb;color:#6b7280;transition:all 0.15s;">
+                {{ $label }}
+            </button>
+            @endforeach
+        </div>
     </div>
 
-    <div style="overflow-x:auto;">
-        <table style="width:100%;border-collapse:collapse;">
-            <thead>
-                <tr style="background:#f9fafb;border-bottom:2px solid #e5e7eb;">
-                    <th style="padding:12px 20px;font-size:12px;font-weight:700;color:#374151;text-align:left;width:140px;">Tier</th>
-                    @foreach(['Today','Yesterday','Last 28 Days','All Time'] as $col)
-                    <th style="padding:12px 20px;font-size:12px;font-weight:700;color:#374151;text-align:right;">{{ $col }}</th>
-                    @endforeach
-                </tr>
-            </thead>
-            <tbody>
-                @foreach([1,2,3] as $t)
-                @php $m = $tierMeta[$t]; @endphp
-                <tr style="border-bottom:1px solid #f3f4f6;">
-                    <td style="padding:14px 20px;">
-                        <div style="display:flex;align-items:center;gap:8px;">
-                            <div style="width:10px;height:10px;border-radius:50%;background:{{ $m['accent'] }};flex-shrink:0;"></div>
-                            <span style="font-size:13px;font-weight:700;color:#111827;">{{ $m['label'] }}</span>
-                            <span style="font-size:11px;color:#9ca3af;">{{ $m['desc'] }}</span>
-                        </div>
-                    </td>
-                    @foreach(['today','yesterday','last28','all_time'] as $p)
-                    <td style="padding:14px 20px;text-align:right;">
-                        <span style="font-size:15px;font-weight:800;color:{{ $m['accent'] }};">
-                            {{ number_format($periodTotals[$t][$p]) }}
-                        </span>
-                    </td>
-                    @endforeach
-                </tr>
-                @endforeach
+    {{-- Tier rows --}}
+    <div style="padding:20px 24px;" id="tierPeriodBody">
+        @php
+            $tierAccents = [1 => '#059669', 2 => '#d97706', 3 => '#6366f1'];
+            $tierLabels  = [1 => 'Tier 1', 2 => 'Tier 2', 3 => 'Tier 3'];
+            $tierDescs   = [1 => 'US, GB, CA, AU, DE, FR, NL, SE, NO, DK', 2 => 'ES, IT, PT, PL, CZ, HU, RO, GR, TR, AE', 3 => 'All other countries'];
+        @endphp
 
-                {{-- Total row --}}
-                <tr style="background:#f8fafc;border-top:2px solid #e5e7eb;">
-                    <td style="padding:12px 20px;font-size:13px;font-weight:700;color:#374151;">Total</td>
-                    @foreach(['today','yesterday','last28','all_time'] as $p)
-                    <td style="padding:12px 20px;text-align:right;font-size:14px;font-weight:800;color:#111827;">
-                        {{ number_format(array_sum(array_column($periodTotals, $p))) }}
-                    </td>
-                    @endforeach
-                </tr>
-            </tbody>
-        </table>
+        @foreach([1,2,3] as $t)
+        <div style="display:flex;align-items:center;gap:16px;padding:14px 0;{{ $t < 3 ? 'border-bottom:1px solid #f3f4f6;' : '' }}">
+            {{-- Tier label --}}
+            <div style="width:180px;flex-shrink:0;display:flex;align-items:center;gap:8px;">
+                <div style="width:10px;height:10px;border-radius:50%;background:{{ $tierAccents[$t] }};flex-shrink:0;"></div>
+                <div>
+                    <div style="font-size:13px;font-weight:700;color:#111827;">{{ $tierLabels[$t] }}</div>
+                    <div style="font-size:11px;color:#9ca3af;">{{ $tierDescs[$t] }}</div>
+                </div>
+            </div>
+
+            {{-- Progress bar --}}
+            <div style="flex:1;height:10px;background:#f3f4f6;border-radius:5px;overflow:hidden;">
+                <div id="bar-{{ $t }}" style="height:100%;background:{{ $tierAccents[$t] }};border-radius:5px;width:0%;transition:width 0.35s ease;"></div>
+            </div>
+
+            {{-- Click count --}}
+            <div style="width:110px;text-align:right;flex-shrink:0;">
+                <span id="count-{{ $t }}" style="font-size:18px;font-weight:800;color:{{ $tierAccents[$t] }};">0</span>
+                <span style="font-size:12px;color:#9ca3af;margin-left:3px;">clicks</span>
+            </div>
+        </div>
+        @endforeach
+
+        {{-- Total --}}
+        <div style="border-top:2px solid #e5e7eb;margin-top:4px;padding-top:14px;display:flex;justify-content:flex-end;align-items:center;gap:8px;">
+            <span style="font-size:13px;color:#6b7280;font-weight:600;">Total:</span>
+            <span id="count-total" style="font-size:20px;font-weight:800;color:#111827;">0</span>
+            <span style="font-size:12px;color:#9ca3af;">clicks</span>
+        </div>
     </div>
 </div>
+
+<script>
+const periodData = @json($periodTotals);
+const tabs = ['today', 'yesterday', 'last28', 'all_time'];
+
+function switchPeriod(period) {
+    // Update tab styles
+    tabs.forEach(t => {
+        const btn = document.getElementById('tab-' + t);
+        if (t === period) {
+            btn.style.background = '#6366f1';
+            btn.style.color = '#fff';
+            btn.style.borderColor = '#6366f1';
+        } else {
+            btn.style.background = '#f9fafb';
+            btn.style.color = '#6b7280';
+            btn.style.borderColor = '#e5e7eb';
+        }
+    });
+
+    // Get values for selected period
+    const t1 = periodData[1][period] || 0;
+    const t2 = periodData[2][period] || 0;
+    const t3 = periodData[3][period] || 0;
+    const total = t1 + t2 + t3;
+
+    // Update counts
+    document.getElementById('count-1').textContent = total > 0 ? t1.toLocaleString() : '0';
+    document.getElementById('count-2').textContent = total > 0 ? t2.toLocaleString() : '0';
+    document.getElementById('count-3').textContent = total > 0 ? t3.toLocaleString() : '0';
+    document.getElementById('count-total').textContent = total.toLocaleString();
+
+    // Update bars
+    [1,2,3].forEach(t => {
+        const val = periodData[t][period] || 0;
+        const pct = total > 0 ? (val / total * 100) : 0;
+        document.getElementById('bar-' + t).style.width = pct + '%';
+    });
+}
+
+// Default to Today on load
+switchPeriod('today');
+</script>
 
 {{-- Total summary bar --}}
 <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:28px;">
