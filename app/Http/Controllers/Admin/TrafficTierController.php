@@ -16,7 +16,6 @@ class TrafficTierController extends Controller
         // Single query — conditional aggregation for all 4 periods at once
         $periodRows = Click::query()
             ->where('is_counted', true)
-            ->where('is_windows', true)
             ->groupBy('country_code')
             ->selectRaw("
                 country_code,
@@ -70,7 +69,6 @@ class TrafficTierController extends Controller
         // Full per-country breakdown for the tables (all time)
         $rows = Click::query()
             ->where('is_counted', true)
-            ->where('is_windows', true)
             ->groupBy('country_code', 'country_name')
             ->selectRaw('country_code, country_name, COUNT(*) as clicks, SUM(click_value) as earnings')
             ->orderByDesc('clicks')
