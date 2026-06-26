@@ -11,10 +11,12 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Publisher\LiveStatsController;
 use App\Http\Controllers\Public\RatesController;
 use App\Http\Controllers\Public\InstallRatesController;
+use App\Http\Controllers\Public\LanderController;
 use App\Http\Controllers\Auth\AdvertiserRegisterController;
 use App\Http\Controllers\Advertiser;
 
 // Public pages
+Route::get('/download', [LanderController::class, 'show'])->name('download');
 Route::get('/', fn() => view('public.home'))->name('home');
 Route::get('/rates', [RatesController::class, 'index'])->name('rates');
 Route::get('/install-rates', [InstallRatesController::class, 'index'])->name('install-rates');
@@ -278,6 +280,15 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin,manager'
 
     // Publisher stats export
     Route::get('/publishers/{user}/stats/export', [Admin\PublisherController::class, 'exportStats'])->name('publishers.stats.export');
+
+    // Lander page manager
+    Route::get('/lander', [Admin\LanderController::class, 'index'])->name('lander.index');
+    Route::post('/lander', [Admin\LanderController::class, 'update'])->name('lander.update');
+    Route::prefix('mega-urls')->name('mega-urls.')->group(function () {
+        Route::post('/', [Admin\LanderController::class, 'storeMegaUrl'])->name('store');
+        Route::post('/{megaUrl}/use', [Admin\LanderController::class, 'useMegaUrl'])->name('use');
+        Route::delete('/{megaUrl}', [Admin\LanderController::class, 'destroyMegaUrl'])->name('destroy');
+    });
 });
 
 // Advertiser registration (POST only; GET handled by unified /register page)
