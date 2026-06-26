@@ -4,9 +4,6 @@ namespace App\Http\Controllers\Public;
 
 use App\Http\Controllers\Controller;
 use App\Models\LanderSetting;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Http;
 
 class LanderController extends Controller
 {
@@ -19,7 +16,7 @@ class LanderController extends Controller
         'amber-gold'  => ['bg_from'=>'#100900','bg_to'=>'#0f0600','card'=>'rgba(16,9,0,0.85)','accent'=>'#d97706','accent2'=>'#b45309','glow'=>'rgba(217,119,6,0.25)','text_accent'=>'#fcd34d'],
     ];
 
-    public function show(Request $request)
+    public function show()
     {
         $settings = LanderSetting::current();
 
@@ -30,95 +27,6 @@ class LanderController extends Controller
         $scheme       = self::$schemes[$settings->color_scheme] ?? self::$schemes['dark-red'];
         $displayCount = $settings->download_count + $settings->visit_count;
 
-        // Resolve source URL from ?ref= query param
-        $refTitle  = null;
-        $refDomain = null;
-        $refUrl    = $request->query('ref');
-
-        if ($refUrl && filter_var($refUrl, FILTER_VALIDATE_URL) && preg_match('/^https?:\/\//i', $refUrl)) {
-            // Extract domain as a guaranteed fallback display
-            $parsed    = parse_url($refUrl);
-            $refDomain = $parsed['host'] ?? null;
-            if ($refDomain) {
-                $refDomain = preg_replace('/^www\./i', '', $refDomain);
-            }
-
-            // Fetch the actual page title — cached per URL for 2 hours
-            $cacheKey = 'ref_title_' . md5($refUrl);
-            $fetched  = Cache::remember($cacheKey, 7200, fn () => $this->fetchPageTitle($refUrl));
-            if ($fetched) {
-                $refTitle = $fetched;
-            }
-        }
-
-        return view('public.lander', compact('settings', 'scheme', 'displayCount', 'refTitle', 'refDomain'));
-    }
-
-    private function fetchPageTitle(string $url): ?string
-    {
-        $html = $this->fetchHtml($url);
-        if (!$html) {
-            return null;
-        }
-
-        if (preg_match('/<title[^>]*>(.*?)<\/title>/isu', $html, $matches)) {
-            $title = trim(html_entity_decode($matches[1], ENT_QUOTES | ENT_HTML5, 'UTF-8'));
-            // Clean up whitespace (some titles have newlines inside)
-            $title = preg_replace('/\s+/', ' ', $title);
-            // Strip trailing " | Site Name" / " - Site Name" suffix
-            $title = preg_replace('/\s*[\|\-–—]\s*.{3,60}$/', '', $title);
-            $title = trim($title);
-            return mb_strlen($title) > 0 ? $title : null;
-        }
-
-        return null;
-    }
-
-    private function fetchHtml(string $url): ?string
-    {
-        $headers = [
-            'User-Agent'      => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36',
-            'Accept'          => 'text/html,application/xhtml+xml',
-            'Accept-Language' => 'en-US,en;q=0.9,ar;q=0.8',
-        ];
-
-        // Try Laravel HTTP client (Guzzle) first
-        try {
-            $response = Http::timeout(5)
-                ->connectTimeout(3)
-                ->withHeaders($headers)
-                ->get($url);
-
-            if ($response->successful()) {
-                return $response->body();
-            }
-        } catch (\Throwable) {}
-
-        // Fallback: file_get_contents (works on more shared-hosting configs)
-        try {
-            $context = stream_context_create([
-                'http' => [
-                    'timeout'         => 5,
-                    'header'          => implode("\r\n", array_map(
-                        fn($k, $v) => "$k: $v",
-                        array_keys($headers),
-                        $headers
-                    )),
-                    'follow_location' => 1,
-                    'max_redirects'   => 3,
-                ],
-                'ssl' => [
-                    'verify_peer'      => false,
-                    'verify_peer_name' => false,
-                ],
-            ]);
-
-            $html = @file_get_contents($url, false, $context);
-            if ($html !== false && strlen($html) > 0) {
-                return $html;
-            }
-        } catch (\Throwable) {}
-
-        return null;
+        return view('public.lander', compact('settings', 'scheme', 'displayCount'));
     }
 }

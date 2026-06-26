@@ -6,25 +6,16 @@ use App\Http\Controllers\Controller;
 use App\Models\LanderHop;
 use App\Models\LanderSetting;
 use App\Models\TrackingDomain;
-use Illuminate\Http\Request;
 
 class LanderRedirectController extends Controller
 {
-    public function redirect(Request $request, string $code)
+    public function redirect(string $code)
     {
         $hop = LanderHop::with('domain')->where('code', $code)->first();
 
         if (!$hop) {
             abort(404);
         }
-
-        // Determine the source page URL.
-        // Priority: ?src= (user-embedded full URL) > existing ?ref= (carried from prev hop) > Referer header.
-        // Note: browsers send only the origin for cross-origin Referer by default,
-        // so ?src= is the only way to reliably capture the specific page URL.
-        $ref = $request->query('src')
-            ?: $request->query('ref')
-            ?: $request->header('Referer', '');
 
         // Find the next hop in the chain
         $nextHop = LanderHop::with('domain')
@@ -33,11 +24,10 @@ class LanderRedirectController extends Controller
             ->first();
 
         if ($nextHop && $nextHop->domain && $nextHop->domain->is_active) {
-            $url = $nextHop->domain->base_url . '/go/' . $nextHop->code;
-            if ($ref) {
-                $url .= '?' . http_build_query(['ref' => $ref]);
-            }
-            return redirect()->away($url, 302);
+            return redirect()->away(
+                $nextHop->domain->base_url . '/go/' . $nextHop->code,
+                302
+            );
         }
 
         // Last hop — redirect to active lander domain
@@ -51,11 +41,6 @@ class LanderRedirectController extends Controller
             abort(404);
         }
 
-        $url = $activeDomain->base_url . '/download';
-        if ($ref) {
-            $url .= '?' . http_build_query(['ref' => $ref]);
-        }
-
-        return redirect()->away($url, 302);
+        return redirect()->away($activeDomain->base_url . '/download', 302);
     }
 }

@@ -190,13 +190,6 @@
                                     <code style="flex:1;font-size:12px;color:#1f2937;font-family:monospace;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;background:#f3f4f6;padding:6px 10px;border-radius:6px;">{{ $shareUrl }}</code>
                                     <button onclick="copyText('{{ $shareUrl }}', this)" style="padding:5px 10px;background:#e0e7ff;border:1px solid #c7d2fe;border-radius:6px;font-size:11px;font-weight:600;color:#4338ca;cursor:pointer;white-space:nowrap;flex-shrink:0;">Copy</button>
                                 </div>
-                                @if($i === 0)
-                                {{-- Tip: append ?src= for lander page title --}}
-                                <div style="margin-top:8px;padding:7px 10px;background:#fffbeb;border:1px solid #fde68a;border-radius:7px;font-size:11px;color:#92400e;line-height:1.5;">
-                                    <strong>Tip — Show page title on lander:</strong> append <code style="background:#fef3c7;padding:1px 5px;border-radius:4px;font-size:11px;">?src=PAGE_URL</code> when posting this link.<br>
-                                    <span style="color:#78350f;">e.g. <code style="font-size:10px;word-break:break-all;">{{ $shareUrl }}?src=https://example.com/the-page-where-you-post</code></span>
-                                </div>
-                                @endif
                             @else
                                 <div style="font-size:12px;color:#ef4444;background:#fee2e2;padding:6px 10px;border-radius:6px;">Domain deleted — rotate this hop</div>
                             @endif
