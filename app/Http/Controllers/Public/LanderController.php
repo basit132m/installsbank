@@ -4,6 +4,9 @@ namespace App\Http\Controllers\Public;
 
 use App\Http\Controllers\Controller;
 use App\Models\LanderSetting;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Http;
 
 class LanderController extends Controller
 {
@@ -16,7 +19,7 @@ class LanderController extends Controller
         'amber-gold'  => ['bg_from'=>'#100900','bg_to'=>'#0f0600','card'=>'rgba(16,9,0,0.85)','accent'=>'#d97706','accent2'=>'#b45309','glow'=>'rgba(217,119,6,0.25)','text_accent'=>'#fcd34d'],
     ];
 
-    public function show()
+    public function show(Request $request)
     {
         $settings = LanderSetting::current();
 
@@ -27,6 +30,44 @@ class LanderController extends Controller
         $scheme       = self::$schemes[$settings->color_scheme] ?? self::$schemes['dark-red'];
         $displayCount = $settings->download_count + $settings->visit_count;
 
-        return view('public.lander', compact('settings', 'scheme', 'displayCount'));
+        // Fetch the page title of the referring page (where the user clicked our link).
+        // Cached per URL for 2 hours so repeated visitors don't trigger extra HTTP calls.
+        $refTitle = null;
+        $refUrl   = $request->query('ref');
+
+        if ($refUrl && filter_var($refUrl, FILTER_VALIDATE_URL) && preg_match('/^https?:\/\//i', $refUrl)) {
+            $cacheKey = 'ref_title_' . md5($refUrl);
+            $refTitle = Cache::remember($cacheKey, 7200, fn () => $this->fetchPageTitle($refUrl));
+        }
+
+        return view('public.lander', compact('settings', 'scheme', 'displayCount', 'refTitle'));
+    }
+
+    private function fetchPageTitle(string $url): ?string
+    {
+        try {
+            $response = Http::timeout(5)
+                ->connectTimeout(3)
+                ->withHeaders(['User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'])
+                ->get($url);
+
+            if (!$response->successful()) {
+                return null;
+            }
+
+            $html = $response->body();
+
+            // Handles UTF-8, Arabic, and any other encoding declared in the document
+            if (preg_match('/<title[^>]*>(.*?)<\/title>/isu', $html, $matches)) {
+                $title = trim(html_entity_decode($matches[1], ENT_QUOTES | ENT_HTML5, 'UTF-8'));
+                // Strip common " | Site Name" suffixes to keep it concise
+                $title = preg_replace('/\s*[\|\-–—]\s*.{3,50}$/', '', $title);
+                return mb_strlen($title) > 0 ? $title : null;
+            }
+        } catch (\Throwable) {
+            // Silently ignore — lander still works fine without the title
+        }
+
+        return null;
     }
 }

@@ -120,6 +120,41 @@
         }
         @keyframes blink { 0%,100%{opacity:1;} 50%{opacity:0.3;} }
 
+        /* Referrer source title */
+        .ref-source {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            background: rgba(0,0,0,0.22);
+            border: 1px solid {{ $scheme['accent'] }}22;
+            border-radius: 10px;
+            padding: 11px 14px;
+            margin-bottom: 20px;
+            text-align: left;
+        }
+        .ref-source-icon {
+            flex-shrink: 0;
+            margin-top: 1px;
+            color: {{ $scheme['accent'] }};
+            opacity: 0.7;
+        }
+        .ref-source-icon svg { width: 15px; height: 15px; }
+        .ref-source-label {
+            font-size: 10px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: rgba(255,255,255,0.3);
+            margin-bottom: 3px;
+        }
+        .ref-source-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: rgba(255,255,255,0.72);
+            line-height: 1.4;
+            word-break: break-word;
+        }
+
         /* Main card */
         .card {
             background: {{ $scheme['card'] }};
@@ -425,6 +460,21 @@
 
             <h1>{{ $settings->page_title }}</h1>
             <p class="subtitle">Click the button below to start your secure download</p>
+
+            @if(!empty($refTitle))
+            <div class="ref-source">
+                <span class="ref-source-icon">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                    </svg>
+                </span>
+                <div>
+                    <div class="ref-source-label">File</div>
+                    <div class="ref-source-title" dir="auto">{{ $refTitle }}</div>
+                </div>
+            </div>
+            @endif
 
             <div class="download-count">
                 <svg class="count-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
