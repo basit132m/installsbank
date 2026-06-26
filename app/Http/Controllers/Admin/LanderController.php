@@ -27,7 +27,7 @@ class LanderController extends Controller
         $data = $request->validate([
             'mega_url'         => 'nullable|string|max:2000',
             'archive_password' => 'nullable|string|max:100',
-            'color_scheme'     => 'required|in:dark-red,dark-blue,dark-green,dark-purple,neon-cyan,amber-gold',
+            'color_scheme'     => 'required|in:dark-red,dark-blue,dark-green,dark-purple,neon-cyan,amber-gold,rose-pink,orange-ember,teal,indigo,lime-green,silver',
             'page_title'       => 'required|string|max:200',
             'download_count'   => 'required|integer|min:0',
             'show_password'    => 'sometimes|boolean',

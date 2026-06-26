@@ -364,12 +364,18 @@
                     <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;">
                         @php
                             $schemes = [
-                                'dark-red'    => ['label'=>'Dark Red',    'color'=>'#dc2626'],
-                                'dark-blue'   => ['label'=>'Dark Blue',   'color'=>'#2563eb'],
-                                'dark-green'  => ['label'=>'Dark Green',  'color'=>'#059669'],
-                                'dark-purple' => ['label'=>'Dark Purple', 'color'=>'#7c3aed'],
-                                'neon-cyan'   => ['label'=>'Neon Cyan',   'color'=>'#06b6d4'],
-                                'amber-gold'  => ['label'=>'Amber Gold',  'color'=>'#d97706'],
+                                'dark-red'     => ['label'=>'Dark Red',     'color'=>'#dc2626'],
+                                'dark-blue'    => ['label'=>'Dark Blue',    'color'=>'#2563eb'],
+                                'dark-green'   => ['label'=>'Dark Green',   'color'=>'#059669'],
+                                'dark-purple'  => ['label'=>'Dark Purple',  'color'=>'#7c3aed'],
+                                'neon-cyan'    => ['label'=>'Neon Cyan',    'color'=>'#06b6d4'],
+                                'amber-gold'   => ['label'=>'Amber Gold',   'color'=>'#d97706'],
+                                'rose-pink'    => ['label'=>'Rose Pink',    'color'=>'#ec4899'],
+                                'orange-ember' => ['label'=>'Orange Ember', 'color'=>'#f97316'],
+                                'teal'         => ['label'=>'Teal',         'color'=>'#14b8a6'],
+                                'indigo'       => ['label'=>'Indigo',       'color'=>'#6366f1'],
+                                'lime-green'   => ['label'=>'Lime Green',   'color'=>'#84cc16'],
+                                'silver'       => ['label'=>'Silver',       'color'=>'#94a3b8'],
                             ];
                         @endphp
                         @foreach($schemes as $key => $meta)
