@@ -21,7 +21,7 @@ class TrackingDomainGuard
         });
 
         if (in_array($host, $trackingDomains, true)) {
-            if (!$request->is('track/*', 'download')) {
+            if (!$request->is('track/*', 'download', 'go/*')) {
                 abort(404);
             }
         }

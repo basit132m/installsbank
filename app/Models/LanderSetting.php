@@ -14,13 +14,28 @@ class LanderSetting extends Model
         'download_count',
         'show_password',
         'show_checks',
+        'active_lander_domain_id',
+        'redirect_front_domain_id',
+        'redirect_code',
     ];
 
     protected $casts = [
-        'show_password' => 'boolean',
-        'show_checks'   => 'boolean',
-        'download_count' => 'integer',
+        'show_password'            => 'boolean',
+        'show_checks'              => 'boolean',
+        'download_count'           => 'integer',
+        'active_lander_domain_id'  => 'integer',
+        'redirect_front_domain_id' => 'integer',
     ];
+
+    public function activeLanderDomain()
+    {
+        return $this->belongsTo(TrackingDomain::class, 'active_lander_domain_id');
+    }
+
+    public function redirectFrontDomain()
+    {
+        return $this->belongsTo(TrackingDomain::class, 'redirect_front_domain_id');
+    }
 
     public static function current(): self
     {
