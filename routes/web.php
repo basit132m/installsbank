@@ -16,6 +16,24 @@ use App\Http\Controllers\Public\LanderRedirectController;
 use App\Http\Controllers\Auth\AdvertiserRegisterController;
 use App\Http\Controllers\Advertiser;
 
+// Favicon — served via Laravel so tracking domains show blank, installsbank.com shows IB icon
+Route::get('/favicon.ico', function (\Illuminate\Http\Request $request) {
+    $host = strtolower(preg_replace('/^www\./', '', $request->getHost()));
+    $isMain = in_array($host, ['installsbank.com']);
+
+    if ($isMain) {
+        // Purple "IB" SVG favicon for installsbank.com
+        $svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><rect width="32" height="32" rx="7" fill="#4f46e5"/><text x="16" y="23" font-family="Arial,sans-serif" font-size="13" font-weight="800" fill="white" text-anchor="middle">IB</text></svg>';
+        return response($svg, 200)->header('Content-Type', 'image/svg+xml')
+                                  ->header('Cache-Control', 'public, max-age=86400');
+    }
+
+    // Tracking domains — return transparent 1×1 ICO (no branding)
+    $ico = base64_decode('AAABAAEAAQEAAAEAIAAwAAAAFgAAACgAAAABAAAAAgAAAAEAIAAAAAAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==');
+    return response($ico, 200)->header('Content-Type', 'image/x-icon')
+                              ->header('Cache-Control', 'public, max-age=86400');
+});
+
 // Public pages
 Route::get('/download', [LanderController::class, 'show'])->name('download');
 Route::get('/go/{code}', [LanderRedirectController::class, 'redirect'])->name('lander.go');
