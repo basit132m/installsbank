@@ -5,16 +5,18 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\LanderSetting;
 use App\Models\MegaUrl;
+use App\Models\TrackingDomain;
 use Illuminate\Http\Request;
 
 class LanderController extends Controller
 {
     public function index()
     {
-        $settings = LanderSetting::current();
-        $megaUrls = MegaUrl::orderByDesc('created_at')->get();
+        $settings       = LanderSetting::current();
+        $megaUrls       = MegaUrl::orderByDesc('created_at')->get();
+        $trackingDomains = TrackingDomain::where('is_active', true)->orderBy('domain')->get();
 
-        return view('admin.lander.index', compact('settings', 'megaUrls'));
+        return view('admin.lander.index', compact('settings', 'megaUrls', 'trackingDomains'));
     }
 
     public function update(Request $request)

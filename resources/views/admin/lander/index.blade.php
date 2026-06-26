@@ -47,6 +47,57 @@
     </div>
 </div>
 
+{{-- Lander URLs from tracking domains --}}
+<div style="background:#fff;border-radius:16px;border:1px solid #e5e7eb;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,0.04);margin-bottom:24px;">
+    <div style="display:flex;align-items:center;gap:12px;padding:18px 24px;border-bottom:1px solid #f3f4f6;">
+        <div style="width:36px;height:36px;background:linear-gradient(135deg,#0ea5e9,#6366f1);border-radius:9px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+            <svg width="18" height="18" fill="none" stroke="white" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/>
+            </svg>
+        </div>
+        <div>
+            <div style="font-size:15px;font-weight:700;color:#111827;">Lander URLs</div>
+            <div style="font-size:12px;color:#9ca3af;">Your active tracking domains with the /download path — share any of these</div>
+        </div>
+    </div>
+
+    @if($trackingDomains->isEmpty())
+        <div style="padding:28px 24px;text-align:center;color:#9ca3af;font-size:14px;">
+            No active tracking domains found. Add domains in <a href="{{ route('admin.tracking-domains.index') }}" style="color:#6366f1;">Tracking Domains</a>.
+        </div>
+    @else
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:0;">
+            @foreach($trackingDomains as $i => $td)
+                @php $url = 'https://' . rtrim($td->domain, '/') . '/download'; @endphp
+                <div style="padding:14px 20px;{{ !$loop->last ? 'border-bottom:1px solid #f3f4f6;' : '' }}display:flex;align-items:center;gap:12px;">
+                    <div style="width:8px;height:8px;background:#10b981;border-radius:50%;box-shadow:0 0 6px rgba(16,185,129,0.5);flex-shrink:0;"></div>
+                    <div style="flex:1;min-width:0;">
+                        @if($td->label)
+                            <div style="font-size:12px;font-weight:600;color:#6b7280;margin-bottom:2px;">{{ $td->label }}</div>
+                        @endif
+                        <div style="font-size:13px;color:#1f2937;font-family:monospace;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" id="lurl-{{ $td->id }}">{{ $url }}</div>
+                    </div>
+                    <div style="display:flex;gap:6px;flex-shrink:0;">
+                        <button onclick="copyLanderUrl('{{ $url }}', this)"
+                                style="padding:5px 12px;background:#f3f4f6;border:1px solid #e5e7eb;border-radius:7px;font-size:12px;font-weight:600;color:#374151;cursor:pointer;white-space:nowrap;transition:all 0.15s;"
+                                onmouseover="this.style.background='#e5e7eb'" onmouseout="this.style.background='#f3f4f6'">
+                            Copy
+                        </button>
+                        <a href="{{ $url }}" target="_blank"
+                           style="padding:5px 10px;background:#ede9fe;border:1px solid #c4b5fd;border-radius:7px;font-size:12px;font-weight:600;color:#6d28d9;text-decoration:none;display:inline-flex;align-items:center;gap:4px;"
+                           onmouseover="this.style.background='#ddd6fe'" onmouseout="this.style.background='#ede9fe'">
+                            <svg width="11" height="11" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
+                            </svg>
+                            Open
+                        </a>
+                    </div>
+                </div>
+            @endforeach
+        </div>
+    @endif
+</div>
+
 <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;align-items:start;">
 
     {{-- Left: Settings form --}}
@@ -333,6 +384,29 @@
 
 @push('scripts')
 <script>
+// Copy lander URL
+function copyLanderUrl(url, btn) {
+    navigator.clipboard.writeText(url).catch(() => {
+        const ta = document.createElement('textarea');
+        ta.value = url;
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+    }).finally ? null : null;
+    const orig = btn.textContent;
+    btn.textContent = 'Copied!';
+    btn.style.background = '#d1fae5';
+    btn.style.borderColor = '#6ee7b7';
+    btn.style.color = '#065f46';
+    setTimeout(() => {
+        btn.textContent = orig;
+        btn.style.background = '#f3f4f6';
+        btn.style.borderColor = '#e5e7eb';
+        btn.style.color = '#374151';
+    }, 2000);
+}
+
 // Toggle visual update
 function wireToggle(checkboxId, sliderId, knobId, activeColor) {
     const cb = document.getElementById(checkboxId);
