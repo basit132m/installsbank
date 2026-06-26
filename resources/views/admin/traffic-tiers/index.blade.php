@@ -35,6 +35,59 @@
     ];
 @endphp
 
+{{-- Period breakdown: Today / Yesterday / Last 28 Days / All Time --}}
+<div style="background:white;border:1px solid #e5e7eb;border-radius:14px;overflow:hidden;margin-bottom:24px;box-shadow:0 1px 6px rgba(0,0,0,0.04);">
+    <div style="padding:14px 20px;border-bottom:1px solid #f3f4f6;display:flex;align-items:center;gap:8px;background:#f8fafc;">
+        <svg width="16" height="16" fill="none" stroke="#6366f1" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+        <span style="font-size:14px;font-weight:700;color:#111827;">Clicks by Tier &amp; Period</span>
+        <span style="font-size:12px;color:#9ca3af;margin-left:4px;">Valid Windows clicks only · no earnings</span>
+    </div>
+
+    <div style="overflow-x:auto;">
+        <table style="width:100%;border-collapse:collapse;">
+            <thead>
+                <tr style="background:#f9fafb;border-bottom:2px solid #e5e7eb;">
+                    <th style="padding:12px 20px;font-size:12px;font-weight:700;color:#374151;text-align:left;width:140px;">Tier</th>
+                    @foreach(['Today','Yesterday','Last 28 Days','All Time'] as $col)
+                    <th style="padding:12px 20px;font-size:12px;font-weight:700;color:#374151;text-align:right;">{{ $col }}</th>
+                    @endforeach
+                </tr>
+            </thead>
+            <tbody>
+                @foreach([1,2,3] as $t)
+                @php $m = $tierMeta[$t]; @endphp
+                <tr style="border-bottom:1px solid #f3f4f6;">
+                    <td style="padding:14px 20px;">
+                        <div style="display:flex;align-items:center;gap:8px;">
+                            <div style="width:10px;height:10px;border-radius:50%;background:{{ $m['accent'] }};flex-shrink:0;"></div>
+                            <span style="font-size:13px;font-weight:700;color:#111827;">{{ $m['label'] }}</span>
+                            <span style="font-size:11px;color:#9ca3af;">{{ $m['desc'] }}</span>
+                        </div>
+                    </td>
+                    @foreach(['today','yesterday','last28','all_time'] as $p)
+                    <td style="padding:14px 20px;text-align:right;">
+                        <span style="font-size:15px;font-weight:800;color:{{ $m['accent'] }};">
+                            {{ number_format($periodTotals[$t][$p]) }}
+                        </span>
+                    </td>
+                    @endforeach
+                </tr>
+                @endforeach
+
+                {{-- Total row --}}
+                <tr style="background:#f8fafc;border-top:2px solid #e5e7eb;">
+                    <td style="padding:12px 20px;font-size:13px;font-weight:700;color:#374151;">Total</td>
+                    @foreach(['today','yesterday','last28','all_time'] as $p)
+                    <td style="padding:12px 20px;text-align:right;font-size:14px;font-weight:800;color:#111827;">
+                        {{ number_format(array_sum(array_column($periodTotals, $p))) }}
+                    </td>
+                    @endforeach
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
 {{-- Total summary bar --}}
 <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:28px;">
     @foreach([1,2,3] as $t)
