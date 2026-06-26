@@ -100,17 +100,56 @@
         </div>
         @endforeach
 
-        {{-- Total --}}
+        {{-- Tier total --}}
         <div style="border-top:2px solid #e5e7eb;margin-top:4px;padding-top:14px;display:flex;justify-content:flex-end;align-items:center;gap:8px;">
-            <span style="font-size:13px;color:#6b7280;font-weight:600;">Total:</span>
+            <span style="font-size:13px;color:#6b7280;font-weight:600;">Tier Total:</span>
             <span id="count-total" style="font-size:20px;font-weight:800;color:#111827;">0</span>
             <span style="font-size:12px;color:#9ca3af;">clicks</span>
+        </div>
+
+        {{-- OS breakdown --}}
+        <div style="border-top:2px solid #e5e7eb;margin-top:20px;padding-top:18px;">
+            <div style="font-size:12px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:14px;">By Operating System</div>
+            @foreach($osData as $osName => $osPeriods)
+            @php
+                $osColors = [
+                    'Windows' => ['bar'=>'#3b82f6','text'=>'#1d4ed8'],
+                    'Android' => ['bar'=>'#22c55e','text'=>'#15803d'],
+                    'Mac'     => ['bar'=>'#8b5cf6','text'=>'#6d28d9'],
+                    'iOS'     => ['bar'=>'#ec4899','text'=>'#be185d'],
+                    'Linux'   => ['bar'=>'#f97316','text'=>'#c2410c'],
+                    'Unknown' => ['bar'=>'#94a3b8','text'=>'#475569'],
+                ];
+                $oc = $osColors[$osName] ?? ['bar'=>'#94a3b8','text'=>'#475569'];
+            @endphp
+            <div style="display:flex;align-items:center;gap:16px;padding:10px 0;{{ !$loop->last ? 'border-bottom:1px solid #f3f4f6;' : '' }}">
+                <div style="width:180px;flex-shrink:0;display:flex;align-items:center;gap:8px;">
+                    <div style="width:10px;height:10px;border-radius:50%;background:{{ $oc['bar'] }};flex-shrink:0;"></div>
+                    <span style="font-size:13px;font-weight:700;color:#111827;">{{ $osName }}</span>
+                </div>
+                <div style="flex:1;height:10px;background:#f3f4f6;border-radius:5px;overflow:hidden;">
+                    <div id="os-bar-{{ Str::slug($osName) }}" style="height:100%;background:{{ $oc['bar'] }};border-radius:5px;width:0%;transition:width 0.35s ease;"></div>
+                </div>
+                <div style="width:110px;text-align:right;flex-shrink:0;">
+                    <span id="os-count-{{ Str::slug($osName) }}" style="font-size:18px;font-weight:800;color:{{ $oc['text'] }};">0</span>
+                    <span style="font-size:12px;color:#9ca3af;margin-left:3px;">clicks</span>
+                </div>
+            </div>
+            @endforeach
+
+            {{-- OS total --}}
+            <div style="border-top:2px solid #e5e7eb;margin-top:4px;padding-top:14px;display:flex;justify-content:flex-end;align-items:center;gap:8px;">
+                <span style="font-size:13px;color:#6b7280;font-weight:600;">OS Total:</span>
+                <span id="os-count-total" style="font-size:20px;font-weight:800;color:#111827;">0</span>
+                <span style="font-size:12px;color:#9ca3af;">clicks</span>
+            </div>
         </div>
     </div>
 </div>
 
 <script>
 const periodData = @json($periodTotals);
+const osData     = @json($osData);
 const tabs = ['today', 'yesterday', 'last28', 'all_time'];
 
 function switchPeriod(period) {
@@ -128,27 +167,42 @@ function switchPeriod(period) {
         }
     });
 
-    // Get values for selected period
+    // Tier counts
     const t1 = periodData[1][period] || 0;
     const t2 = periodData[2][period] || 0;
     const t3 = periodData[3][period] || 0;
-    const total = t1 + t2 + t3;
+    const tierTotal = t1 + t2 + t3;
 
-    // Update counts
-    document.getElementById('count-1').textContent = total > 0 ? t1.toLocaleString() : '0';
-    document.getElementById('count-2').textContent = total > 0 ? t2.toLocaleString() : '0';
-    document.getElementById('count-3').textContent = total > 0 ? t3.toLocaleString() : '0';
-    document.getElementById('count-total').textContent = total.toLocaleString();
+    document.getElementById('count-1').textContent = t1.toLocaleString();
+    document.getElementById('count-2').textContent = t2.toLocaleString();
+    document.getElementById('count-3').textContent = t3.toLocaleString();
+    document.getElementById('count-total').textContent = tierTotal.toLocaleString();
 
-    // Update bars
     [1,2,3].forEach(t => {
         const val = periodData[t][period] || 0;
-        const pct = total > 0 ? (val / total * 100) : 0;
+        const pct = tierTotal > 0 ? (val / tierTotal * 100) : 0;
         document.getElementById('bar-' + t).style.width = pct + '%';
     });
+
+    // OS counts
+    let osTotal = 0;
+    Object.entries(osData).forEach(([name, periods]) => {
+        osTotal += periods[period] || 0;
+    });
+
+    Object.entries(osData).forEach(([name, periods]) => {
+        const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+        const val  = periods[period] || 0;
+        const pct  = osTotal > 0 ? (val / osTotal * 100) : 0;
+        const countEl = document.getElementById('os-count-' + slug);
+        const barEl   = document.getElementById('os-bar-'   + slug);
+        if (countEl) countEl.textContent = val.toLocaleString();
+        if (barEl)   barEl.style.width   = pct + '%';
+    });
+
+    document.getElementById('os-count-total').textContent = osTotal.toLocaleString();
 }
 
-// Default to Today on load
 switchPeriod('today');
 </script>
 

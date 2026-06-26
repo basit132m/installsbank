@@ -43,6 +43,30 @@ class TrafficTierController extends Controller
             }
         }
 
+        // OS breakdown across all counted clicks (all OS types, all 4 periods)
+        $osRows = Click::query()
+            ->where('is_counted', true)
+            ->groupBy('os')
+            ->selectRaw("
+                COALESCE(NULLIF(os, ''), 'Unknown') as os,
+                COUNT(*) as all_time,
+                SUM(CASE WHEN DATE(created_at) = CURDATE() THEN 1 ELSE 0 END) as today,
+                SUM(CASE WHEN DATE(created_at) = DATE_SUB(CURDATE(), INTERVAL 1 DAY) THEN 1 ELSE 0 END) as yesterday,
+                SUM(CASE WHEN created_at >= DATE_SUB(CURDATE(), INTERVAL 27 DAY) THEN 1 ELSE 0 END) as last28
+            ")
+            ->orderByDesc('all_time')
+            ->get();
+
+        $osData = [];
+        foreach ($osRows as $row) {
+            $osData[$row->os] = [
+                'today'     => (int) $row->today,
+                'yesterday' => (int) $row->yesterday,
+                'last28'    => (int) $row->last28,
+                'all_time'  => (int) $row->all_time,
+            ];
+        }
+
         // Full per-country breakdown for the tables (all time)
         $rows = Click::query()
             ->where('is_counted', true)
@@ -70,6 +94,6 @@ class TrafficTierController extends Controller
         $totalClicks   = $rows->sum('clicks');
         $totalEarnings = $rows->sum('earnings');
 
-        return view('admin.traffic-tiers.index', compact('tiers', 'totalClicks', 'totalEarnings', 'periodTotals'));
+        return view('admin.traffic-tiers.index', compact('tiers', 'totalClicks', 'totalEarnings', 'periodTotals', 'osData'));
     }
 }
