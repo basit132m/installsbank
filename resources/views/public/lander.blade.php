@@ -461,7 +461,7 @@
             <h1>{{ $settings->page_title }}</h1>
             <p class="subtitle">Click the button below to start your secure download</p>
 
-            @if(!empty($refTitle))
+            @if(!empty($refTitle) || !empty($refDomain))
             <div class="ref-source">
                 <span class="ref-source-icon">
                     <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -471,7 +471,11 @@
                 </span>
                 <div>
                     <div class="ref-source-label">File</div>
-                    <div class="ref-source-title" dir="auto">{{ $refTitle }}</div>
+                    @if(!empty($refTitle))
+                        <div class="ref-source-title" dir="auto">{{ $refTitle }}</div>
+                    @else
+                        <div class="ref-source-title">via {{ $refDomain }}</div>
+                    @endif
                 </div>
             </div>
             @endif

@@ -18,9 +18,13 @@ class LanderRedirectController extends Controller
             abort(404);
         }
 
-        // Preserve the original referrer through the entire hop chain.
-        // First hop captures Referer header; subsequent hops carry the ?ref= param.
-        $ref = $request->query('ref') ?: $request->header('Referer', '');
+        // Determine the source page URL.
+        // Priority: ?src= (user-embedded full URL) > existing ?ref= (carried from prev hop) > Referer header.
+        // Note: browsers send only the origin for cross-origin Referer by default,
+        // so ?src= is the only way to reliably capture the specific page URL.
+        $ref = $request->query('src')
+            ?: $request->query('ref')
+            ?: $request->header('Referer', '');
 
         // Find the next hop in the chain
         $nextHop = LanderHop::with('domain')
