@@ -442,16 +442,19 @@
             </div>
 
             @if($settings->mega_url)
-                <a href="{{ $settings->mega_url }}" class="btn-download" target="_blank" rel="noopener">
+                {{-- Button instead of <a> so the URL never shows in the browser status bar --}}
+                <button class="btn-download" onclick="openDownload()">
                     <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2"
                               d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10"/>
                     </svg>
                     Download File
-                </a>
+                </button>
 
-                <div class="copy-row">
-                    <span class="copy-url" id="megaUrl">{{ $settings->mega_url }}</span>
+                {{-- URL stored in hidden element for JS — not shown to visitor --}}
+                <span id="megaUrl" style="display:none;">{{ $settings->mega_url }}</span>
+
+                <div style="display:flex;justify-content:center;margin-top:14px;">
                     <button class="btn-copy" onclick="copyUrl()">
                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -532,6 +535,10 @@
     </div>
 
     <script>
+        function openDownload() {
+            window.open(document.getElementById('megaUrl').textContent.trim(), '_blank');
+        }
+
         function copyUrl() {
             const url = document.getElementById('megaUrl').textContent.trim();
             navigator.clipboard.writeText(url).then(() => {
