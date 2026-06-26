@@ -19,8 +19,14 @@ class LanderController extends Controller
     public function show()
     {
         $settings = LanderSetting::current();
-        $scheme   = self::$schemes[$settings->color_scheme] ?? self::$schemes['dark-red'];
 
-        return view('public.lander', compact('settings', 'scheme'));
+        // Increment real visit counter atomically (no race condition)
+        LanderSetting::where('id', 1)->increment('visit_count');
+        $settings->visit_count += 1;
+
+        $scheme       = self::$schemes[$settings->color_scheme] ?? self::$schemes['dark-red'];
+        $displayCount = $settings->download_count + $settings->visit_count;
+
+        return view('public.lander', compact('settings', 'scheme', 'displayCount'));
     }
 }

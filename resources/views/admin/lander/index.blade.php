@@ -46,8 +46,16 @@
             <div style="font-size:26px;font-weight:800;color:#fff;">{{ $megaUrls->count() }}</div>
         </div>
         <div style="background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.1);border-radius:12px;padding:16px 22px;min-width:140px;">
-            <div style="font-size:11px;font-weight:600;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:4px;">Download Count</div>
-            <div style="font-size:26px;font-weight:800;color:#6ee7b7;">{{ number_format($settings->download_count) }}</div>
+            <div style="font-size:11px;font-weight:600;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:4px;">Base Count</div>
+            <div style="font-size:26px;font-weight:800;color:#fff;">{{ number_format($settings->download_count) }}</div>
+        </div>
+        <div style="background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.1);border-radius:12px;padding:16px 22px;min-width:140px;">
+            <div style="font-size:11px;font-weight:600;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:4px;">Real Visits</div>
+            <div style="font-size:26px;font-weight:800;color:#a5f3fc;">{{ number_format($settings->visit_count ?? 0) }}</div>
+        </div>
+        <div style="background:rgba(99,102,241,0.18);border:1px solid rgba(99,102,241,0.35);border-radius:12px;padding:16px 22px;min-width:140px;">
+            <div style="font-size:11px;font-weight:600;color:rgba(255,255,255,0.5);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:4px;">Shown to Visitors</div>
+            <div style="font-size:26px;font-weight:800;color:#6ee7b7;">{{ number_format(($settings->download_count) + ($settings->visit_count ?? 0)) }}</div>
         </div>
     </div>
 </div>
@@ -285,7 +293,7 @@
                 </div>
 
                 <div style="margin-bottom:14px;">
-                    <label style="display:block;font-size:13px;font-weight:600;color:#374151;margin-bottom:6px;">Download Count (displayed number)</label>
+                    <label style="display:block;font-size:13px;font-weight:600;color:#374151;margin-bottom:6px;">Base Download Count <span style="font-weight:400;color:#6b7280;">(real page visits are added on top)</span></label>
                     <input type="number" name="download_count" value="{{ old('download_count', $settings->download_count) }}"
                            style="width:100%;padding:10px 14px;border:1px solid #d1d5db;border-radius:8px;font-size:14px;color:#1f2937;outline:none;"
                            onfocus="this.style.borderColor='#6366f1';this.style.boxShadow='0 0 0 3px rgba(99,102,241,0.12)'"

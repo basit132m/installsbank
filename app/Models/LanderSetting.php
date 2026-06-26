@@ -12,6 +12,7 @@ class LanderSetting extends Model
         'color_scheme',
         'page_title',
         'download_count',
+        'visit_count',
         'show_password',
         'show_checks',
         'active_lander_domain_id',
@@ -23,6 +24,7 @@ class LanderSetting extends Model
         'show_password'            => 'boolean',
         'show_checks'              => 'boolean',
         'download_count'           => 'integer',
+        'visit_count'              => 'integer',
         'active_lander_domain_id'  => 'integer',
         'redirect_front_domain_id' => 'integer',
     ];
