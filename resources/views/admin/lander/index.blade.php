@@ -390,6 +390,57 @@
                     Save Settings
                 </button>
             </form>
+
+            {{-- Favicon Upload --}}
+            <div style="border-top:1px solid #f3f4f6;padding:24px;">
+                <div style="display:flex;align-items:center;gap:8px;margin-bottom:16px;">
+                    <div style="width:4px;height:18px;background:linear-gradient(180deg,#f59e0b,#d97706);border-radius:2px;"></div>
+                    <span style="font-size:12px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:0.07em;">Lander Favicon</span>
+                </div>
+
+                {{-- Current favicon --}}
+                @if($settings->favicon_path && file_exists(public_path($settings->favicon_path)))
+                <div style="display:flex;align-items:center;gap:12px;padding:12px 14px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;margin-bottom:14px;">
+                    <img src="{{ asset($settings->favicon_path) }}?v={{ filemtime(public_path($settings->favicon_path)) }}"
+                         style="width:32px;height:32px;image-rendering:pixelated;" alt="Current favicon">
+                    <div style="flex:1;">
+                        <div style="font-size:13px;font-weight:600;color:#065f46;">Favicon active</div>
+                        <div style="font-size:11px;color:#6b7280;">lander-favicon.ico</div>
+                    </div>
+                    <form method="POST" action="{{ route('admin.lander.favicon.delete') }}"
+                          onsubmit="return confirm('Remove the current favicon?')">
+                        @csrf @method('DELETE')
+                        <button type="submit"
+                                style="padding:6px 12px;background:#fee2e2;border:1px solid #fca5a5;border-radius:7px;font-size:12px;font-weight:600;color:#dc2626;cursor:pointer;">
+                            Remove
+                        </button>
+                    </form>
+                </div>
+                @else
+                <div style="padding:10px 14px;background:#fefce8;border:1px solid #fde68a;border-radius:10px;margin-bottom:14px;font-size:12px;color:#92400e;">
+                    No favicon set — lander tabs will show no icon.
+                </div>
+                @endif
+
+                {{-- Upload new favicon --}}
+                <form method="POST" action="{{ route('admin.lander.favicon.upload') }}"
+                      enctype="multipart/form-data">
+                    @csrf
+                    <div style="display:flex;align-items:center;gap:10px;">
+                        <input type="file" name="favicon" accept=".ico"
+                               style="flex:1;padding:8px 10px;border:1px solid #d1d5db;border-radius:8px;font-size:13px;color:#374151;background:#fff;cursor:pointer;"
+                               required>
+                        <button type="submit"
+                                style="padding:9px 18px;background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap;">
+                            Upload Favicon
+                        </button>
+                    </div>
+                    <div style="margin-top:6px;font-size:11px;color:#9ca3af;">.ico format only — max 512 KB</div>
+                    @error('favicon')
+                        <div style="margin-top:6px;font-size:12px;color:#dc2626;">{{ $message }}</div>
+                    @enderror
+                </form>
+            </div>
         </div>
     </div>
 

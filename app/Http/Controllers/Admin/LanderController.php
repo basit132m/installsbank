@@ -52,6 +52,42 @@ class LanderController extends Controller
         return back()->with('success', "Active lander domain switched to {$domain->domain}. All redirect chains now point here.");
     }
 
+    // ── Favicon upload ────────────────────────────────────────────────────
+
+    public function uploadFavicon(Request $request)
+    {
+        $request->validate([
+            'favicon' => 'required|file|max:512|mimetypes:image/x-icon,image/vnd.microsoft.icon',
+        ]);
+
+        $uploadDir = public_path('uploads');
+        if (!is_dir($uploadDir)) {
+            mkdir($uploadDir, 0755, true);
+        }
+
+        // Delete old file if exists
+        $settings = LanderSetting::current();
+        if ($settings->favicon_path && file_exists(public_path($settings->favicon_path))) {
+            unlink(public_path($settings->favicon_path));
+        }
+
+        $request->file('favicon')->move($uploadDir, 'lander-favicon.ico');
+        $settings->update(['favicon_path' => 'uploads/lander-favicon.ico']);
+
+        return back()->with('success', 'Lander favicon updated.');
+    }
+
+    public function deleteFavicon()
+    {
+        $settings = LanderSetting::current();
+        if ($settings->favicon_path && file_exists(public_path($settings->favicon_path))) {
+            unlink(public_path($settings->favicon_path));
+        }
+        $settings->update(['favicon_path' => null]);
+
+        return back()->with('success', 'Favicon removed. Lander page will show no icon.');
+    }
+
     // ── Hop chain management ──────────────────────────────────────────────
 
     public function addHop(Request $request)

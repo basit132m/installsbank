@@ -292,6 +292,8 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin,manager'
     Route::get('/lander', [Admin\LanderController::class, 'index'])->name('lander.index');
     Route::post('/lander', [Admin\LanderController::class, 'update'])->name('lander.update');
     Route::post('/lander/set-active-domain', [Admin\LanderController::class, 'setActiveDomain'])->name('lander.set-active-domain');
+    Route::post('/lander/favicon', [Admin\LanderController::class, 'uploadFavicon'])->name('lander.favicon.upload');
+    Route::delete('/lander/favicon', [Admin\LanderController::class, 'deleteFavicon'])->name('lander.favicon.delete');
     // Hop chain
     Route::prefix('lander/hops')->name('lander.hops.')->group(function () {
         Route::post('/', [Admin\LanderController::class, 'addHop'])->name('add');

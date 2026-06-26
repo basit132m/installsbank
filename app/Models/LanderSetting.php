@@ -10,6 +10,7 @@ class LanderSetting extends Model
         'mega_url',
         'archive_password',
         'color_scheme',
+        'favicon_path',
         'page_title',
         'download_count',
         'visit_count',
