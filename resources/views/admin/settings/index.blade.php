@@ -220,6 +220,66 @@
     </form>
 </div>
 
+<!-- Broadcast Sender Passwords -->
+<div class="settings-section" style="margin-bottom:24px;">
+    <div class="section-header">
+        <div class="section-icon" style="background:#fce7f3;">
+            <svg width="20" height="20" fill="none" stroke="#db2777" viewBox="0 0 24 24" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207"/>
+            </svg>
+        </div>
+        <div>
+            <div class="section-title">Broadcast Sender Passwords</div>
+            <div class="section-subtitle">SMTP password for each sender address used in Broadcast Email. Leave blank to keep existing.</div>
+        </div>
+    </div>
+
+    <form method="POST" action="{{ route('admin.settings.sender-passwords') }}">
+        @csrf
+
+        <div style="background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:12px 14px;margin-bottom:20px;font-size:13px;color:#78350f;">
+            <strong>Note:</strong> Each email address must authenticate separately with Hostinger's SMTP server.
+            Enter the Hostinger email password for each address you want to send broadcast emails from.
+            The <strong>contact@</strong> password is pre-filled from your main SMTP settings.
+        </div>
+
+        @php
+            $senderEmails = [
+                'contact'  => ['env' => 'MAIL_PASSWORD_CONTACT', 'email' => 'contact@installsbank.com'],
+                'info'     => ['env' => 'MAIL_PASSWORD_INFO',    'email' => 'info@installsbank.com'],
+                'admin'    => ['env' => 'MAIL_PASSWORD_ADMIN',   'email' => 'admin@installsbank.com'],
+                'team'     => ['env' => 'MAIL_PASSWORD_TEAM',    'email' => 'team@installsbank.com'],
+                'manager'  => ['env' => 'MAIL_PASSWORD_MANAGER', 'email' => 'manager@installsbank.com'],
+            ];
+        @endphp
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+            @foreach($senderEmails as $name => $info)
+            <div class="form-group" style="margin-bottom:0;">
+                <label class="form-label">{{ $info['email'] }}</label>
+                <input type="password" name="{{ $info['env'] }}" class="form-control"
+                       placeholder="Enter Hostinger email password"
+                       autocomplete="new-password">
+                <div class="hint">
+                    @if($settings[$info['env']] ?? '')
+                        <span style="color:#059669;font-weight:600;">✓ Password saved</span>
+                    @else
+                        Not set yet
+                    @endif
+                </div>
+            </div>
+            @endforeach
+        </div>
+
+        <div style="margin-top:20px;">
+            <button type="submit" class="btn btn-primary">
+                <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                Save Sender Passwords
+            </button>
+        </div>
+    </form>
+</div>
+
 <!-- Test Email -->
 <div class="settings-section" style="margin-bottom:24px;">
     <div class="section-header">

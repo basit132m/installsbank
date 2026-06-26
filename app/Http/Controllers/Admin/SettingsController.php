@@ -29,7 +29,34 @@ class SettingsController extends Controller
         'IMAP_USERNAME',
         'IMAP_PASSWORD',
         'IMAP_FOLDER',
+        // Per-sender SMTP passwords for broadcast
+        'MAIL_PASSWORD_CONTACT',
+        'MAIL_PASSWORD_INFO',
+        'MAIL_PASSWORD_ADMIN',
+        'MAIL_PASSWORD_TEAM',
+        'MAIL_PASSWORD_MANAGER',
     ];
+
+    private const SENDER_PASSWORD_KEYS = [
+        'contact@installsbank.com' => 'MAIL_PASSWORD_CONTACT',
+        'info@installsbank.com'    => 'MAIL_PASSWORD_INFO',
+        'admin@installsbank.com'   => 'MAIL_PASSWORD_ADMIN',
+        'team@installsbank.com'    => 'MAIL_PASSWORD_TEAM',
+        'manager@installsbank.com' => 'MAIL_PASSWORD_MANAGER',
+    ];
+
+    public static function passwordForSender(string $email): string
+    {
+        $map = [
+            'contact@installsbank.com' => env('MAIL_PASSWORD_CONTACT', env('MAIL_PASSWORD', '')),
+            'info@installsbank.com'    => env('MAIL_PASSWORD_INFO', ''),
+            'admin@installsbank.com'   => env('MAIL_PASSWORD_ADMIN', ''),
+            'team@installsbank.com'    => env('MAIL_PASSWORD_TEAM', ''),
+            'manager@installsbank.com' => env('MAIL_PASSWORD_MANAGER', ''),
+        ];
+
+        return $map[$email] ?? env('MAIL_PASSWORD', '');
+    }
 
     public function index()
     {
@@ -157,6 +184,44 @@ class SettingsController extends Controller
         Setting::set('contact_email',    trim($data['email'] ?? ''));
 
         return back()->with('success', 'Contact info updated successfully.');
+    }
+
+    public function updateSenderPasswords(Request $request)
+    {
+        $request->validate([
+            'MAIL_PASSWORD_CONTACT' => 'nullable|string|max:255',
+            'MAIL_PASSWORD_INFO'    => 'nullable|string|max:255',
+            'MAIL_PASSWORD_ADMIN'   => 'nullable|string|max:255',
+            'MAIL_PASSWORD_TEAM'    => 'nullable|string|max:255',
+            'MAIL_PASSWORD_MANAGER' => 'nullable|string|max:255',
+        ]);
+
+        $envPath = base_path('.env');
+        if (!file_exists($envPath)) {
+            return back()->withErrors(['error' => '.env file not found.']);
+        }
+
+        $envContent = file_get_contents($envPath);
+        $keys = ['MAIL_PASSWORD_CONTACT', 'MAIL_PASSWORD_INFO', 'MAIL_PASSWORD_ADMIN', 'MAIL_PASSWORD_TEAM', 'MAIL_PASSWORD_MANAGER'];
+
+        foreach ($keys as $key) {
+            $value = $request->input($key, '');
+            if ($value === '') continue; // skip blanks — don't overwrite with empty
+
+            $needsQuotes    = preg_match('/[\s#&]/', $value);
+            $formattedValue = $needsQuotes ? '"' . addslashes($value) . '"' : $value;
+
+            if (preg_match("/^{$key}=.*/m", $envContent)) {
+                $envContent = preg_replace("/^{$key}=.*/m", "{$key}={$formattedValue}", $envContent);
+            } else {
+                $envContent .= "\n{$key}={$formattedValue}";
+            }
+        }
+
+        file_put_contents($envPath, $envContent);
+        Artisan::call('config:clear');
+
+        return back()->with('success', 'Sender passwords saved successfully.');
     }
 
     public function testEmail(Request $request)

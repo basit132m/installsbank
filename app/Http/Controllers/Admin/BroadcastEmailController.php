@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\Admin\SettingsController;
 use App\Mail\BroadcastMailable;
 use App\Models\BroadcastEmailLog;
 use Illuminate\Http\Request;
@@ -110,9 +111,23 @@ Contact us on WhatsApp at +1 (970) 742-6488 or email contact@installsbank.com or
         $failed  = 0;
         $lastError = null;
 
+        // Build a dynamic mailer config using the selected sender's own SMTP credentials
+        $fromEmail    = $data['from_email'];
+        $fromPassword = SettingsController::passwordForSender($fromEmail);
+
+        config(['mail.mailers.broadcast_sender' => [
+            'transport'  => 'smtp',
+            'host'       => config('mail.mailers.smtp.host'),
+            'port'       => config('mail.mailers.smtp.port'),
+            'username'   => $fromEmail,
+            'password'   => $fromPassword,
+            'encryption' => config('mail.mailers.smtp.encryption'),
+            'timeout'    => null,
+        ]]);
+
         foreach ($valid as $email) {
             try {
-                Mail::to($email)->send(new BroadcastMailable($data['subject'], $data['body'], $data['from_email']));
+                Mail::mailer('broadcast_sender')->to($email)->send(new BroadcastMailable($data['subject'], $data['body'], $fromEmail));
                 BroadcastEmailLog::create([
                     'sent_by'         => $sentBy,
                     'batch_id'        => $batchId,

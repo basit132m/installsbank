@@ -120,6 +120,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin,manager'
         Route::post('/withdrawal-days', [Admin\SettingsController::class, 'updateWithdrawalDays'])->name('withdrawal-days');
         Route::post('/contact-info', [Admin\SettingsController::class, 'updateContactInfo'])->name('contact-info');
         Route::post('/imap', [Admin\SettingsController::class, 'updateImap'])->name('imap');
+        Route::post('/sender-passwords', [Admin\SettingsController::class, 'updateSenderPasswords'])->name('sender-passwords');
     });
 
     // Advertisers
