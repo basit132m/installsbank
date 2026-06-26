@@ -123,6 +123,9 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin,manager'
         Route::post('/sender-passwords', [Admin\SettingsController::class, 'updateSenderPasswords'])->name('sender-passwords');
     });
 
+    // Traffic Tiers
+    Route::get('traffic-tiers', [Admin\TrafficTierController::class, 'index'])->name('traffic-tiers.index');
+
     // Advertisers
     Route::prefix('advertisers')->name('advertisers.')->group(function () {
         Route::get('/', [Admin\AdvertiserController::class, 'index'])->name('index');
