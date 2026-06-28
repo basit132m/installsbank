@@ -70,14 +70,14 @@
 <div class="card mb-6">
     <div class="card-title mb-1">Traffic by Country</div>
     <div style="font-size:12px;color:#9ca3af;margin-bottom:16px;">
-        {{ $countryStats->count() }} {{ Str::plural('country', $countryStats->count()) }} · Windows clicks only
+        {{ $countryStats->count() }} {{ Str::plural('country', $countryStats->count()) }} · Valid clicks (Windows + Mac + other)
     </div>
     <div class="table-wrap">
         <table>
             <thead>
                 <tr>
                     <th>Country</th>
-                    <th>Windows Clicks</th>
+                    <th>Valid Clicks</th>
                     @if($showEarnings && $profile->contract_type === 'per_click')<th>Earnings</th>@endif
                 </tr>
             </thead>
@@ -113,7 +113,7 @@
     @if($countryStats->count() > 0)
     <div class="card">
         <div class="card-title mb-1">Clicks by Country</div>
-        <div style="font-size:12px;color:#9ca3af;margin-bottom:4px;">{{ ['1'=>'Today','7'=>'Last 7 Days','30'=>'Last 30 Days','90'=>'Last 90 Days'][$period] ?? 'Selected period' }} · Windows clicks</div>
+        <div style="font-size:12px;color:#9ca3af;margin-bottom:4px;">{{ ['1'=>'Today','7'=>'Last 7 Days','30'=>'Last 30 Days','90'=>'Last 90 Days'][$period] ?? 'Selected period' }} · Valid clicks</div>
         <div id="statsCountryChart"></div>
     </div>
     @endif

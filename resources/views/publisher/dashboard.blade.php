@@ -275,7 +275,7 @@
 </div>
 
 @if(in_array($profile->contract_type ?? '', ['per_click', 'installs_base']))
-<!-- Windows + Earnings live panel — below live counter -->
+<!-- Windows + Mac + Earnings live panel — below live counter -->
 <div id="liveWindowsTable" style="background:#fff;border:1.5px solid #e5e7eb;border-radius:16px;padding:20px 24px;margin-bottom:24px;">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
         <div style="font-size:14px;font-weight:700;color:#111827;">Today's Performance</div>
@@ -283,12 +283,20 @@
             <span style="width:7px;height:7px;background:#01BF63;border-radius:50%;display:inline-block;animation:livePulse 2s infinite;"></span>Live
         </span>
     </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;">
+        {{-- Windows Clicks --}}
         <div style="background:linear-gradient(135deg,#f0fdf4,#dcfce7);border-radius:12px;padding:18px 20px;text-align:center;border:1px solid #bbf7d0;">
             <div style="font-size:10px;color:#6b7280;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:8px;">Windows Clicks</div>
             <div id="liveWindowsCount" style="font-size:30px;font-weight:900;color:#01BF63;font-variant-numeric:tabular-nums;">{{ number_format($todayEarning?->windows_clicks_divided ?? 0) }}</div>
             <div style="font-size:11px;color:#9ca3af;margin-top:5px;">today</div>
         </div>
+        {{-- Mac Clicks --}}
+        <div style="background:linear-gradient(135deg,#f5f3ff,#ede9fe);border-radius:12px;padding:18px 20px;text-align:center;border:1px solid #c4b5fd;">
+            <div style="font-size:10px;color:#6b7280;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:8px;">Mac Clicks</div>
+            <div id="liveMacCount" style="font-size:30px;font-weight:900;color:#8b5cf6;font-variant-numeric:tabular-nums;">{{ number_format($todayEarning?->mac_clicks_divided ?? 0) }}</div>
+            <div style="font-size:11px;color:#9ca3af;margin-top:5px;">today</div>
+        </div>
+        {{-- Earnings or Valid Clicks --}}
         @if($showEarnings)
         <div style="background:linear-gradient(135deg,#eff6ff,#dbeafe);border-radius:12px;padding:18px 20px;text-align:center;border:1px solid #bfdbfe;">
             <div style="font-size:10px;color:#6b7280;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:8px;">Earnings</div>
@@ -318,6 +326,7 @@
 @media(max-width:700px){
     .country-grid { grid-template-columns: 1fr !important; }
     .charts-row { grid-template-columns: 1fr !important; }
+    .installs-grid { grid-template-columns: 1fr !important; }
 }
 </style>
 
@@ -365,41 +374,91 @@
 </div>
 
 @if($profile->contract_type === 'installs_base')
-{{-- Installs Section --}}
-<div class="card mb-6">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
-        <div class="card-title">Install Earnings</div>
-        <span style="font-size:12px;color:#6b7280;">Today: {{ now()->format('M d, Y') }}</span>
+{{-- Installs Section — Windows + Mac side by side --}}
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:24px;" class="installs-grid">
+    {{-- Windows Installs --}}
+    <div class="card">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+            <div>
+                <div class="card-title" style="display:flex;align-items:center;gap:8px;">
+                    <div style="width:10px;height:10px;background:#01BF63;border-radius:2px;flex-shrink:0;"></div>
+                    Windows Installs
+                </div>
+                <div style="font-size:11px;color:#9ca3af;margin-top:2px;">Today: {{ now()->format('M d, Y') }}</div>
+            </div>
+        </div>
+        @if($installsToday && $installsToday->count())
+        <div style="overflow-x:auto;">
+            <table>
+                <thead><tr><th>Country</th><th>Installs</th><th>Earnings</th></tr></thead>
+                <tbody>
+                @foreach($installsToday as $inst)
+                <tr>
+                    <td>
+                        <div style="display:flex;align-items:center;gap:8px;">
+                            <img src="https://flagcdn.com/24x18/{{ strtolower($inst->country_code) }}.png" width="24" height="18" style="border-radius:2px;" onerror="this.style.display='none'">
+                            {{ $inst->country_name ?: strtoupper($inst->country_code) }}
+                        </div>
+                    </td>
+                    <td><strong>{{ number_format($inst->install_count) }}</strong></td>
+                    <td>
+                        @if($inst->earnings > 0)
+                            <span style="color:#01BF63;font-weight:700;">${{ number_format($inst->earnings, 4) }}</span>
+                        @else
+                            <span style="color:#9ca3af;font-size:12px;">N/A</span>
+                        @endif
+                    </td>
+                </tr>
+                @endforeach
+                </tbody>
+            </table>
+        </div>
+        @else
+        <div style="text-align:center;padding:30px;color:#9ca3af;font-size:13px;">No Windows installs today yet.</div>
+        @endif
     </div>
-    @if($installsToday && $installsToday->count())
-    <div style="overflow-x:auto;">
-        <table>
-            <thead><tr><th>Country</th><th>Installs Today</th><th>Earnings</th></tr></thead>
-            <tbody>
-            @foreach($installsToday as $inst)
-            <tr>
-                <td>
-                    <div style="display:flex;align-items:center;gap:8px;">
-                        <img src="https://flagcdn.com/24x18/{{ strtolower($inst->country_code) }}.png" width="24" height="18" style="border-radius:2px;" onerror="this.style.display='none'">
-                        {{ $inst->country_name ?: strtoupper($inst->country_code) }}
-                    </div>
-                </td>
-                <td><strong>{{ number_format($inst->install_count) }}</strong></td>
-                <td>
-                    @if($inst->earnings > 0)
-                        <span style="color:#01BF63;font-weight:700;">${{ number_format($inst->earnings, 4) }}</span>
-                    @else
-                        <span style="color:#9ca3af;font-size:12px;">N/A (rate not set)</span>
-                    @endif
-                </td>
-            </tr>
-            @endforeach
-            </tbody>
-        </table>
+
+    {{-- Mac Installs --}}
+    <div class="card" style="border-color:#ede9fe;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+            <div>
+                <div class="card-title" style="display:flex;align-items:center;gap:8px;">
+                    <div style="width:10px;height:10px;background:#8b5cf6;border-radius:2px;flex-shrink:0;"></div>
+                    Mac Installs
+                </div>
+                <div style="font-size:11px;color:#9ca3af;margin-top:2px;">Today: {{ now()->format('M d, Y') }}</div>
+            </div>
+        </div>
+        @if($macInstallsToday && $macInstallsToday->count())
+        <div style="overflow-x:auto;">
+            <table>
+                <thead><tr><th>Country</th><th>Installs</th><th>Earnings</th></tr></thead>
+                <tbody>
+                @foreach($macInstallsToday as $inst)
+                <tr>
+                    <td>
+                        <div style="display:flex;align-items:center;gap:8px;">
+                            <img src="https://flagcdn.com/24x18/{{ strtolower($inst->country_code) }}.png" width="24" height="18" style="border-radius:2px;" onerror="this.style.display='none'">
+                            {{ $inst->country_name ?: strtoupper($inst->country_code) }}
+                        </div>
+                    </td>
+                    <td><strong>{{ number_format($inst->install_count) }}</strong></td>
+                    <td>
+                        @if($inst->earnings > 0)
+                            <span style="color:#8b5cf6;font-weight:700;">${{ number_format($inst->earnings, 4) }}</span>
+                        @else
+                            <span style="color:#9ca3af;font-size:12px;">N/A</span>
+                        @endif
+                    </td>
+                </tr>
+                @endforeach
+                </tbody>
+            </table>
+        </div>
+        @else
+        <div style="text-align:center;padding:30px;color:#9ca3af;font-size:13px;">No Mac installs today yet.</div>
+        @endif
     </div>
-    @else
-    <div style="text-align:center;padding:30px;color:#9ca3af;font-size:13px;">No installs recorded today yet.</div>
-    @endif
 </div>
 @endif
 
@@ -409,24 +468,24 @@
     <div id="pubClickChart"></div>
 </div>
 
-<!-- Traffic by Country — divider-adjusted Windows clicks -->
-@if($windowsByCountry->count() > 0)
+<!-- Traffic by Country — valid clicks (Windows + Mac + other, each with its own divider) -->
+@if($clicksByCountry->count() > 0)
 <div class="card mb-6">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
         <div>
             <div class="card-title">Traffic by Country</div>
-            <div style="font-size:12px;color:#9ca3af;margin-top:2px;">{{ $windowsByCountry->count() }} {{ Str::plural('country', $windowsByCountry->count()) }} · {{ number_format($windowsByCountry->sum('windows')) }} clicks today</div>
+            <div style="font-size:12px;color:#9ca3af;margin-top:2px;">{{ $clicksByCountry->count() }} {{ Str::plural('country', $clicksByCountry->count()) }} · {{ number_format($clicksByCountry->sum('valid_clicks')) }} valid clicks today</div>
         </div>
     </div>
     <div style="display:flex;flex-wrap:wrap;gap:14px;padding:16px;background:#ffffff;border-radius:12px;border:1px solid #f3f4f6;">
-        @foreach($windowsByCountry as $row)
+        @foreach($clicksByCountry as $row)
         <div style="display:flex;flex-direction:column;align-items:center;gap:5px;width:66px;">
             <img src="https://flagcdn.com/48x36/{{ strtolower($row->country_code) }}.png"
                  alt="{{ $row->country_name }}"
                  title="{{ $row->country_name }}"
                  style="width:48px;height:36px;border-radius:5px;object-fit:cover;box-shadow:0 1px 6px rgba(0,0,0,0.15);flex-shrink:0;"
                  onerror="this.style.display='none'">
-            <span style="font-size:11px;font-weight:800;color:#111827;line-height:1;text-align:center;">{{ number_format($row->windows) }}</span>
+            <span style="font-size:11px;font-weight:800;color:#111827;line-height:1;text-align:center;">{{ number_format($row->valid_clicks) }}</span>
             <span style="font-size:9px;color:#9ca3af;font-weight:600;line-height:1;">{{ strtoupper($row->country_code) }}</span>
         </div>
         @endforeach
@@ -439,7 +498,7 @@
     <div style="padding:14px 18px 12px;background:#0f2540;display:flex;align-items:center;justify-content:space-between;">
         <div>
             <div style="font-size:15px;font-weight:700;color:#e2e8f0;letter-spacing:0.01em;">Traffic World Map</div>
-            <div style="font-size:11px;color:#64748b;margin-top:2px;">Windows click distribution by country · today</div>
+            <div style="font-size:11px;color:#64748b;margin-top:2px;">Valid click distribution by country · today</div>
         </div>
         <div style="display:flex;align-items:center;gap:7px;">
             <div style="width:54px;height:7px;border-radius:4px;background:linear-gradient(to right,rgba(1,191,99,0.25),#01BF63);"></div>
@@ -452,12 +511,12 @@
     </div>
     {{-- Country pills strip --}}
     <div style="padding:10px 14px 14px;background:#0f2540;display:flex;flex-wrap:wrap;gap:6px;">
-        @foreach($windowsByCountry->take(8) as $row)
+        @foreach($clicksByCountry->take(8) as $row)
         <div style="display:flex;align-items:center;gap:5px;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);padding:4px 10px;border-radius:20px;">
             <img src="https://flagcdn.com/20x15/{{ strtolower($row->country_code) }}.png"
                  style="width:18px;height:13px;border-radius:2px;object-fit:cover;"
                  onerror="this.style.display='none'">
-            <span style="font-size:11px;font-weight:700;color:#e2e8f0;">{{ number_format($row->windows) }}</span>
+            <span style="font-size:11px;font-weight:700;color:#e2e8f0;">{{ number_format($row->valid_clicks) }}</span>
             <span style="font-size:9px;color:#64748b;font-weight:600;">{{ strtoupper($row->country_code) }}</span>
         </div>
         @endforeach
@@ -469,7 +528,7 @@
     <!-- Country donut -->
     <div class="card">
         <div class="card-title mb-1">Clicks by Country</div>
-        <div style="font-size:12px;color:#9ca3af;margin-bottom:4px;">Today · Windows clicks</div>
+        <div style="font-size:12px;color:#9ca3af;margin-bottom:4px;">Today · valid clicks</div>
         <div id="countryPieChart"></div>
     </div>
     <!-- OS donut -->
@@ -594,6 +653,10 @@ function fetchLiveStats() {
             if (winEl && data.windows_today !== undefined) {
                 winEl.textContent = data.windows_today.toLocaleString();
             }
+            const macEl = document.getElementById('liveMacCount');
+            if (macEl && data.mac_today !== undefined) {
+                macEl.textContent = data.mac_today.toLocaleString();
+            }
             const earnEl = document.getElementById('liveEarningsToday');
             if (earnEl && data.earnings_today !== null) {
                 earnEl.textContent = '$' + parseFloat(data.earnings_today).toFixed(4);
@@ -626,17 +689,17 @@ new ApexCharts(document.getElementById('pubClickChart'), {
         return compact('id','labels','values','colors');
     };
 @endphp
-@if($windowsByCountry->count() > 0)
+@if($clicksByCountry->count() > 0)
 @php
     $pieLabels = [];
     $pieValues = [];
-    foreach ($windowsByCountry->take(8) as $pieRow) {
+    foreach ($clicksByCountry->take(8) as $pieRow) {
         $pieLabels[] = $pieRow->country_name ?: strtoupper($pieRow->country_code);
-        $pieValues[] = (int) $pieRow->windows;
+        $pieValues[] = (int) $pieRow->valid_clicks;
     }
-    if ($windowsByCountry->count() > 8) {
+    if ($clicksByCountry->count() > 8) {
         $pieLabels[] = 'Others';
-        $pieValues[] = (int) $windowsByCountry->skip(8)->sum('windows');
+        $pieValues[] = (int) $clicksByCountry->skip(8)->sum('valid_clicks');
     }
 @endphp
 new ApexCharts(document.getElementById('countryPieChart'), {
@@ -673,16 +736,16 @@ new ApexCharts(document.getElementById('osPieChart'), {
 @endif
 </script>
 
-@if($windowsByCountry->count() > 0)
+@if($clicksByCountry->count() > 0)
 @php
     // jsvectormap world map uses lowercase 2-letter ISO codes
     $mapValues = [];
     $mapLabels = [];
-    $maxWinClicks = $windowsByCountry->max('windows') ?: 1;
-    foreach ($windowsByCountry as $mapRow) {
+    $maxWinClicks = $clicksByCountry->max('valid_clicks') ?: 1;
+    foreach ($clicksByCountry as $mapRow) {
         $lower = strtolower($mapRow->country_code);
-        $mapValues[$lower] = (int) $mapRow->windows;
-        $mapLabels[$lower] = ($mapRow->country_name ?: strtoupper($lower)) . ': ' . number_format($mapRow->windows) . ' clicks';
+        $mapValues[$lower] = (int) $mapRow->valid_clicks;
+        $mapLabels[$lower] = ($mapRow->country_name ?: strtoupper($lower)) . ': ' . number_format($mapRow->valid_clicks) . ' clicks';
     }
 @endphp
 <script>
