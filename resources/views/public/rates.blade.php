@@ -195,7 +195,7 @@
             <div class="hero-stat-label">Countries Covered</div>
         </div>
         <div class="hero-stat">
-            <div class="hero-stat-val">Win<span>dows</span></div>
+            <div class="hero-stat-val">Win/<span>Mac</span></div>
             <div class="hero-stat-label">Traffic Accepted</div>
         </div>
         <div class="hero-stat">
@@ -220,7 +220,7 @@
                 <div style="font-size:15px;font-weight:700;color:#065f46;margin-bottom:4px;">How Rates Work</div>
                 <p style="font-size:14px;color:#374151;line-height:1.7;margin:0;">
                     Rates shown are per single Windows click from each country. Your exact rate is confirmed after a 48-hour test period.
-                    Clicks from non-Windows devices are not counted. Rates are updated live by our team.
+                    Mac device clicks are paid separately — see the Mac Rates section below. Rates are updated live by our team.
                 </p>
             </div>
         </div>
@@ -278,6 +278,83 @@
                 <p>Try a different search term.</p>
             </div>
         @endif
+
+        <!-- Mac Rates Section -->
+        <div style="margin-top:60px;">
+            <div style="text-align:center;margin-bottom:32px;">
+                <span style="display:inline-block;background:#f5f3ff;color:#6d28d9;padding:6px 16px;border-radius:20px;font-size:13px;font-weight:700;margin-bottom:16px;">Mac Rates</span>
+                <h2 style="font-size:28px;font-weight:900;color:#111827;line-height:1.2;margin-bottom:12px;">Mac <span style="color:#8b5cf6;">Click</span> Rates by Country</h2>
+                <p style="font-size:15px;color:#6b7280;max-width:520px;margin:0 auto;">We now pay for both Windows and Mac device clicks. Rates below apply to valid Mac clicks from each country.</p>
+            </div>
+
+            <!-- Mac Info Banner -->
+            <div style="background:linear-gradient(135deg,#f5f3ff,#ede9fe);border:1px solid #c4b5fd;border-radius:14px;padding:20px 24px;margin-bottom:28px;display:flex;align-items:flex-start;gap:14px;">
+                <div style="width:40px;height:40px;background:linear-gradient(135deg,#8b5cf6,#6d28d9);border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                    <svg width="18" height="18" fill="none" stroke="white" viewBox="0 0 24 24" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                </div>
+                <div>
+                    <div style="font-size:15px;font-weight:700;color:#4c1d95;margin-bottom:4px;">Mac Rates Info</div>
+                    <p style="font-size:14px;color:#374151;line-height:1.7;margin:0;">
+                        Rates shown are per single Mac/macOS click from each country. Mac clicks are tracked separately from Windows clicks and credited at their own rate.
+                    </p>
+                </div>
+            </div>
+
+            <!-- Mac Search -->
+            <div class="search-wrap">
+                <svg class="search-icon" width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                </svg>
+                <input type="text" id="macSearchInput" class="search-input" placeholder="Search Mac country..." oninput="filterMacRates()" style="border-color:#c4b5fd;">
+            </div>
+            <div class="search-count" id="macSearchCount">Showing {{ $macRates->count() }} countries</div>
+
+            @if($macRates->isEmpty())
+                <div class="empty-state">
+                    <svg width="48" height="48" fill="none" stroke="#d1d5db" viewBox="0 0 24 24" stroke-width="1.5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"/>
+                    </svg>
+                    <h3>No Mac Rates Available Yet</h3>
+                    <p>Our team is setting up Mac rates. Please check back soon.</p>
+                </div>
+            @else
+                <div class="rates-grid" id="macRatesGrid">
+                    @foreach($macRates as $rate)
+                    <div class="rate-card {{ $rate->mac_rate_per_click == $topMacRate ? 'top-rate' : '' }}"
+                         style="{{ $rate->mac_rate_per_click == $topMacRate ? '' : 'border-color:#f3f4f6;' }} {{ $rate->mac_rate_per_click == $topMacRate ? '' : '' }}"
+                         data-mac-name="{{ strtolower($rate->country_name) }}"
+                         data-mac-code="{{ strtolower($rate->country_code) }}">
+                        <img class="flag-img"
+                             src="https://flagcdn.com/32x24/{{ strtolower($rate->country_code) }}.png"
+                             alt="{{ $rate->country_name }} flag"
+                             onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+                        <div class="flag-fallback" style="display:none;">🌍</div>
+                        <div class="country-info">
+                            <div class="country-name">{{ $rate->country_name }}</div>
+                            <div class="country-code">{{ strtoupper($rate->country_code) }}</div>
+                            @if($rate->mac_rate_per_click == $topMacRate)
+                                <span class="top-badge" style="background:#f5f3ff;color:#5b21b6;">TOP MAC</span>
+                            @endif
+                        </div>
+                        <div class="rate-amount">
+                            <div class="rate-val" style="color:#8b5cf6;">${{ number_format($rate->mac_rate_per_click, 2) }}</div>
+                            <div class="rate-label">per Mac click</div>
+                        </div>
+                    </div>
+                    @endforeach
+                </div>
+
+                <div id="macNoResults" style="display:none;" class="empty-state">
+                    <svg width="40" height="40" fill="none" stroke="#d1d5db" viewBox="0 0 24 24" stroke-width="1.5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                    </svg>
+                    <h3>No Mac countries found</h3>
+                    <p>Try a different search term.</p>
+                </div>
+            @endif
+        </div>
 
         <!-- CTA Banner -->
         <div style="background:linear-gradient(135deg,#0f172a,#064e35);border-radius:20px;padding:40px;text-align:center;margin-top:16px;">
@@ -356,6 +433,22 @@ function filterRates() {
         ? `Showing ${visible} of {{ $rates->count() }} countries`
         : `Showing {{ $rates->count() }} countries`;
     document.getElementById('noResults').style.display = (visible === 0 && q) ? 'block' : 'none';
+}
+
+function filterMacRates() {
+    const q = document.getElementById('macSearchInput').value.toLowerCase().trim();
+    const cards = document.querySelectorAll('#macRatesGrid .rate-card');
+    let visible = 0;
+    cards.forEach(card => {
+        const match = card.dataset.macName.includes(q) || card.dataset.macCode.includes(q);
+        card.style.display = match ? '' : 'none';
+        if (match) visible++;
+    });
+    document.getElementById('macSearchCount').textContent = q
+        ? `Showing ${visible} of {{ $macRates->count() }} countries`
+        : `Showing {{ $macRates->count() }} countries`;
+    const noResults = document.getElementById('macNoResults');
+    if (noResults) noResults.style.display = (visible === 0 && q) ? 'block' : 'none';
 }
 </script>
 </body>

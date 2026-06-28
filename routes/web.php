@@ -73,6 +73,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin,manager'
         Route::post('/{user}/activate', [Admin\PublisherController::class, 'activate'])->name('activate');
         Route::post('/{user}/suspend', [Admin\PublisherController::class, 'suspend'])->name('suspend');
         Route::post('/{user}/divider', [Admin\PublisherController::class, 'updateDivider'])->name('update-divider');
+        Route::post('/{user}/mac-divider', [Admin\PublisherController::class, 'updateMacDivider'])->name('update-mac-divider');
         Route::post('/{user}/test-results', [Admin\PublisherController::class, 'updateTestResults'])->name('test-results');
         Route::post('/{user}/payment-status', [Admin\PublisherController::class, 'updatePaymentStatus'])->name('payment-status');
         Route::post('/{user}/fixed-rate', [Admin\PublisherController::class, 'updateFixedRate'])->name('fixed-rate');
@@ -125,6 +126,15 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin,manager'
 
     // Traffic Tiers
     Route::get('traffic-tiers', [Admin\TrafficTierController::class, 'index'])->name('traffic-tiers.index');
+
+    // Mac Country Rates
+    Route::prefix('mac-rates')->name('mac-rates.')->group(function () {
+        Route::get('/', [Admin\MacCountryRateController::class, 'index'])->name('index');
+        Route::post('/', [Admin\MacCountryRateController::class, 'store'])->name('store');
+        Route::put('/{macRate}', [Admin\MacCountryRateController::class, 'update'])->name('update');
+        Route::delete('/{macRate}', [Admin\MacCountryRateController::class, 'destroy'])->name('destroy');
+        Route::post('/bulk-update', [Admin\MacCountryRateController::class, 'bulkUpdate'])->name('bulk-update');
+    });
 
     // Advertisers
     Route::prefix('advertisers')->name('advertisers.')->group(function () {

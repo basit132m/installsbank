@@ -425,6 +425,31 @@
         </form>
     </div>
 
+    {{-- Mac Click Divider --}}
+    <div class="card" style="border:1.5px solid #e5e7eb;">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;">
+            <div style="width:36px;height:36px;background:linear-gradient(135deg,#8b5cf6,#6d28d9);border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 4px 10px rgba(139,92,246,.25);">
+                <svg width="16" height="16" fill="none" stroke="white" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/></svg>
+            </div>
+            <div>
+                <div style="font-size:14px;font-weight:800;color:#111827;">Mac Click Divider</div>
+                <div style="font-size:11px;color:#9ca3af;margin-top:1px;">Hidden from publisher</div>
+            </div>
+        </div>
+        <form method="POST" action="{{ route('admin.publishers.update-mac-divider', $user) }}">
+            @csrf
+            <div class="form-group">
+                <label class="form-label">Mac Divider Value</label>
+                <input type="number" name="mac_divider_value" class="form-control" value="{{ $divider->mac_divider_value ?? 1 }}" min="1" max="100" step="0.1">
+            </div>
+            <div class="toggle-wrap mb-4">
+                <label class="toggle"><input type="checkbox" name="mac_divider_enabled" value="1" {{ $divider->mac_divider_enabled ? 'checked' : '' }}><span class="toggle-slider"></span></label>
+                <span style="font-size:13px;font-weight:500;">Enable Mac divider</span>
+            </div>
+            <button type="submit" class="btn btn-primary" style="width:100%;background:linear-gradient(135deg,#8b5cf6,#6d28d9);border:none;">Update Mac Divider</button>
+        </form>
+    </div>
+
     {{-- 48-Hour Test --}}
     <div class="card" style="border:1.5px solid #e5e7eb;">
         @php $testStatus = $user->publisherProfile?->test_status ?? 'not_started'; @endphp

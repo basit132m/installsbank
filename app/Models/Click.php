@@ -12,7 +12,7 @@ class Click extends Model
         'os', 'os_version', 'device_type', 'browser',
         'user_agent', 'fingerprint', 'referrer',
         'is_fraud', 'fraud_reason', 'is_vpn', 'is_proxy',
-        'is_counted', 'is_windows', 'click_value',
+        'is_counted', 'is_windows', 'is_mac', 'click_value',
     ];
 
     protected $casts = [
@@ -21,6 +21,7 @@ class Click extends Model
         'is_proxy' => 'boolean',
         'is_counted' => 'boolean',
         'is_windows' => 'boolean',
+        'is_mac' => 'boolean',
     ];
 
     public function trackingLink()

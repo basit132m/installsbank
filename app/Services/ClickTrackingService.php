@@ -6,6 +6,7 @@ use App\Models\Campaign;
 use App\Models\Click;
 use App\Models\CountryRate;
 use App\Models\DailyEarning;
+use App\Models\MacCountryRate;
 use App\Models\TrackingLink;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
@@ -54,6 +55,7 @@ class ClickTrackingService
         $browser = $agent->browser() ?: 'Unknown';
         $deviceType = $agent->isDesktop() ? 'desktop' : ($agent->isTablet() ? 'tablet' : 'mobile');
         $isWindows = str_contains(strtolower($os), 'windows');
+        $isMac     = !$isWindows && (bool) preg_match('/^(os[\s_]?x|mac)/i', $os);
 
         $geoData = $this->geo->lookup($ip);
 
@@ -72,6 +74,7 @@ class ClickTrackingService
             'fingerprint'      => $this->generateFingerprint($request),
             'referrer'         => $rawReferrer,
             'is_windows'       => $isWindows,
+            'is_mac'           => $isMac,
             'headers'          => $request->headers->all(),
         ];
 
@@ -120,9 +123,10 @@ class ClickTrackingService
         // Fixed rate publishers are paid externally — no per-click earnings
         $isFixedRate = $profile?->isFixedRate() ?? false;
 
-        // Discover new countries from ALL counted Windows clicks
+        $countryCode = $geoData['country_code'];
+
+        // Discover new countries from counted Windows clicks and assign Windows rate
         if ($isCounted && $isWindows) {
-            $countryCode = $geoData['country_code'];
             $countryRate = CountryRate::where('country_code', $countryCode)->first();
 
             if (!$countryRate && !in_array($countryCode, ['XX', 'Unknown', ''])) {
@@ -137,6 +141,25 @@ class ClickTrackingService
 
             if (!$isFixedRate && $countryRate && $countryRate->is_active && !$countryRate->needs_rate_update) {
                 $clickValue = $countryRate->rate_per_click;
+            }
+        }
+
+        // Discover new countries from counted Mac clicks and assign Mac rate
+        if ($isCounted && $isMac) {
+            $macRate = MacCountryRate::where('country_code', $countryCode)->first();
+
+            if (!$macRate && !in_array($countryCode, ['XX', 'Unknown', ''])) {
+                $macRate = MacCountryRate::create([
+                    'country_code'      => $countryCode,
+                    'country_name'      => $geoData['country_name'],
+                    'mac_rate_per_click'=> 0,
+                    'is_active'         => false,
+                    'needs_rate_update' => true,
+                ]);
+            }
+
+            if (!$isFixedRate && $macRate && $macRate->is_active && !$macRate->needs_rate_update) {
+                $clickValue = $macRate->mac_rate_per_click;
             }
         }
 
@@ -158,7 +181,7 @@ class ClickTrackingService
         }
 
         if ($isCounted) {
-            $this->updateDailyEarnings($link->user_id, $isWindows, $os, $geoData['country_code'], $clickValue);
+            $this->updateDailyEarnings($link->user_id, $isWindows, $isMac, $os, $countryCode, $clickValue);
         }
 
         $this->maybeStartTestPeriod($link);
@@ -171,62 +194,87 @@ class ClickTrackingService
         return $click;
     }
 
-    private function updateDailyEarnings(int $publisherId, bool $isWindows, string $osName, string $countryCode, float $clickValue): void
+    private function updateDailyEarnings(int $publisherId, bool $isWindows, bool $isMac, string $osName, string $countryCode, float $clickValue): void
     {
         $today   = now()->toDateString();
         $earning = DailyEarning::firstOrCreate(
             ['user_id' => $publisherId, 'date' => $today],
             [
-                'total_raw_clicks'           => 0,
-                'windows_clicks'             => 0,
-                'windows_clicks_base_count'  => 0,
-                'windows_clicks_base_divided'=> 0,
-                'windows_clicks_divided'     => 0,
-                'valid_clicks'               => 0,
-                'earnings'                   => 0,
+                'total_raw_clicks'            => 0,
+                'windows_clicks'              => 0,
+                'windows_clicks_base_count'   => 0,
+                'windows_clicks_base_divided' => 0,
+                'windows_clicks_divided'      => 0,
+                'mac_clicks'                  => 0,
+                'mac_clicks_base_count'       => 0,
+                'mac_clicks_base_divided'     => 0,
+                'mac_clicks_divided'          => 0,
+                'valid_clicks'                => 0,
+                'earnings'                    => 0,
             ]
         );
 
         $earning->increment('total_raw_clicks');
 
+        // Load divider record once
+        $dividerRecord = \App\Models\ClickDivider::where('user_id', $publisherId)->first();
+
         if ($isWindows) {
             $earning->increment('windows_clicks');
 
-            // Use snapshot-aware divider calculation so mid-day divider changes
-            // only affect clicks that arrive AFTER the change, not retroactively
-            $divider      = \App\Models\ClickDivider::where('user_id', $publisherId)->where('is_enabled', true)->first();
-            $dividerValue = $divider ? (float)$divider->divider_value : 1;
+            // Snapshot-aware Windows divider — new divider only applies to clicks after the change
+            $dividerValue = ($dividerRecord && $dividerRecord->is_enabled)
+                ? (float) $dividerRecord->divider_value : 1;
 
-            $fresh      = $earning->fresh();
-            $baseCount  = (int)($fresh->windows_clicks_base_count ?? 0);
-            $baseDivided= (int)($fresh->windows_clicks_base_divided ?? 0);
-            $newWindows = $fresh->windows_clicks - $baseCount;
+            $fresh       = $earning->fresh();
+            $baseCount   = (int) ($fresh->windows_clicks_base_count ?? 0);
+            $baseDivided = (int) ($fresh->windows_clicks_base_divided ?? 0);
+            $newWindows  = $fresh->windows_clicks - $baseCount;
 
-            $earning->windows_clicks_divided = $baseDivided + (int)floor($newWindows / $dividerValue);
+            $earning->windows_clicks_divided = $baseDivided + (int) floor($newWindows / $dividerValue);
         }
 
-        $nonWindowsClicks = Click::where('user_id', $publisherId)
+        if ($isMac) {
+            $earning->increment('mac_clicks');
+
+            // Snapshot-aware Mac divider
+            $macDividerValue = ($dividerRecord && $dividerRecord->mac_divider_enabled)
+                ? (float) $dividerRecord->mac_divider_value : 1;
+
+            $fresh          = $earning->fresh();
+            $macBaseCount   = (int) ($fresh->mac_clicks_base_count ?? 0);
+            $macBaseDivided = (int) ($fresh->mac_clicks_base_divided ?? 0);
+            $newMac         = $fresh->mac_clicks - $macBaseCount;
+
+            $earning->mac_clicks_divided = $macBaseDivided + (int) floor($newMac / $macDividerValue);
+        }
+
+        // valid_clicks = windows (divider-adjusted) + mac (divider-adjusted) + all other OS (raw)
+        $fresh          = $earning->fresh();
+        $windowsDivided = (int) ($fresh->windows_clicks_divided ?? 0);
+        $macDivided     = (int) ($fresh->mac_clicks_divided ?? 0);
+        $otherClicks    = Click::where('user_id', $publisherId)
             ->where('is_counted', true)
             ->where('is_windows', false)
+            ->where('is_mac', false)
             ->whereDate('created_at', $today)
             ->count();
 
-        $windowsDivided      = $earning->fresh()->windows_clicks_divided ?? 0;
-        $earning->valid_clicks = $nonWindowsClicks + $windowsDivided;
+        $earning->valid_clicks = $otherClicks + $windowsDivided + $macDivided;
 
         // Country breakdown
-        $breakdown = $earning->country_breakdown ?? [];
-        $breakdown[$countryCode] = $breakdown[$countryCode] ?? ['clicks' => 0, 'earnings' => 0];
+        $breakdown                           = $earning->country_breakdown ?? [];
+        $breakdown[$countryCode]             = $breakdown[$countryCode] ?? ['clicks' => 0, 'earnings' => 0];
         $breakdown[$countryCode]['clicks']++;
         $breakdown[$countryCode]['earnings'] += $clickValue;
-        $earning->country_breakdown = $breakdown;
+        $earning->country_breakdown          = $breakdown;
 
         // OS breakdown
-        $osKey                    = $osName ?: 'Unknown';
-        $osBreakdown              = $earning->os_breakdown ?? [];
-        $osBreakdown[$osKey]      = $osBreakdown[$osKey] ?? ['clicks' => 0];
+        $osKey               = $osName ?: 'Unknown';
+        $osBreakdown         = $earning->os_breakdown ?? [];
+        $osBreakdown[$osKey] = $osBreakdown[$osKey] ?? ['clicks' => 0];
         $osBreakdown[$osKey]['clicks']++;
-        $earning->os_breakdown    = $osBreakdown;
+        $earning->os_breakdown = $osBreakdown;
 
         $earning->earnings += $clickValue;
         $earning->save();

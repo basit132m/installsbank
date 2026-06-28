@@ -6,8 +6,8 @@ use Illuminate\Database\Eloquent\Model;
 
 class ClickDivider extends Model
 {
-    protected $fillable = ['user_id', 'divider_value', 'is_enabled'];
-    protected $casts = ['is_enabled' => 'boolean'];
+    protected $fillable = ['user_id', 'divider_value', 'is_enabled', 'mac_divider_value', 'mac_divider_enabled'];
+    protected $casts = ['is_enabled' => 'boolean', 'mac_divider_enabled' => 'boolean'];
 
     public function user()
     {

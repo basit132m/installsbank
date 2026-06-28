@@ -438,6 +438,12 @@
                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
                 Install Rates
             </a>
+            <a href="{{ route('admin.mac-rates.index') }}" class="nav-item {{ request()->routeIs('admin.mac-rates.*') ? 'active' : '' }}">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18m0 0h10a2 2 0 002-2V9M9 21H5a2 2 0 01-2-2V9m0 0h18"/></svg>
+                Mac Rates
+                @php $macUnratedCount = \App\Models\MacCountryRate::where('needs_rate_update', true)->count(); @endphp
+                @if($macUnratedCount > 0)<span class="nav-badge warning">{{ $macUnratedCount }}</span>@endif
+            </a>
             <a href="{{ route('admin.install-settings.index') }}" class="nav-item {{ request()->routeIs('admin.install-settings.*') ? 'active' : '' }}">
                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/></svg>
                 Install Settings

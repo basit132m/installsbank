@@ -204,6 +204,35 @@ class PublisherController extends Controller
         return back()->with('success', 'Click divider updated.');
     }
 
+    public function updateMacDivider(Request $request, User $user)
+    {
+        $data = $request->validate([
+            'mac_divider_value'   => 'required|numeric|min:1|max:100',
+            'mac_divider_enabled' => 'boolean',
+        ]);
+
+        // Snapshot today's DailyEarning so the new Mac divider only applies to
+        // clicks that arrive AFTER this change, not retroactively to today's old clicks
+        $today        = today()->toDateString();
+        $dailyEarning = DailyEarning::where('user_id', $user->id)->whereDate('date', $today)->first();
+        if ($dailyEarning) {
+            $dailyEarning->update([
+                'mac_clicks_base_count'   => $dailyEarning->mac_clicks,
+                'mac_clicks_base_divided' => $dailyEarning->mac_clicks_divided,
+            ]);
+        }
+
+        ClickDivider::updateOrCreate(
+            ['user_id' => $user->id],
+            [
+                'mac_divider_value'   => $data['mac_divider_value'],
+                'mac_divider_enabled' => $request->boolean('mac_divider_enabled'),
+            ]
+        );
+
+        return back()->with('success', 'Mac click divider updated.');
+    }
+
     public function updateSettings(Request $request, User $user)
     {
         $user->publisherProfile->update([
