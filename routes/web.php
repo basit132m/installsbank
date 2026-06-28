@@ -138,6 +138,16 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin,manager'
         Route::delete('/{macRate}', [Admin\MacCountryRateController::class, 'destroy'])->name('destroy');
     });
 
+    // Mac Install Country Rates
+    Route::prefix('mac-install-rates')->name('mac-install-rates.')->group(function () {
+        Route::get('/', [Admin\MacInstallRateController::class, 'index'])->name('index');
+        Route::post('/', [Admin\MacInstallRateController::class, 'store'])->name('store');
+        Route::post('/sync', [Admin\MacInstallRateController::class, 'syncFromTracked'])->name('sync');
+        Route::post('/bulk-update', [Admin\MacInstallRateController::class, 'bulkUpdate'])->name('bulk-update');
+        Route::put('/{macInstallRate}', [Admin\MacInstallRateController::class, 'update'])->name('update');
+        Route::delete('/{macInstallRate}', [Admin\MacInstallRateController::class, 'destroy'])->name('destroy');
+    });
+
     // Advertisers
     Route::prefix('advertisers')->name('advertisers.')->group(function () {
         Route::get('/', [Admin\AdvertiserController::class, 'index'])->name('index');

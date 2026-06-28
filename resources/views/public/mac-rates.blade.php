@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mac Rates — Installs Bank</title>
     <link rel="icon" type="image/x-icon" href="/images/favicon.ico">
-    <meta name="description" content="View Installs Bank's current pay-per-click rates for Mac devices by country. See exactly how much you earn per Mac click from each country.">
+    <meta name="description" content="View Installs Bank's current Mac click and Mac install rates by country. See how much you earn per Mac click or Mac install from each country.">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <style>
         :root { --primary: #01BF63; --primary-dark: #00a354; --accent: #8b5cf6; --accent-dark: #6d28d9; }
@@ -184,16 +184,16 @@
 <!-- HERO -->
 <section class="hero">
     <span class="section-tag">Mac Rates</span>
-    <h1>Mac <span>Click</span> Rates.<br>By Country. Updated Live.</h1>
-    <p>We pay for both Windows and Mac device traffic. Find the Mac click rate for your country below — all rates are set and updated directly by our team.</p>
+    <h1>Mac <span>Click & Install</span> Rates.<br>By Country. Updated Live.</h1>
+    <p>We pay for Mac device traffic in two ways — per click and per install. Find the rates for your country below.</p>
     <div class="hero-stats">
         <div class="hero-stat">
             <div class="hero-stat-val"><span>${{ $topClickRate > 0 ? number_format($topClickRate, 2) : '—' }}</span></div>
             <div class="hero-stat-label">Top Mac Click Rate</div>
         </div>
         <div class="hero-stat">
-            <div class="hero-stat-val"><span>{{ $clickRates->count() }}</span></div>
-            <div class="hero-stat-label">Countries Live</div>
+            <div class="hero-stat-val"><span>${{ $topInstallRate > 0 ? number_format($topInstallRate, 2) : '—' }}</span></div>
+            <div class="hero-stat-label">Top Mac Install Rate</div>
         </div>
         <div class="hero-stat">
             <div class="hero-stat-val"><span>Mac</span>OS</div>
@@ -210,76 +210,160 @@
 <section class="content">
     <div class="content-inner">
 
-        <!-- Info banner -->
-        <div class="info-banner" style="background:linear-gradient(135deg,#f5f3ff,#ede9fe);border:1px solid #c4b5fd;">
-            <div class="info-icon" style="background:linear-gradient(135deg,#8b5cf6,#6d28d9);box-shadow:0 4px 12px rgba(139,92,246,.3);">
-                <svg width="20" height="20" fill="none" stroke="white" viewBox="0 0 24 24" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                </svg>
-            </div>
-            <div>
-                <div style="font-size:15px;font-weight:700;color:#4c1d95;margin-bottom:4px;">Mac Click Rates</div>
-                <p style="font-size:14px;color:#374151;line-height:1.7;margin:0;">
-                    Rates shown are per single Mac/macOS click from each country. Mac clicks are tracked and paid separately from Windows clicks.
-                    Your exact rate is confirmed after a 48-hour test period.
-                </p>
-            </div>
+        <!-- Tabs -->
+        <div class="tab-bar">
+            <button class="tab-btn active" id="tab-click" onclick="switchTab('click')">
+                Mac Click Rates
+            </button>
+            <button class="tab-btn" id="tab-install" onclick="switchTab('install')">
+                Mac Install Rates
+            </button>
         </div>
 
-        <!-- Search -->
-        <div class="search-wrap">
-            <svg class="search-icon" width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-            </svg>
-            <input type="text" id="searchInput" class="search-input" placeholder="Search country name or code..." oninput="filterRates()">
-        </div>
-        <div class="search-count" id="searchCount">Showing {{ $clickRates->count() }} countries</div>
-
-        @if($clickRates->isEmpty())
-            <div class="empty-state">
-                <svg width="48" height="48" fill="none" stroke="#d1d5db" viewBox="0 0 24 24" stroke-width="1.5">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"/>
-                </svg>
-                <h3>Mac Rates Coming Soon</h3>
-                <p>Our team is configuring Mac rates. Please check back soon.</p>
-            </div>
-        @else
-            <div class="rates-grid" id="ratesGrid">
-                @foreach($clickRates as $rate)
-                <div class="rate-card {{ $rate->mac_rate_per_click == $topClickRate ? 'top-rate' : '' }}"
-                     data-name="{{ strtolower($rate->country_name) }}"
-                     data-code="{{ strtolower($rate->country_code) }}">
-                    <img class="flag-img"
-                         src="https://flagcdn.com/32x24/{{ strtolower($rate->country_code) }}.png"
-                         alt="{{ $rate->country_name }} flag"
-                         onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
-                    <div class="flag-fallback" style="display:none;">🌍</div>
-                    <div class="country-info">
-                        <div class="country-name">{{ $rate->country_name }}</div>
-                        <div class="country-code">{{ strtoupper($rate->country_code) }}</div>
-                        @if($rate->mac_rate_per_click == $topClickRate)
-                            <span class="top-badge">TOP RATE</span>
-                        @endif
-                    </div>
-                    <div class="rate-amount">
-                        <div class="rate-val">${{ number_format($rate->mac_rate_per_click, 2) }}</div>
-                        <div class="rate-label">per Mac click</div>
-                    </div>
+        <!-- ── TAB: Click Rates ── -->
+        <div class="tab-panel active" id="panel-click">
+            <!-- Info banner -->
+            <div class="info-banner" style="background:linear-gradient(135deg,#f5f3ff,#ede9fe);border:1px solid #c4b5fd;">
+                <div class="info-icon" style="background:linear-gradient(135deg,#8b5cf6,#6d28d9);box-shadow:0 4px 12px rgba(139,92,246,.3);">
+                    <svg width="20" height="20" fill="none" stroke="white" viewBox="0 0 24 24" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
                 </div>
-                @endforeach
+                <div>
+                    <div style="font-size:15px;font-weight:700;color:#4c1d95;margin-bottom:4px;">Mac Click Rates</div>
+                    <p style="font-size:14px;color:#374151;line-height:1.7;margin:0;">
+                        Rates shown are per single Mac/macOS click from each country. Mac clicks are tracked and paid separately from Windows clicks.
+                        Your exact rate is confirmed after a 48-hour test period.
+                    </p>
+                </div>
             </div>
 
-            <div id="noResults" style="display:none;" class="empty-state">
-                <svg width="40" height="40" fill="none" stroke="#d1d5db" viewBox="0 0 24 24" stroke-width="1.5">
+            <!-- Search -->
+            <div class="search-wrap">
+                <svg class="search-icon" width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
                 </svg>
-                <h3>No countries found</h3>
-                <p>Try a different search term.</p>
+                <input type="text" id="clickSearchInput" class="search-input" placeholder="Search country name or code..." oninput="filterClickRates()">
             </div>
-        @endif
+            <div class="search-count" id="clickSearchCount">Showing {{ $clickRates->count() }} countries</div>
+
+            @if($clickRates->isEmpty())
+                <div class="empty-state">
+                    <svg width="48" height="48" fill="none" stroke="#d1d5db" viewBox="0 0 24 24" stroke-width="1.5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"/>
+                    </svg>
+                    <h3>Mac Click Rates Coming Soon</h3>
+                    <p>Our team is configuring Mac click rates. Please check back soon.</p>
+                </div>
+            @else
+                <div class="rates-grid" id="clickRatesGrid">
+                    @foreach($clickRates as $rate)
+                    <div class="rate-card {{ $rate->mac_rate_per_click == $topClickRate ? 'top-rate' : '' }}"
+                         data-name="{{ strtolower($rate->country_name) }}"
+                         data-code="{{ strtolower($rate->country_code) }}">
+                        <img class="flag-img"
+                             src="https://flagcdn.com/32x24/{{ strtolower($rate->country_code) }}.png"
+                             alt="{{ $rate->country_name }} flag"
+                             onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+                        <div class="flag-fallback" style="display:none;">🌍</div>
+                        <div class="country-info">
+                            <div class="country-name">{{ $rate->country_name }}</div>
+                            <div class="country-code">{{ strtoupper($rate->country_code) }}</div>
+                            @if($rate->mac_rate_per_click == $topClickRate)
+                                <span class="top-badge">TOP RATE</span>
+                            @endif
+                        </div>
+                        <div class="rate-amount">
+                            <div class="rate-val">${{ number_format($rate->mac_rate_per_click, 2) }}</div>
+                            <div class="rate-label">per Mac click</div>
+                        </div>
+                    </div>
+                    @endforeach
+                </div>
+
+                <div id="clickNoResults" style="display:none;" class="empty-state">
+                    <svg width="40" height="40" fill="none" stroke="#d1d5db" viewBox="0 0 24 24" stroke-width="1.5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                    </svg>
+                    <h3>No countries found</h3>
+                    <p>Try a different search term.</p>
+                </div>
+            @endif
+        </div>
+
+        <!-- ── TAB: Install Rates ── -->
+        <div class="tab-panel" id="panel-install">
+            <!-- Info banner -->
+            <div class="info-banner" style="background:linear-gradient(135deg,#f5f3ff,#ede9fe);border:1px solid #c4b5fd;">
+                <div class="info-icon" style="background:linear-gradient(135deg,#8b5cf6,#6d28d9);box-shadow:0 4px 12px rgba(139,92,246,.3);">
+                    <svg width="20" height="20" fill="none" stroke="white" viewBox="0 0 24 24" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                    </svg>
+                </div>
+                <div>
+                    <div style="font-size:15px;font-weight:700;color:#4c1d95;margin-bottom:4px;">Mac Install Rates</div>
+                    <p style="font-size:14px;color:#374151;line-height:1.7;margin:0;">
+                        Rates shown are per verified Mac software install from each country. For publishers on an installs-based contract,
+                        Mac installs are credited separately from Windows installs at the rates listed below.
+                    </p>
+                </div>
+            </div>
+
+            <!-- Search -->
+            <div class="search-wrap">
+                <svg class="search-icon" width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                </svg>
+                <input type="text" id="installSearchInput" class="search-input" placeholder="Search country name or code..." oninput="filterInstallRates()">
+            </div>
+            <div class="search-count" id="installSearchCount">Showing {{ $installRates->count() }} countries</div>
+
+            @if($installRates->isEmpty())
+                <div class="empty-state">
+                    <svg width="48" height="48" fill="none" stroke="#d1d5db" viewBox="0 0 24 24" stroke-width="1.5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                    </svg>
+                    <h3>Mac Install Rates Coming Soon</h3>
+                    <p>Our team is configuring Mac install rates. Please check back soon.</p>
+                </div>
+            @else
+                <div class="rates-grid" id="installRatesGrid">
+                    @foreach($installRates as $rate)
+                    <div class="rate-card {{ $rate->mac_rate_usd == $topInstallRate ? 'top-rate' : '' }}"
+                         data-name="{{ strtolower($rate->country_name) }}"
+                         data-code="{{ strtolower($rate->country_code) }}">
+                        <img class="flag-img"
+                             src="https://flagcdn.com/32x24/{{ strtolower($rate->country_code) }}.png"
+                             alt="{{ $rate->country_name }} flag"
+                             onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+                        <div class="flag-fallback" style="display:none;">🌍</div>
+                        <div class="country-info">
+                            <div class="country-name">{{ $rate->country_name }}</div>
+                            <div class="country-code">{{ strtoupper($rate->country_code) }}</div>
+                            @if($rate->mac_rate_usd == $topInstallRate)
+                                <span class="top-badge">TOP RATE</span>
+                            @endif
+                        </div>
+                        <div class="rate-amount">
+                            <div class="rate-val">${{ number_format($rate->mac_rate_usd, 2) }}</div>
+                            <div class="rate-label">per Mac install</div>
+                        </div>
+                    </div>
+                    @endforeach
+                </div>
+
+                <div id="installNoResults" style="display:none;" class="empty-state">
+                    <svg width="40" height="40" fill="none" stroke="#d1d5db" viewBox="0 0 24 24" stroke-width="1.5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                    </svg>
+                    <h3>No countries found</h3>
+                    <p>Try a different search term.</p>
+                </div>
+            @endif
+        </div>
 
         <!-- Compare box -->
-        <div style="background:#f9fafb;border:1.5px solid #e5e7eb;border-radius:16px;padding:28px 32px;margin-bottom:36px;">
+        <div style="background:#f9fafb;border:1.5px solid #e5e7eb;border-radius:16px;padding:28px 32px;margin-bottom:36px;margin-top:40px;">
             <h3 style="font-size:16px;font-weight:800;color:#111827;margin-bottom:16px;">All Rate Types at a Glance</h3>
             <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;">
                 <a href="{{ route('rates') }}" style="text-decoration:none;display:block;background:white;border:1.5px solid #a7f3d0;border-radius:12px;padding:18px 20px;transition:all 0.18s;" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 4px 16px rgba(1,191,99,.12)'" onmouseout="this.style.transform='';this.style.boxShadow=''">
@@ -296,8 +380,8 @@
                 </a>
                 <div style="background:linear-gradient(135deg,#ede9fe,#f5f3ff);border:1.5px solid #8b5cf6;border-radius:12px;padding:18px 20px;">
                     <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:#7c3aed;margin-bottom:6px;">Mac</div>
-                    <div style="font-size:18px;font-weight:900;color:#8b5cf6;">Mac Click Rates</div>
-                    <div style="font-size:12px;color:#6b7280;margin-top:4px;">Per Mac click by country</div>
+                    <div style="font-size:18px;font-weight:900;color:#8b5cf6;">Mac Rates</div>
+                    <div style="font-size:12px;color:#6b7280;margin-top:4px;">Click + install rates for Mac</div>
                     <div style="font-size:12px;font-weight:700;color:#8b5cf6;margin-top:8px;">You are here</div>
                 </div>
             </div>
@@ -364,19 +448,43 @@ function toggleMenu() {
 }
 function closeMenu() { document.getElementById('mobileMenu').classList.remove('open'); }
 
-function filterRates() {
-    const q = document.getElementById('searchInput').value.toLowerCase().trim();
-    const cards = document.querySelectorAll('#ratesGrid .rate-card');
+function switchTab(tab) {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    document.getElementById('tab-' + tab).classList.add('active');
+    document.getElementById('panel-' + tab).classList.add('active');
+}
+
+function filterClickRates() {
+    const q = document.getElementById('clickSearchInput').value.toLowerCase().trim();
+    const cards = document.querySelectorAll('#clickRatesGrid .rate-card');
     let visible = 0;
     cards.forEach(card => {
         const match = card.dataset.name.includes(q) || card.dataset.code.includes(q);
         card.style.display = match ? '' : 'none';
         if (match) visible++;
     });
-    document.getElementById('searchCount').textContent = q
+    document.getElementById('clickSearchCount').textContent = q
         ? `Showing ${visible} of {{ $clickRates->count() }} countries`
         : `Showing {{ $clickRates->count() }} countries`;
-    document.getElementById('noResults').style.display = (visible === 0 && q) ? 'block' : 'none';
+    const noRes = document.getElementById('clickNoResults');
+    if (noRes) noRes.style.display = (visible === 0 && q) ? 'block' : 'none';
+}
+
+function filterInstallRates() {
+    const q = document.getElementById('installSearchInput').value.toLowerCase().trim();
+    const cards = document.querySelectorAll('#installRatesGrid .rate-card');
+    let visible = 0;
+    cards.forEach(card => {
+        const match = card.dataset.name.includes(q) || card.dataset.code.includes(q);
+        card.style.display = match ? '' : 'none';
+        if (match) visible++;
+    });
+    document.getElementById('installSearchCount').textContent = q
+        ? `Showing ${visible} of {{ $installRates->count() }} countries`
+        : `Showing {{ $installRates->count() }} countries`;
+    const noRes = document.getElementById('installNoResults');
+    if (noRes) noRes.style.display = (visible === 0 && q) ? 'block' : 'none';
 }
 </script>
 </body>

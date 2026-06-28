@@ -7,6 +7,8 @@ use App\Models\Click;
 use App\Models\CountryRate;
 use App\Models\DailyEarning;
 use App\Models\MacCountryRate;
+use App\Models\MacInstallCountryRate;
+use App\Models\MacPublisherInstall;
 use App\Models\TrackingLink;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
@@ -186,6 +188,7 @@ class ClickTrackingService
 
         $this->maybeStartTestPeriod($link);
         $this->processInstallsIfApplicable($link, $geoData, $isCounted, $isWindows);
+        $this->processMacInstallsIfApplicable($link, $geoData, $isCounted, $isMac);
 
         if ($isCounted && $link->campaign_id) {
             $this->updateCampaignStats($link->campaign_id, $geoData['country_code']);
@@ -384,6 +387,49 @@ class ClickTrackingService
         }
 
         $profile->update(['install_pending_clicks' => $pending]);
+    }
+
+    private function processMacInstallsIfApplicable(TrackingLink $link, array $geoData, bool $isCounted, bool $isMac): void
+    {
+        if (!$isCounted || !$isMac) return;
+
+        $profile = $link->user?->publisherProfile;
+        if (!$profile || $profile->contract_type !== 'installs_base') return;
+
+        $countryCode = strtolower($geoData['country_code'] ?? '');
+        if (!$countryCode || $countryCode === 'xx') return;
+
+        $weekday = (int) now()->format('w');
+        $ratio   = \App\Models\InstallDayRatio::where('weekday', $weekday)->value('ratio') ?? 30;
+
+        // Apply Mac divider: mac installs scale with mac divider, same logic as Windows
+        $divider        = \App\Models\ClickDivider::where('user_id', $link->user_id)->where('mac_divider_enabled', true)->first();
+        $dividerValue   = $divider ? max(1, (float)$divider->mac_divider_value) : 1;
+        $effectiveRatio = max(1, (int)round($ratio * $dividerValue));
+
+        $pending               = $profile->mac_install_pending_clicks ?? [];
+        $pending[$countryCode] = ($pending[$countryCode] ?? 0) + 1;
+
+        $installs = (int) floor($pending[$countryCode] / $effectiveRatio);
+        if ($installs > 0) {
+            $pending[$countryCode] = $pending[$countryCode] % $effectiveRatio;
+
+            $rate     = MacInstallCountryRate::where('country_code', $countryCode)->where('is_active', true)->value('mac_rate_usd') ?? 0;
+            $earnings = $installs * (float) $rate;
+
+            $installRecord = MacPublisherInstall::firstOrCreate(
+                ['user_id' => $link->user_id, 'country_code' => $countryCode, 'date' => now()->toDateString()],
+                ['country_name' => $geoData['country_name'], 'install_count' => 0, 'earnings' => 0]
+            );
+            $installRecord->increment('install_count', $installs);
+            if ($earnings > 0) {
+                $installRecord->increment('earnings', $earnings);
+                $profile->increment('balance', $earnings);
+                $profile->increment('total_earnings', $earnings);
+            }
+        }
+
+        $profile->update(['mac_install_pending_clicks' => $pending]);
     }
 
     private function generateFingerprint(Request $request): string

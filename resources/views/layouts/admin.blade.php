@@ -444,6 +444,12 @@
                 @php $macUnratedCount = \App\Models\MacCountryRate::where('needs_rate_update', true)->count(); @endphp
                 @if($macUnratedCount > 0)<span class="nav-badge warning">{{ $macUnratedCount }}</span>@endif
             </a>
+            <a href="{{ route('admin.mac-install-rates.index') }}" class="nav-item {{ request()->routeIs('admin.mac-install-rates.*') ? 'active' : '' }}">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                Mac Install Rates
+                @php $macInstallNoRateCount = \App\Models\MacInstallCountryRate::where('mac_rate_usd', 0)->count(); @endphp
+                @if($macInstallNoRateCount > 0)<span class="nav-badge warning">{{ $macInstallNoRateCount }}</span>@endif
+            </a>
             <a href="{{ route('admin.install-settings.index') }}" class="nav-item {{ request()->routeIs('admin.install-settings.*') ? 'active' : '' }}">
                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/></svg>
                 Install Settings

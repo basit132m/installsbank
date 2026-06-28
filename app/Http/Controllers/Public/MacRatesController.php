@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Public;
 
 use App\Http\Controllers\Controller;
 use App\Models\MacCountryRate;
+use App\Models\MacInstallCountryRate;
 
 class MacRatesController extends Controller
 {
@@ -18,6 +19,14 @@ class MacRatesController extends Controller
 
         $topClickRate = $clickRates->max('mac_rate_per_click');
 
-        return view('public.mac-rates', compact('clickRates', 'topClickRate'));
+        $installRates = MacInstallCountryRate::where('is_active', true)
+            ->where('mac_rate_usd', '>', 0)
+            ->orderByDesc('mac_rate_usd')
+            ->orderBy('country_name')
+            ->get();
+
+        $topInstallRate = $installRates->max('mac_rate_usd');
+
+        return view('public.mac-rates', compact('clickRates', 'topClickRate', 'installRates', 'topInstallRate'));
     }
 }
