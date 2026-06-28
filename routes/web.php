@@ -27,6 +27,7 @@ Route::get('/go/{code}', [LanderRedirectController::class, 'redirect'])->name('l
 Route::get('/', fn() => view('public.home'))->name('home');
 Route::get('/rates', [RatesController::class, 'index'])->name('rates');
 Route::get('/install-rates', [InstallRatesController::class, 'index'])->name('install-rates');
+Route::get('/mac-rates', [\App\Http\Controllers\Public\MacRatesController::class, 'index'])->name('mac-rates');
 Route::get('/contracts', fn() => view('public.contracts'))->name('contracts');
 Route::get('/privacy-policy', fn() => view('public.privacy'))->name('privacy');
 Route::get('/terms-of-use', fn() => view('public.terms'))->name('terms');

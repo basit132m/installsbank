@@ -141,6 +141,7 @@
         <a href="{{ route('home') }}#contracts">Contracts</a>
         <a href="{{ route('rates') }}">Click Rates</a>
         <a href="{{ route('install-rates') }}" class="active">Install Rates</a>
+        <a href="{{ route('mac-rates') }}">Mac Rates</a>
         <a href="{{ route('home') }}#contact">Contact</a>
     </div>
     <div class="nav-cta">
@@ -157,6 +158,7 @@
     <a href="{{ route('home') }}#contracts" onclick="closeMenu()">Contracts</a>
     <a href="{{ route('rates') }}" onclick="closeMenu()">Click Rates</a>
     <a href="{{ route('install-rates') }}" onclick="closeMenu()">Install Rates</a>
+    <a href="{{ route('mac-rates') }}" onclick="closeMenu()">Mac Rates</a>
     <a href="{{ route('home') }}#contact" onclick="closeMenu()">Contact</a>
     <div class="mobile-cta">
         <a href="{{ route('login') }}" class="btn-login">Sign In</a>
@@ -279,6 +281,7 @@
             <div class="footer-heading">Rates</div>
             <a href="{{ route('rates') }}" class="footer-link">Click Rates</a>
             <a href="{{ route('install-rates') }}" class="footer-link">Install Rates</a>
+            <a href="{{ route('mac-rates') }}" class="footer-link">Mac Rates</a>
         </div>
         <div>
             <div class="footer-heading">Contact Us</div>
