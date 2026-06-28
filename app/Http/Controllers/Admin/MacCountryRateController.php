@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Click;
+use App\Models\CountryRate;
 use App\Models\DailyEarning;
 use App\Models\MacCountryRate;
 use Illuminate\Http\Request;
@@ -14,7 +15,14 @@ class MacCountryRateController extends Controller
     {
         $rates = MacCountryRate::orderByDesc('needs_rate_update')->orderBy('country_name')->paginate(50);
         $unratedCount = MacCountryRate::where('needs_rate_update', true)->count();
-        return view('admin.mac-rates.index', compact('rates', 'unratedCount'));
+
+        // Countries already in CountryRate (Windows-tracked) but not yet in mac_country_rates
+        $existing = MacCountryRate::pluck('country_code')->map('strtoupper');
+        $unsynced = CountryRate::whereNotIn('country_code', $existing)
+            ->orderBy('country_name')
+            ->get(['country_code', 'country_name']);
+
+        return view('admin.mac-rates.index', compact('rates', 'unratedCount', 'unsynced'));
     }
 
     public function store(Request $request)
@@ -95,6 +103,24 @@ class MacCountryRateController extends Controller
     {
         $macRate->delete();
         return back()->with('success', 'Mac rate deleted.');
+    }
+
+    public function syncFromTracked()
+    {
+        $existing = MacCountryRate::pluck('country_code')->map('strtoupper');
+        $toImport = CountryRate::whereNotIn('country_code', $existing)->get();
+
+        foreach ($toImport as $cr) {
+            MacCountryRate::create([
+                'country_code'       => strtoupper($cr->country_code),
+                'country_name'       => $cr->country_name,
+                'mac_rate_per_click' => 0,
+                'is_active'          => false,
+                'needs_rate_update'  => true,
+            ]);
+        }
+
+        return back()->with('success', "Imported {$toImport->count()} countries with \$0 Mac rate. Set the rates before they take effect.");
     }
 
     public function bulkUpdate(Request $request)

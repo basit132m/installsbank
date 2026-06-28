@@ -83,6 +83,26 @@
 </div>
 @endif
 
+{{-- UNSYNCED IMPORT BANNER --}}
+@if($unsynced->count())
+<div style="background:#eff6ff;border:1.5px solid #bfdbfe;border-radius:14px;padding:16px 20px;margin-bottom:20px;display:flex;align-items:center;gap:16px;flex-wrap:wrap;">
+    <div style="width:42px;height:42px;background:linear-gradient(135deg,#3b82f6,#1d4ed8);border-radius:11px;display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 4px 12px rgba(59,130,246,.3);">
+        <svg width="20" height="20" fill="none" stroke="white" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+    </div>
+    <div style="flex:1;min-width:200px;">
+        <div style="font-size:14px;font-weight:800;color:#1e40af;">{{ $unsynced->count() }} tracked {{ Str::plural('country', $unsynced->count()) }} not yet in Mac rates</div>
+        <div style="font-size:13px;color:#3b82f6;margin-top:3px;">Countries already tracked in Windows click rates. Import them to start setting Mac rates.</div>
+    </div>
+    <form method="POST" action="{{ route('admin.mac-rates.sync') }}">
+        @csrf
+        <button type="submit" style="padding:10px 20px;background:linear-gradient(135deg,#3b82f6,#1d4ed8);color:white;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;box-shadow:0 4px 12px rgba(59,130,246,.35);display:flex;align-items:center;gap:8px;white-space:nowrap;">
+            <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+            Import {{ $unsynced->count() }} Countries (rate $0)
+        </button>
+    </form>
+</div>
+@endif
+
 @if(session('success'))
 <div style="background:#f0fdf4;border:1.5px solid #bbf7d0;border-radius:12px;padding:14px 18px;margin-bottom:20px;font-size:14px;color:#166534;font-weight:600;display:flex;align-items:center;gap:10px;">
     <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>

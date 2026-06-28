@@ -131,9 +131,10 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin,manager'
     Route::prefix('mac-rates')->name('mac-rates.')->group(function () {
         Route::get('/', [Admin\MacCountryRateController::class, 'index'])->name('index');
         Route::post('/', [Admin\MacCountryRateController::class, 'store'])->name('store');
+        Route::post('/sync', [Admin\MacCountryRateController::class, 'syncFromTracked'])->name('sync');
+        Route::post('/bulk-update', [Admin\MacCountryRateController::class, 'bulkUpdate'])->name('bulk-update');
         Route::put('/{macRate}', [Admin\MacCountryRateController::class, 'update'])->name('update');
         Route::delete('/{macRate}', [Admin\MacCountryRateController::class, 'destroy'])->name('destroy');
-        Route::post('/bulk-update', [Admin\MacCountryRateController::class, 'bulkUpdate'])->name('bulk-update');
     });
 
     // Advertisers
