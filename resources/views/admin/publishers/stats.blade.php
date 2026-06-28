@@ -94,14 +94,28 @@
             <svg width="20" height="20" fill="none" stroke="#7c3aed" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
         </div>
         <div class="stat-value" style="color:#7c3aed;">{{ number_format($installsData['total_installs']) }}</div>
-        <div class="stat-label">Total Installs</div>
+        <div class="stat-label">Win Installs</div>
     </div>
     <div class="stat-card">
         <div class="stat-icon" style="background:#d1fae5;">
             <svg width="20" height="20" fill="none" stroke="#059652" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"/></svg>
         </div>
         <div class="stat-value" style="color:#01BF63;">${{ number_format($installsData['total_earnings'], 4) }}</div>
-        <div class="stat-label">Install Earnings</div>
+        <div class="stat-label">Win Install Earnings</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon" style="background:#f5f3ff;">
+            <svg width="20" height="20" fill="none" stroke="#8b5cf6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+        </div>
+        <div class="stat-value" style="color:#8b5cf6;">{{ number_format($installsData['mac_total_installs']) }}</div>
+        <div class="stat-label">Mac Installs</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon" style="background:#f5f3ff;">
+            <svg width="20" height="20" fill="none" stroke="#8b5cf6" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"/></svg>
+        </div>
+        <div class="stat-value" style="color:#8b5cf6;">${{ number_format($installsData['mac_total_earnings'], 4) }}</div>
+        <div class="stat-label">Mac Install Earnings</div>
     </div>
     @else
     <div class="stat-card">
@@ -133,8 +147,10 @@
                     <th style="text-align:right;padding:8px 12px;color:#6b7280;font-weight:600;">Fraud Clicks</th>
                     <th style="text-align:right;padding:8px 12px;color:#6b7280;font-weight:600;">Windows</th>
                     @if($installsData)
-                    <th style="text-align:right;padding:8px 12px;color:#7c3aed;font-weight:600;">Installs</th>
-                    <th style="text-align:right;padding:8px 12px;color:#6b7280;font-weight:600;">Install Earnings</th>
+                    <th style="text-align:right;padding:8px 12px;color:#7c3aed;font-weight:600;">Win Installs</th>
+                    <th style="text-align:right;padding:8px 12px;color:#6b7280;font-weight:600;">Win Earnings</th>
+                    <th style="text-align:right;padding:8px 12px;color:#8b5cf6;font-weight:600;">Mac Installs</th>
+                    <th style="text-align:right;padding:8px 12px;color:#8b5cf6;font-weight:600;">Mac Earnings</th>
                     @else
                     <th style="text-align:right;padding:8px 12px;color:#6b7280;font-weight:600;">Earnings (USD)</th>
                     @endif
@@ -152,6 +168,8 @@
                     @if($installsData)
                     <td style="padding:8px 12px;text-align:right;color:#7c3aed;font-weight:700;">{{ number_format($row['installs'] ?? 0) }}</td>
                     <td style="padding:8px 12px;text-align:right;color:#374151;font-family:monospace;">${{ number_format($row['install_earnings'] ?? 0, 4) }}</td>
+                    <td style="padding:8px 12px;text-align:right;color:#8b5cf6;font-weight:700;">{{ number_format($row['mac_installs'] ?? 0) }}</td>
+                    <td style="padding:8px 12px;text-align:right;color:#8b5cf6;font-family:monospace;">${{ number_format($row['mac_install_earnings'] ?? 0, 4) }}</td>
                     @else
                     <td style="padding:8px 12px;text-align:right;color:#374151;font-family:monospace;">${{ number_format($row['earnings'], 4) }}</td>
                     @endif
@@ -167,6 +185,8 @@
                     @if($installsData)
                     <td style="padding:10px 12px;text-align:right;font-weight:700;color:#7c3aed;">{{ number_format($installsData['total_installs']) }}</td>
                     <td style="padding:10px 12px;text-align:right;font-weight:700;font-family:monospace;">${{ number_format($installsData['total_earnings'], 4) }}</td>
+                    <td style="padding:10px 12px;text-align:right;font-weight:700;color:#8b5cf6;">{{ number_format($installsData['mac_total_installs']) }}</td>
+                    <td style="padding:10px 12px;text-align:right;font-weight:700;font-family:monospace;color:#8b5cf6;">${{ number_format($installsData['mac_total_earnings'], 4) }}</td>
                     @else
                     <td style="padding:10px 12px;text-align:right;font-weight:700;font-family:monospace;">${{ number_format($totalEarnings, 4) }}</td>
                     @endif
@@ -177,15 +197,15 @@
     @endif
 </div>
 
-{{-- Installs by Country (installs_base only) --}}
+{{-- Windows Installs by Country (installs_base only) --}}
 @if($installsData)
 <div class="card mb-6">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
-        <div class="card-title">Install Earnings by Country</div>
-        <span style="background:#ede9fe;color:#7c3aed;padding:3px 10px;border-radius:20px;font-size:12px;font-weight:700;">Installs Base Contract</span>
+        <div class="card-title">Windows Install Earnings by Country</div>
+        <span style="background:#ede9fe;color:#7c3aed;padding:3px 10px;border-radius:20px;font-size:12px;font-weight:700;">Windows Installs</span>
     </div>
     @if($installsData['by_country']->isEmpty())
-        <div style="text-align:center;padding:24px;color:#9ca3af;">No install data for this period</div>
+        <div style="text-align:center;padding:24px;color:#9ca3af;">No Windows install data for this period</div>
     @else
     <div class="table-wrap">
         <table>
@@ -220,6 +240,55 @@
                     <td style="padding:10px 12px;font-weight:700;">Total</td>
                     <td style="padding:10px 12px;text-align:right;font-weight:700;color:#7c3aed;">{{ number_format($installsData['total_installs']) }}</td>
                     <td style="padding:10px 12px;text-align:right;font-weight:700;font-family:monospace;color:#01BF63;">${{ number_format($installsData['total_earnings'], 4) }}</td>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+    @endif
+</div>
+
+{{-- Mac Installs by Country --}}
+<div class="card mb-6" style="border:1.5px solid #c4b5fd;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+        <div class="card-title">Mac Install Earnings by Country</div>
+        <span style="background:#f5f3ff;color:#8b5cf6;padding:3px 10px;border-radius:20px;font-size:12px;font-weight:700;">Mac Installs</span>
+    </div>
+    @if($installsData['mac_by_country']->isEmpty())
+        <div style="text-align:center;padding:24px;color:#9ca3af;">No Mac install data for this period</div>
+    @else
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>Country</th>
+                    <th style="text-align:right;">Mac Installs</th>
+                    <th style="text-align:right;">Earnings (USD)</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach($installsData['mac_by_country'] as $inst)
+                <tr>
+                    <td>
+                        <div style="display:flex;align-items:center;gap:8px;">
+                            <img src="https://flagcdn.com/24x18/{{ strtolower($inst['country_code']) }}.png"
+                                 style="width:24px;height:18px;border-radius:3px;object-fit:cover;flex-shrink:0;"
+                                 onerror="this.style.display='none'">
+                            <div>
+                                <div style="font-weight:600;font-size:13px;">{{ $inst['country_name'] }}</div>
+                                <div style="font-size:11px;color:#9ca3af;"><code>{{ $inst['country_code'] }}</code></div>
+                            </div>
+                        </div>
+                    </td>
+                    <td style="text-align:right;font-weight:700;color:#8b5cf6;">{{ number_format($inst['install_count']) }}</td>
+                    <td style="text-align:right;font-weight:600;color:#8b5cf6;">${{ number_format($inst['earnings'], 4) }}</td>
+                </tr>
+                @endforeach
+            </tbody>
+            <tfoot>
+                <tr style="border-top:2px solid #e5e7eb;background:#f9fafb;">
+                    <td style="padding:10px 12px;font-weight:700;">Total</td>
+                    <td style="padding:10px 12px;text-align:right;font-weight:700;color:#8b5cf6;">{{ number_format($installsData['mac_total_installs']) }}</td>
+                    <td style="padding:10px 12px;text-align:right;font-weight:700;font-family:monospace;color:#8b5cf6;">${{ number_format($installsData['mac_total_earnings'], 4) }}</td>
                 </tr>
             </tfoot>
         </table>

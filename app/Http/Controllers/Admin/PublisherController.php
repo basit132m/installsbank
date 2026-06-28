@@ -8,6 +8,8 @@ use App\Models\Click;
 use App\Models\Contract;
 use App\Models\DailyEarning;
 use App\Models\FraudAlert;
+use App\Models\MacInstallCountryRate;
+use App\Models\MacPublisherInstall;
 use App\Models\PublisherInstall;
 use App\Models\PublisherProfile;
 use App\Models\PublisherTag;
@@ -146,6 +148,54 @@ class PublisherController extends Controller
             }
         }
 
+        // Mac Install stats — only for installs_base publishers
+        $macInstallStats = null;
+        if ($profile?->contract_type === 'installs_base') {
+            try {
+                $weekday         = (int) now()->format('w');
+                $ratio           = \App\Models\InstallDayRatio::where('weekday', $weekday)->value('ratio') ?? 30;
+                $macDividerValue = ($divider->mac_divider_enabled ?? false) ? max(1, (float)($divider->mac_divider_value ?? 1)) : 1;
+
+                $macPublisherInstalls = MacPublisherInstall::where('user_id', $user->id)
+                    ->where('date', today()->toDateString())
+                    ->get();
+
+                $rawMacByCountry = Click::where('user_id', $user->id)
+                    ->whereDate('created_at', today())
+                    ->where('is_counted', true)
+                    ->where('is_mac', true)
+                    ->selectRaw('LOWER(country_code) as country_code, COUNT(*) as raw_mac')
+                    ->groupBy('country_code')
+                    ->get();
+
+                $macRawCodes  = $rawMacByCountry->pluck('country_code')->filter()->values()->all();
+                $macInstallRates = MacInstallCountryRate::whereIn('country_code', $macRawCodes)
+                    ->where('is_active', true)
+                    ->get()
+                    ->mapWithKeys(fn($r) => [strtolower((string)$r->country_code) => (float)$r->mac_rate_usd]);
+
+                $safeMacRatio = max(1, (int)$ratio);
+                $macActualByCountry = $rawMacByCountry->map(fn($r) => [
+                    'country_code' => $r->country_code,
+                    'installs'     => (int)floor((int)$r->raw_mac / $safeMacRatio),
+                    'earnings'     => (float)floor((int)$r->raw_mac / $safeMacRatio) * ($macInstallRates[$r->country_code] ?? 0),
+                ])->filter(fn($r) => $r['installs'] > 0)->values();
+
+                $macInstallStats = [
+                    'publisher_installs'   => (int)$macPublisherInstalls->sum('install_count'),
+                    'publisher_earnings'   => (float)$macPublisherInstalls->sum('earnings'),
+                    'actual_installs'      => (int)$macActualByCountry->sum('installs'),
+                    'actual_earnings'      => (float)$macActualByCountry->sum('earnings'),
+                    'divider_value'        => $macDividerValue,
+                    'ratio'                => (int)$ratio,
+                    'publisher_by_country' => $macPublisherInstalls,
+                    'actual_by_country'    => $macActualByCountry,
+                ];
+            } catch (\Throwable $e) {
+                \Illuminate\Support\Facades\Log::warning('macInstallStats failed for user '.$user->id.': '.$e->getMessage());
+            }
+        }
+
         // OS breakdown — last 30 days, counted clicks grouped by OS
         $osBreakdown = Click::where('user_id', $user->id)
             ->where('is_counted', true)
@@ -156,7 +206,7 @@ class PublisherController extends Controller
             ->get()
             ->mapWithKeys(fn($r) => [($r->os ?: 'Unknown') => (int)$r->cnt]);
 
-        return view('admin.publishers.show', compact('user', 'clickStats', 'clicksChart', 'divider', 'installStats', 'publisherWebsites', 'osBreakdown'));
+        return view('admin.publishers.show', compact('user', 'clickStats', 'clicksChart', 'divider', 'installStats', 'macInstallStats', 'publisherWebsites', 'osBreakdown'));
     }
 
     public function activate(User $user)
@@ -385,6 +435,7 @@ class PublisherController extends Controller
         // (publisher_installs is per-user, not per-link)
         $installsData = null;
         if (!$selectedLink && $user->publisherProfile?->contract_type === 'installs_base') {
+            // Windows installs
             $installRows = PublisherInstall::where('user_id', $user->id)
                 ->whereBetween('date', [$startDate->toDateString(), $endDate->toDateString()])
                 ->orderBy('date')
@@ -406,16 +457,44 @@ class PublisherController extends Controller
                     'earnings'      => (float)$rows->sum('earnings'),
                 ]);
 
+            // Mac installs
+            $macInstallRows = MacPublisherInstall::where('user_id', $user->id)
+                ->whereBetween('date', [$startDate->toDateString(), $endDate->toDateString()])
+                ->orderBy('date')
+                ->get();
+
+            $macInstallsByCountry = $macInstallRows->groupBy('country_code')
+                ->map(fn($rows) => [
+                    'country_code'  => $rows->first()->country_code,
+                    'country_name'  => $rows->first()->country_name ?: $rows->first()->country_code,
+                    'install_count' => (int)$rows->sum('install_count'),
+                    'earnings'      => (float)$rows->sum('earnings'),
+                ])
+                ->sortByDesc('install_count')
+                ->values();
+
+            $macInstallsByDay = $macInstallRows->groupBy(fn($r) => $r->date->toDateString())
+                ->map(fn($rows) => [
+                    'install_count' => (int)$rows->sum('install_count'),
+                    'earnings'      => (float)$rows->sum('earnings'),
+                ]);
+
             $installsData = [
-                'total_installs' => (int)$installRows->sum('install_count'),
-                'total_earnings' => (float)$installRows->sum('earnings'),
-                'by_country'     => $installsByCountry,
-                'by_day'         => $installsByDay,
+                'total_installs'     => (int)$installRows->sum('install_count'),
+                'total_earnings'     => (float)$installRows->sum('earnings'),
+                'by_country'         => $installsByCountry,
+                'by_day'             => $installsByDay,
+                'mac_total_installs' => (int)$macInstallRows->sum('install_count'),
+                'mac_total_earnings' => (float)$macInstallRows->sum('earnings'),
+                'mac_by_country'     => $macInstallsByCountry,
+                'mac_by_day'         => $macInstallsByDay,
             ];
 
             $daily = array_map(fn($d) => array_merge($d, [
-                'installs'         => $installsByDay->get($d['date_raw'])['install_count'] ?? 0,
-                'install_earnings' => $installsByDay->get($d['date_raw'])['earnings'] ?? 0.0,
+                'installs'             => $installsByDay->get($d['date_raw'])['install_count'] ?? 0,
+                'install_earnings'     => $installsByDay->get($d['date_raw'])['earnings'] ?? 0.0,
+                'mac_installs'         => $macInstallsByDay->get($d['date_raw'])['install_count'] ?? 0,
+                'mac_install_earnings' => $macInstallsByDay->get($d['date_raw'])['earnings'] ?? 0.0,
             ]), $daily);
         }
 
@@ -634,6 +713,105 @@ class PublisherController extends Controller
         $profile->update(['install_pending_clicks' => $pending]);
 
         $msg = "Installs recalculated with divider ({$dividerValue}×). "
+             . "Earnings adjusted by \$" . number_format(abs($earningsDiff), 6)
+             . ($earningsDiff > 0 ? ' (over-credit removed)' : ($earningsDiff < 0 ? ' (under-credit added)' : ' (no change)'));
+
+        return back()->with('success', $msg);
+    }
+
+    public function recalculateMacInstalls(User $user)
+    {
+        $profile = $user->publisherProfile;
+        if ($profile?->contract_type !== 'installs_base') {
+            return back()->with('error', 'This publisher is not on an installs_base contract.');
+        }
+
+        $divider = $user->clickDivider;
+        $macDividerValue = ($divider && ($divider->mac_divider_enabled ?? false))
+            ? max(1, (float)($divider->mac_divider_value ?? 1))
+            : 1;
+
+        $dayRatios    = \App\Models\InstallDayRatio::pluck('ratio', 'weekday')->toArray();
+        $macRates     = MacInstallCountryRate::where('is_active', true)
+            ->get()
+            ->mapWithKeys(fn($r) => [strtolower($r->country_code) => (float)$r->mac_rate_usd]);
+
+        $countryNames = Click::where('user_id', $user->id)
+            ->where('is_mac', true)
+            ->where('is_counted', true)
+            ->selectRaw('LOWER(country_code) as cc, MAX(country_name) as cn')
+            ->groupBy('cc')
+            ->pluck('cn', 'cc');
+
+        $clickRows = Click::where('user_id', $user->id)
+            ->where('is_counted', true)
+            ->where('is_mac', true)
+            ->selectRaw('DATE(created_at) as day,
+                         LOWER(country_code) as country_code,
+                         COUNT(*) as raw_clicks,
+                         (DAYOFWEEK(created_at) - 1) as weekday')
+            ->groupBy('day', 'country_code', 'weekday')
+            ->orderBy('day')
+            ->get();
+
+        $pending     = [];
+        $correctData = [];
+
+        foreach ($clickRows as $row) {
+            $country        = $row->country_code;
+            $ratio          = $dayRatios[(int)$row->weekday] ?? 30;
+            $effectiveRatio = max(1, (int)round($ratio * $macDividerValue));
+
+            $pending[$country] = ($pending[$country] ?? 0) + $row->raw_clicks;
+            $installs          = (int)floor($pending[$country] / $effectiveRatio);
+
+            if ($installs > 0) {
+                $pending[$country] = $pending[$country] % $effectiveRatio;
+                $earnings          = $installs * ($macRates[$country] ?? 0);
+
+                if (!isset($correctData[$row->day][$country])) {
+                    $correctData[$row->day][$country] = ['install_count' => 0, 'earnings' => 0.0];
+                }
+                $correctData[$row->day][$country]['install_count'] += $installs;
+                $correctData[$row->day][$country]['earnings']       += $earnings;
+            }
+        }
+
+        $currentEarnings = (float)MacPublisherInstall::where('user_id', $user->id)->sum('earnings');
+        $correctEarnings = 0.0;
+        foreach ($correctData as $countries) {
+            foreach ($countries as $d) {
+                $correctEarnings += $d['earnings'];
+            }
+        }
+        $earningsDiff = round($currentEarnings - $correctEarnings, 6);
+
+        MacPublisherInstall::where('user_id', $user->id)->delete();
+        foreach ($correctData as $date => $countries) {
+            foreach ($countries as $country => $data) {
+                MacPublisherInstall::create([
+                    'user_id'       => $user->id,
+                    'country_code'  => $country,
+                    'country_name'  => $countryNames[$country] ?? strtoupper($country),
+                    'install_count' => $data['install_count'],
+                    'earnings'      => $data['earnings'],
+                    'date'          => $date,
+                ]);
+            }
+        }
+
+        if ($earningsDiff > 0) {
+            $safeDeduct = min($earningsDiff, $profile->balance);
+            $profile->decrement('balance', $safeDeduct);
+            $profile->decrement('total_earnings', $earningsDiff);
+        } elseif ($earningsDiff < 0) {
+            $profile->increment('balance', abs($earningsDiff));
+            $profile->increment('total_earnings', abs($earningsDiff));
+        }
+
+        $profile->update(['mac_install_pending_clicks' => $pending]);
+
+        $msg = "Mac installs recalculated with Mac divider ({$macDividerValue}×). "
              . "Earnings adjusted by \$" . number_format(abs($earningsDiff), 6)
              . ($earningsDiff > 0 ? ' (over-credit removed)' : ($earningsDiff < 0 ? ' (under-credit added)' : ' (no change)'));
 

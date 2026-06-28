@@ -374,15 +374,115 @@
 
     <div style="margin-top:20px;padding-top:16px;border-top:1px solid #f3f4f6;display:flex;align-items:center;gap:14px;flex-wrap:wrap;">
         <div style="flex:1;">
-            <div style="font-size:13px;font-weight:700;color:#374151;">Apply Divider Retroactively</div>
-            <div style="font-size:12px;color:#9ca3af;margin-top:2px;">Rebuilds all historical install records using the divider-adjusted threshold. Run once to sync existing data.</div>
+            <div style="font-size:13px;font-weight:700;color:#374151;">Apply Divider Retroactively (Windows)</div>
+            <div style="font-size:12px;color:#9ca3af;margin-top:2px;">Rebuilds all historical Windows install records using the divider-adjusted threshold. Run once to sync existing data.</div>
         </div>
         <form method="POST" action="{{ route('admin.publishers.recalculate-installs', $user) }}"
-              onsubmit="return confirm('Recalculate all install history for {{ addslashes($user->name) }} using divider {{ $installStats["divider_value"] }}×?\n\nThis will rebuild publisher_installs from Click data and adjust their balance. This cannot be undone.')">
+              onsubmit="return confirm('Recalculate all Windows install history for {{ addslashes($user->name) }} using divider {{ $installStats["divider_value"] }}×?\n\nThis will rebuild publisher_installs from Click data and adjust their balance. This cannot be undone.')">
             @csrf
             <button type="submit" style="padding:10px 20px;background:linear-gradient(135deg,#7c3aed,#6d28d9);color:white;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:6px;box-shadow:0 4px 12px rgba(124,58,237,.3);">
                 <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
-                Recalculate All History
+                Recalculate Windows History
+            </button>
+        </form>
+    </div>
+</div>
+@endif
+
+{{-- ═══════════════════════════════════════════════
+     MAC INSTALL EARNINGS (installs_base only)
+     ═══════════════════════════════════════════════ --}}
+@if($macInstallStats)
+<div class="card" style="border:1.5px solid #c4b5fd;margin-bottom:24px;background:linear-gradient(135deg,#faf5ff,#f5f3ff);">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;">
+        <div style="width:40px;height:40px;background:linear-gradient(135deg,#8b5cf6,#7c3aed);border-radius:11px;display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 4px 12px rgba(139,92,246,.3);">
+            <svg width="18" height="18" fill="none" stroke="white" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+        </div>
+        <div>
+            <div style="font-size:15px;font-weight:800;color:#111827;">Mac Install Earnings — Today</div>
+            <div style="font-size:12px;color:#6b7280;margin-top:2px;">Mac Divider: <strong>{{ $macInstallStats['divider_value'] }}×</strong> &nbsp;·&nbsp; Clicks per install: <strong>{{ $macInstallStats['ratio'] }}</strong> &nbsp;·&nbsp; Effective threshold: <strong>{{ (int)round($macInstallStats['ratio'] * $macInstallStats['divider_value']) }} raw clicks</strong></div>
+        </div>
+        <span style="margin-left:auto;background:#ede9fe;color:#7c3aed;padding:5px 14px;border-radius:20px;font-size:12px;font-weight:700;">Mac Installs</span>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px;">
+        <div style="background:#f5f3ff;border:1.5px solid #c4b5fd;border-radius:12px;padding:18px;">
+            <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:#7c3aed;margin-bottom:10px;">Publisher Sees (Divider Applied)</div>
+            <div style="display:flex;gap:20px;">
+                <div><div style="font-size:28px;font-weight:900;color:#7c3aed;">{{ number_format($macInstallStats['publisher_installs']) }}</div><div style="font-size:11px;color:#6b7280;">Mac Installs</div></div>
+                <div><div style="font-size:28px;font-weight:900;color:#7c3aed;">${{ number_format($macInstallStats['publisher_earnings'], 4) }}</div><div style="font-size:11px;color:#6b7280;">Earnings</div></div>
+            </div>
+        </div>
+        <div style="background:#fff7ed;border:1.5px solid #fed7aa;border-radius:12px;padding:18px;">
+            <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:#c2410c;margin-bottom:10px;">Actual (Admin Only — No Divider)</div>
+            <div style="display:flex;gap:20px;">
+                <div><div style="font-size:28px;font-weight:900;color:#ea580c;">{{ number_format($macInstallStats['actual_installs']) }}</div><div style="font-size:11px;color:#6b7280;">Mac Installs</div></div>
+                <div><div style="font-size:28px;font-weight:900;color:#ea580c;">${{ number_format($macInstallStats['actual_earnings'], 4) }}</div><div style="font-size:11px;color:#6b7280;">Earnings</div></div>
+            </div>
+        </div>
+    </div>
+
+    @if($macInstallStats['publisher_by_country']->count() > 0 || count($macInstallStats['actual_by_country']) > 0)
+    <div style="overflow-x:auto;border-radius:10px;border:1px solid #f3f4f6;">
+        <table style="width:100%;font-size:13px;border-collapse:collapse;">
+            <thead>
+                <tr style="background:#f9fafb;border-bottom:1px solid #e5e7eb;">
+                    <th style="text-align:left;padding:10px 14px;color:#6b7280;font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:0.05em;">Country</th>
+                    <th style="text-align:right;padding:10px 14px;color:#7c3aed;font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:0.05em;">Pub Installs</th>
+                    <th style="text-align:right;padding:10px 14px;color:#7c3aed;font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:0.05em;">Pub Earnings</th>
+                    <th style="text-align:right;padding:10px 14px;color:#c2410c;font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:0.05em;">Act Installs</th>
+                    <th style="text-align:right;padding:10px 14px;color:#c2410c;font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:0.05em;">Act Earnings</th>
+                </tr>
+            </thead>
+            <tbody>
+                @php
+                    $macPubMap    = $macInstallStats['publisher_by_country']->keyBy('country_code');
+                    $macActualMap = collect($macInstallStats['actual_by_country'])->keyBy('country_code');
+                    $macAllCodes  = $macPubMap->keys()->merge($macActualMap->keys())->unique();
+                @endphp
+                @foreach($macAllCodes as $code)
+                @php $macPub = $macPubMap->get($code); $macActual = $macActualMap->get($code); @endphp
+                <tr style="border-bottom:1px solid #f3f4f6;" onmouseover="this.style.background='#fafafa'" onmouseout="this.style.background=''">
+                    <td style="padding:10px 14px;">
+                        <div style="display:flex;align-items:center;gap:8px;">
+                            <img src="https://flagcdn.com/20x15/{{ strtolower($code) }}.png" style="border-radius:2px;" onerror="this.style.display='none'">
+                            <span style="font-weight:600;color:#111827;">{{ $macPub?->country_name ?? ($macActual['country_code'] ?? strtoupper($code)) }}</span>
+                            <code style="font-size:11px;color:#9ca3af;">{{ strtoupper($code) }}</code>
+                        </div>
+                    </td>
+                    <td style="padding:10px 14px;text-align:right;font-weight:700;color:#7c3aed;">{{ number_format($macPub?->install_count ?? 0) }}</td>
+                    <td style="padding:10px 14px;text-align:right;color:#7c3aed;">${{ number_format($macPub?->earnings ?? 0, 4) }}</td>
+                    <td style="padding:10px 14px;text-align:right;font-weight:700;color:#ea580c;">{{ number_format($macActual['installs'] ?? 0) }}</td>
+                    <td style="padding:10px 14px;text-align:right;color:#ea580c;">${{ number_format($macActual['earnings'] ?? 0, 4) }}</td>
+                </tr>
+                @endforeach
+            </tbody>
+            <tfoot>
+                <tr style="border-top:2px solid #e5e7eb;background:#f9fafb;">
+                    <td style="padding:10px 14px;font-weight:800;color:#374151;">Total</td>
+                    <td style="padding:10px 14px;text-align:right;font-weight:800;color:#7c3aed;">{{ number_format($macInstallStats['publisher_installs']) }}</td>
+                    <td style="padding:10px 14px;text-align:right;font-weight:700;color:#7c3aed;">${{ number_format($macInstallStats['publisher_earnings'], 4) }}</td>
+                    <td style="padding:10px 14px;text-align:right;font-weight:800;color:#ea580c;">{{ number_format($macInstallStats['actual_installs']) }}</td>
+                    <td style="padding:10px 14px;text-align:right;font-weight:700;color:#ea580c;">${{ number_format($macInstallStats['actual_earnings'], 4) }}</td>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+    @else
+    <div style="text-align:center;padding:16px;color:#9ca3af;font-size:13px;">No Mac installs recorded today yet.</div>
+    @endif
+
+    <div style="margin-top:20px;padding-top:16px;border-top:1px solid #ede9fe;display:flex;align-items:center;gap:14px;flex-wrap:wrap;">
+        <div style="flex:1;">
+            <div style="font-size:13px;font-weight:700;color:#374151;">Apply Mac Divider Retroactively</div>
+            <div style="font-size:12px;color:#9ca3af;margin-top:2px;">Rebuilds all historical Mac install records from raw Mac click data using the Mac divider-adjusted threshold.</div>
+        </div>
+        <form method="POST" action="{{ route('admin.publishers.recalculate-mac-installs', $user) }}"
+              onsubmit="return confirm('Recalculate all Mac install history for {{ addslashes($user->name) }} using Mac divider {{ $macInstallStats["divider_value"] }}×?\n\nThis will rebuild mac_publisher_installs from Click data and adjust their balance. This cannot be undone.')">
+            @csrf
+            <button type="submit" style="padding:10px 20px;background:linear-gradient(135deg,#8b5cf6,#7c3aed);color:white;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:6px;box-shadow:0 4px 12px rgba(139,92,246,.3);">
+                <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                Recalculate Mac History
             </button>
         </form>
     </div>

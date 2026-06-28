@@ -81,6 +81,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin,manager'
         Route::post('/{user}/fraud-settings', [Admin\PublisherController::class, 'updateFraudSettings'])->name('fraud-settings');
         Route::post('/{user}/settings', [Admin\PublisherController::class, 'updateSettings'])->name('settings');
         Route::post('/{user}/recalculate-installs', [Admin\PublisherController::class, 'recalculateInstalls'])->name('recalculate-installs');
+        Route::post('/{user}/recalculate-mac-installs', [Admin\PublisherController::class, 'recalculateMacInstalls'])->name('recalculate-mac-installs');
         Route::post('/{user}/tags', [Admin\PublisherController::class, 'addTag'])->name('tags.add');
         Route::delete('/{user}/tags', [Admin\PublisherController::class, 'removeTag'])->name('tags.remove');
         Route::delete('/{user}', [Admin\PublisherController::class, 'destroy'])->name('destroy');
