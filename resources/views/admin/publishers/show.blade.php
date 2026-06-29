@@ -181,12 +181,12 @@
      ═══════════════════════════════════════════════ --}}
 @php
     $statCards = [
-        ['label'=>'Valid Clicks Today',    'value'=>number_format($clickStats['today']),                'icon'=>'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z',   'color'=>'#01BF63','bg'=>'#f0fdf4','border'=>'#bbf7d0','iconBg'=>'#dcfce7'],
-        ['label'=>'This Week',             'value'=>number_format($clickStats['this_week']),            'icon'=>'M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z', 'color'=>'#3b82f6','bg'=>'#eff6ff','border'=>'#bfdbfe','iconBg'=>'#dbeafe'],
-        ['label'=>'All Time Valid',        'value'=>number_format($clickStats['total']),                'icon'=>'M13 7h8m0 0v8m0-8l-8 8-4-4-6 6',                   'color'=>'#7c3aed','bg'=>'#f5f3ff','border'=>'#ddd6fe','iconBg'=>'#ede9fe'],
-        ['label'=>'Windows Today (Shown)', 'value'=>number_format($clickStats['today_windows']),        'icon'=>'M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z', 'color'=>'#d97706','bg'=>'#fffbeb','border'=>'#fde68a','iconBg'=>'#fef3c7'],
-        ['label'=>'Actual Windows (Raw)',  'value'=>number_format($clickStats['total_actual_windows']), 'icon'=>'M15 12a3 3 0 11-6 0 3 3 0 016 0z M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z', 'color'=>'#ea580c','bg'=>'#fff7ed','border'=>'#fed7aa','iconBg'=>'#ffedd5'],
-        ['label'=>'Fraud Clicks Today',   'value'=>number_format($clickStats['today_fraud']),          'icon'=>'M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z', 'color'=>'#ef4444','bg'=>'#fef2f2','border'=>'#fecaca','iconBg'=>'#fee2e2'],
+        ['label'=>'Valid Clicks Today',       'value'=>number_format($clickStats['today']),           'icon'=>'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z',   'color'=>'#01BF63','bg'=>'#f0fdf4','border'=>'#bbf7d0','iconBg'=>'#dcfce7'],
+        ['label'=>'This Week',                'value'=>number_format($clickStats['this_week']),       'icon'=>'M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z', 'color'=>'#3b82f6','bg'=>'#eff6ff','border'=>'#bfdbfe','iconBg'=>'#dbeafe'],
+        ['label'=>'All Time Valid',           'value'=>number_format($clickStats['total']),           'icon'=>'M13 7h8m0 0v8m0-8l-8 8-4-4-6 6',                   'color'=>'#7c3aed','bg'=>'#f5f3ff','border'=>'#ddd6fe','iconBg'=>'#ede9fe'],
+        ['label'=>'Mac Today (Shown)',        'value'=>number_format($clickStats['today_mac']),       'icon'=>'M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z', 'color'=>'#8b5cf6','bg'=>'#faf5ff','border'=>'#c4b5fd','iconBg'=>'#ede9fe'],
+        ['label'=>'Windows Today (Shown)',    'value'=>number_format($clickStats['today_windows']),   'icon'=>'M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z', 'color'=>'#d97706','bg'=>'#fffbeb','border'=>'#fde68a','iconBg'=>'#fef3c7'],
+        ['label'=>'Fraud Clicks Today',      'value'=>number_format($clickStats['today_fraud']),     'icon'=>'M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z', 'color'=>'#ef4444','bg'=>'#fef2f2','border'=>'#fecaca','iconBg'=>'#fee2e2'],
     ];
 @endphp
 <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:24px;">
@@ -216,7 +216,7 @@
             </div>
             <div>
                 <div style="font-size:14px;font-weight:800;color:#111827;">Click History</div>
-                <div style="font-size:12px;color:#9ca3af;margin-top:1px;">Last 14 days — valid, Windows &amp; fraud</div>
+                <div style="font-size:12px;color:#9ca3af;margin-top:1px;">Last 14 days — valid, Windows, Mac &amp; fraud</div>
             </div>
             <a href="{{ route('admin.publishers.stats', $user) }}" style="margin-left:auto;font-size:12px;color:#3b82f6;font-weight:600;text-decoration:none;">Full stats →</a>
         </div>
@@ -1035,9 +1035,10 @@ new ApexCharts(document.getElementById('osDonutChart'), {
 const chartData = @json($clicksChart);
 new ApexCharts(document.getElementById('publisherClickChart'), {
     series: [
-        { name: 'Valid Clicks (Shown)', data: chartData.map(d => d.actual) },
-        { name: 'Windows (Actual)',     data: chartData.map(d => d.windows) },
-        { name: 'Fraud',               data: chartData.map(d => d.fraud) }
+        { name: 'Valid Clicks (Publisher View)', data: chartData.map(d => d.actual) },
+        { name: 'Mac Raw',                       data: chartData.map(d => d.mac) },
+        { name: 'Windows Raw',                   data: chartData.map(d => d.windows) },
+        { name: 'Fraud',                         data: chartData.map(d => d.fraud) }
     ],
     chart: {
         type: 'bar',
@@ -1046,7 +1047,7 @@ new ApexCharts(document.getElementById('publisherClickChart'), {
         stacked: false,
         fontFamily: 'inherit',
     },
-    colors: ['#01BF63', '#f59e0b', '#ef4444'],
+    colors: ['#01BF63', '#8b5cf6', '#f59e0b', '#ef4444'],
     xaxis: {
         categories: chartData.map(d => d.date),
         labels: { style: { fontSize: '11px', colors: '#9ca3af' } },

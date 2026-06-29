@@ -65,14 +65,14 @@ class PublisherController extends Controller
 
         $clickStats = [
             'today'                => Click::where('user_id', $user->id)->whereDate('created_at', today())->where('is_counted', true)->count(),
-            // What publisher sees — windows clicks after divider applied
             'today_windows'        => (int)($dailyEarningToday?->windows_clicks_divided ?? 0),
+            'today_mac'            => (int)($dailyEarningToday?->mac_clicks_divided ?? 0),
             'today_fraud'          => Click::where('user_id', $user->id)->whereDate('created_at', today())->where('is_fraud', true)->count(),
             'this_week'            => Click::where('user_id', $user->id)->whereBetween('created_at', [now()->startOfWeek(), now()])->where('is_counted', true)->count(),
             'this_month'           => Click::where('user_id', $user->id)->whereMonth('created_at', now()->month)->where('is_counted', true)->count(),
             'total'                => Click::where('user_id', $user->id)->where('is_counted', true)->count(),
-            // Raw actual windows count — admin only, never shown to publisher
             'total_actual_windows' => (int)($dailyEarningToday?->windows_clicks ?? 0),
+            'total_actual_mac'     => (int)($dailyEarningToday?->mac_clicks ?? 0),
         ];
 
         // Daily clicks chart (last 14 days) — use DailyEarning for divider-accurate valid_clicks
@@ -81,15 +81,28 @@ class PublisherController extends Controller
             ->get()
             ->keyBy(fn($r) => $r->date->toDateString());
 
+        // Single query for all raw click counts per day — avoids N*3 per-day queries
+        $rawDailyMap = Click::where('user_id', $user->id)
+            ->where('created_at', '>=', now()->subDays(13)->startOfDay())
+            ->selectRaw("DATE(created_at) as day,
+                SUM(CASE WHEN is_counted = 1 AND is_windows = 1 THEN 1 ELSE 0 END) as windows,
+                SUM(CASE WHEN is_counted = 1 AND is_mac = 1 THEN 1 ELSE 0 END) as mac,
+                SUM(CASE WHEN is_fraud = 1 THEN 1 ELSE 0 END) as fraud")
+            ->groupBy('day')
+            ->get()
+            ->keyBy('day');
+
         $clicksChart = [];
         for ($i = 13; $i >= 0; $i--) {
             $date    = now()->subDays($i)->toDateString();
             $earning = $dailyEarningsMap[$date] ?? null;
+            $raw     = $rawDailyMap[$date] ?? null;
             $clicksChart[] = [
                 'date'    => now()->subDays($i)->format('M d'),
                 'actual'  => (int)($earning?->valid_clicks ?? 0),
-                'windows' => Click::where('user_id', $user->id)->whereDate('created_at', $date)->where('is_windows', true)->where('is_counted', true)->count(),
-                'fraud'   => Click::where('user_id', $user->id)->whereDate('created_at', $date)->where('is_fraud', true)->count(),
+                'windows' => (int)($raw?->windows ?? 0),
+                'mac'     => (int)($raw?->mac ?? 0),
+                'fraud'   => (int)($raw?->fraud ?? 0),
             ];
         }
 
