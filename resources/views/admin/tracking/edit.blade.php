@@ -3,7 +3,7 @@
 @section('page-title', 'Edit Tracking Link')
 
 @section('content')
-<div style="max-width:600px;">
+<div style="max-width:920px;">
     <div class="card">
         <div class="card-title mb-1">Edit Tracking Link</div>
         <div style="font-size:13px;color:#6b7280;margin-bottom:20px;">
