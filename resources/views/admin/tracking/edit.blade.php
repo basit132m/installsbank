@@ -209,6 +209,17 @@ function secondsUntilEnd(now, start, end) {
     return Math.max(0, Math.floor((endDate - now) / 1000));
 }
 
+// Seconds until a window's next start (today if still ahead, otherwise tomorrow)
+function secondsUntilStart(now, start) {
+    const [sh, sm] = start.split(':').map(Number);
+    const startDate = new Date(now);
+    startDate.setHours(sh, sm, 0, 0);
+    if (startDate <= now) {
+        startDate.setDate(startDate.getDate() + 1);
+    }
+    return Math.max(0, Math.floor((startDate - now) / 1000));
+}
+
 function fmtDuration(totalSec) {
     const pad = n => String(n).padStart(2, '0');
     const h = Math.floor(totalSec / 3600);
@@ -245,9 +256,14 @@ function updatePkClock() {
             activeIdx = i; activeEnd = end;
             badge.textContent = scheduleOn ? '● ACTIVE NOW' : '● would be active (timer off)';
             badge.style.color = scheduleOn ? '#059669' : '#d97706';
-        } else {
-            badge.textContent = '○ inactive';
+        } else if (inWindow) {
+            // In window but a lower-numbered slot already claimed it (overlap loser)
+            badge.textContent = '○ overlapped by Timer ' + (activeIdx + 1);
             badge.style.color = '#9ca3af';
+        } else {
+            // Not active yet — show live countdown until it activates
+            badge.textContent = '○ starts in ' + fmtDuration(secondsUntilStart(now, start));
+            badge.style.color = '#d97706';
         }
     }
 
