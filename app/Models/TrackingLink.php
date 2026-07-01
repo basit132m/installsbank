@@ -10,6 +10,7 @@ class TrackingLink extends Model
     protected $fillable = [
         'user_id', 'tracking_domain_id', 'name', 'original_url', 'unique_code',
         'url_windows', 'url_android', 'url_mac', 'url_other',
+        'windows_schedule_enabled', 'windows_schedules',
         'is_active', 'total_clicks', 'unique_clicks', 'fraud_clicks', 'last_click_at',
         'allowed_domain', 'campaign_id',
     ];
@@ -17,7 +18,12 @@ class TrackingLink extends Model
     protected $casts = [
         'is_active' => 'boolean',
         'last_click_at' => 'datetime',
+        'windows_schedule_enabled' => 'boolean',
+        'windows_schedules' => 'array',
     ];
+
+    /** All schedule times are entered and evaluated in Pakistan time */
+    public const SCHEDULE_TIMEZONE = 'Asia/Karachi';
 
     public function user()
     {
@@ -50,6 +56,39 @@ class TrackingLink extends Model
     }
 
     /**
+     * Windows URL honoring the auto-redirect timer.
+     * When the timer is on and the current Pakistan time falls inside a slot,
+     * that slot's URL wins; otherwise the normal url_windows applies.
+     */
+    public function resolveWindowsUrl(): ?string
+    {
+        if ($this->windows_schedule_enabled && !empty($this->windows_schedules)) {
+            $nowPk = now(self::SCHEDULE_TIMEZONE)->format('H:i');
+
+            foreach ($this->windows_schedules as $slot) {
+                $start = $slot['start'] ?? null;
+                $end   = $slot['end'] ?? null;
+                $url   = $slot['url'] ?? null;
+
+                if (!$start || !$end || !$url || $start === $end) {
+                    continue;
+                }
+
+                // Overnight window (e.g. 22:00 → 04:00) wraps past midnight
+                $matches = $start < $end
+                    ? ($nowPk >= $start && $nowPk < $end)
+                    : ($nowPk >= $start || $nowPk < $end);
+
+                if ($matches) {
+                    return $url;
+                }
+            }
+        }
+
+        return $this->url_windows;
+    }
+
+    /**
      * Resolve the destination URL based on detected OS.
      * Falls back to original_url if no device-specific URL is set.
      */
@@ -57,8 +96,11 @@ class TrackingLink extends Model
     {
         $os = strtolower($os);
 
-        if (str_contains($os, 'windows') && $this->url_windows) {
-            return $this->url_windows;
+        if (str_contains($os, 'windows')) {
+            $windowsUrl = $this->resolveWindowsUrl();
+            if ($windowsUrl) {
+                return $windowsUrl;
+            }
         }
         if (str_contains($os, 'android') && $this->url_android) {
             return $this->url_android;

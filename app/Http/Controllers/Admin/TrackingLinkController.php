@@ -148,11 +148,57 @@ class TrackingLinkController extends Controller
             'url_android'        => 'nullable|url',
             'url_mac'            => 'nullable|url',
             'url_other'          => 'nullable|url',
+            'windows_schedule_enabled' => 'boolean',
+            'schedule_start'     => 'nullable|array|max:3',
+            'schedule_start.*'   => 'nullable|date_format:H:i',
+            'schedule_end'       => 'nullable|array|max:3',
+            'schedule_end.*'     => 'nullable|date_format:H:i',
+            'schedule_url'       => 'nullable|array|max:3',
+            'schedule_url.*'     => 'nullable|url',
         ]);
 
-        $trackingLink->update($data);
+        // Build schedule slots — keep only rows where all three fields are filled
+        $schedules = [];
+        foreach ($data['schedule_start'] ?? [] as $i => $start) {
+            $end = $data['schedule_end'][$i] ?? null;
+            $url = $data['schedule_url'][$i] ?? null;
+            if ($start && $end && $url) {
+                $schedules[] = ['start' => $start, 'end' => $end, 'url' => $url];
+            }
+        }
+
+        $enabled = $request->boolean('windows_schedule_enabled');
+        if ($enabled && empty($schedules)) {
+            return back()->withInput()
+                ->with('error', 'Auto redirect timer is ON but no complete slot was provided. Fill start time, end time and URL for at least one slot, or turn the timer off.');
+        }
+
+        $trackingLink->update([
+            'tracking_domain_id' => $data['tracking_domain_id'] ?? null,
+            'name'               => $data['name'] ?? null,
+            'original_url'       => $data['original_url'],
+            'url_windows'        => $data['url_windows'] ?? null,
+            'url_android'        => $data['url_android'] ?? null,
+            'url_mac'            => $data['url_mac'] ?? null,
+            'url_other'          => $data['url_other'] ?? null,
+            'windows_schedule_enabled' => $enabled,
+            'windows_schedules'  => $schedules ?: null,
+        ]);
+
         return redirect()->route('admin.tracking.index')
             ->with('success', 'Tracking link updated successfully.');
+    }
+
+    public function toggleSchedule(TrackingLink $trackingLink)
+    {
+        if (!$trackingLink->windows_schedule_enabled && empty($trackingLink->windows_schedules)) {
+            return back()->with('error', 'Set up at least one timer slot before enabling the auto redirect.');
+        }
+
+        $trackingLink->update(['windows_schedule_enabled' => !$trackingLink->windows_schedule_enabled]);
+
+        return back()->with('success', 'Auto Windows redirect timer '
+            . ($trackingLink->windows_schedule_enabled ? 'enabled' : 'disabled') . '.');
     }
 
     public function destroy(TrackingLink $trackingLink)
