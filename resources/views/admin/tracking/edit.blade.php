@@ -189,8 +189,12 @@
                         @endforeach
                     </div>
                 </div>
-                <div id="winstats" style="font-size:12px;color:#6b7280;margin-bottom:14px;">
-                    {{ $statsLabel }} · <strong>{{ number_format($windowsTotalClicks) }}</strong> total Windows click(s) on this link
+                <div id="winstats" style="font-size:12px;color:#6b7280;margin-bottom:14px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+                    <span>{{ $statsLabel }} · <strong>{{ number_format($windowsTotalClicks) }}</strong> total Windows click(s) on this link</span>
+                    <a href="{{ route('admin.tracking.windows-history', $trackingLink) }}" style="color:#3b82f6;font-weight:600;text-decoration:none;">View 30-day history →</a>
+                </div>
+                <div style="font-size:11px;color:#9ca3af;margin-bottom:12px;">
+                    <strong>This run</strong> counts only the current window occurrence — it resets to 0 each time a slot restarts. <strong>{{ $statsLabel }}</strong> is the cumulative total for the selected timeframe.
                 </div>
 
                 @php
@@ -204,16 +208,23 @@
                         $stat    = $windowsRedirectStats->get($slot['url'] ?? '__none__');
                         $total   = (int) ($stat->total ?? 0);
                         $counted = (int) ($stat->counted ?? 0);
+                        $cur     = $slotCurrentCounts[$i] ?? ['count'=>0,'active'=>false];
                     @endphp
-                    <div style="display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid #f3f4f6;border-radius:8px;margin-bottom:8px;background:#fafafa;">
+                    <div style="display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid {{ $cur['active'] ? '#6ee7b7' : '#f3f4f6' }};border-radius:8px;margin-bottom:8px;background:{{ $cur['active'] ? '#ecfdf5' : '#fafafa' }};">
                         <span style="background:#ede9fe;color:#7c3aed;padding:2px 8px;border-radius:6px;font-size:11px;font-weight:700;flex-shrink:0;">TIMER {{ $i + 1 }}</span>
                         <div style="flex:1;min-width:0;">
                             <div style="font-size:12px;color:#374151;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ $slot['url'] ?? '—' }}</div>
                             <div style="font-size:11px;color:#9ca3af;">{{ $slot['start'] ?? '?' }}–{{ $slot['end'] ?? '?' }} PKT{{ !empty($slot['note']) ? ' · '.$slot['note'] : '' }}</div>
                         </div>
+                        {{-- Current activation (resets each time the window restarts) --}}
+                        <div style="text-align:right;flex-shrink:0;padding-right:12px;border-right:1px solid #e5e7eb;">
+                            <div style="font-size:18px;font-weight:900;color:{{ $cur['active'] ? '#059669' : '#6b7280' }};line-height:1;">{{ number_format($cur['count']) }}</div>
+                            <div style="font-size:10px;color:{{ $cur['active'] ? '#059669' : '#9ca3af' }};">{{ $cur['active'] ? '● this run' : 'last run' }}</div>
+                        </div>
+                        {{-- Period total (from the timeframe buttons above) --}}
                         <div style="text-align:right;flex-shrink:0;">
-                            <div style="font-size:18px;font-weight:900;color:#059669;line-height:1;">{{ number_format($total) }}</div>
-                            <div style="font-size:10px;color:#9ca3af;">{{ number_format($counted) }} counted</div>
+                            <div style="font-size:18px;font-weight:900;color:#374151;line-height:1;">{{ number_format($total) }}</div>
+                            <div style="font-size:10px;color:#9ca3af;">{{ number_format($counted) }} counted · {{ $statsLabel }}</div>
                         </div>
                     </div>
                 @endforeach

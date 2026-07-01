@@ -56,6 +56,57 @@ class TrackingLink extends Model
     }
 
     /**
+     * The current (or most recent) occurrence of a timer slot's window, as real
+     * instants in the app timezone (UTC). Used to count clicks for only the
+     * current activation — so the count resets to 0 each time the window restarts.
+     *
+     * Returns ['start' => Carbon, 'end' => Carbon, 'active' => bool] or null.
+     */
+    public function currentWindowRange(array $slot): ?array
+    {
+        $start = $slot['start'] ?? null;
+        $end   = $slot['end'] ?? null;
+        if (!$start || !$end || $start === $end) {
+            return null;
+        }
+
+        $tz  = self::SCHEDULE_TIMEZONE;
+        $now = \Illuminate\Support\Carbon::now($tz);
+        [$sh, $sm] = array_map('intval', explode(':', $start));
+        [$eh, $em] = array_map('intval', explode(':', $end));
+
+        $startToday = $now->copy()->setTime($sh, $sm, 0);
+        $endToday   = $now->copy()->setTime($eh, $em, 0);
+
+        if ($start < $end) {
+            // Same-day window
+            if ($now->gte($startToday) && $now->lt($endToday)) {
+                $occStart = $startToday;      $occEnd = $endToday;      $active = true;
+            } elseif ($now->lt($startToday)) {
+                $occStart = $startToday->copy()->subDay(); $occEnd = $endToday->copy()->subDay(); $active = false;
+            } else {
+                $occStart = $startToday;      $occEnd = $endToday;      $active = false;
+            }
+        } else {
+            // Overnight window that crosses midnight
+            if ($now->gte($startToday)) {
+                $occStart = $startToday;                   $occEnd = $endToday->copy()->addDay(); $active = true;
+            } elseif ($now->lt($endToday)) {
+                $occStart = $startToday->copy()->subDay(); $occEnd = $endToday;                   $active = true;
+            } else {
+                $occStart = $startToday->copy()->subDay(); $occEnd = $endToday;                   $active = false;
+            }
+        }
+
+        // Convert to UTC so created_at comparisons are correct
+        return [
+            'start'  => $occStart->utc(),
+            'end'    => $occEnd->utc(),
+            'active' => $active,
+        ];
+    }
+
+    /**
      * Windows URL honoring the auto-redirect timer.
      * When the timer is on and the current Pakistan time falls inside a slot,
      * that slot's URL wins; otherwise the normal url_windows applies.

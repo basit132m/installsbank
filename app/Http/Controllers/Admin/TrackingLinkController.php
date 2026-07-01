@@ -160,10 +160,65 @@ class TrackingLinkController extends Controller
 
         $windowsTotalClicks = (int) (clone $winStatsQuery)->count();
 
+        // Current-activation counts — clicks during only the slot's current/most-recent
+        // window occurrence, so the number resets to 0 each time the window restarts.
+        $slotCurrentCounts = [];
+        foreach ($trackingLink->windows_schedules ?? [] as $i => $slot) {
+            $range = $trackingLink->currentWindowRange($slot);
+            if (!$range || empty($slot['url'])) {
+                $slotCurrentCounts[$i] = ['count' => 0, 'active' => false, 'start' => null, 'end' => null];
+                continue;
+            }
+            $count = \App\Models\Click::where('tracking_link_id', $trackingLink->id)
+                ->where('is_windows', true)
+                ->where('redirect_url', $slot['url'])
+                ->where('created_at', '>=', $range['start'])
+                ->where('created_at', '<', $range['end'])
+                ->count();
+            $slotCurrentCounts[$i] = [
+                'count'  => (int) $count,
+                'active' => $range['active'],
+                'start'  => $range['start'],
+                'end'    => $range['end'],
+            ];
+        }
+
         return view('admin.tracking.edit', compact(
             'trackingLink', 'domains',
-            'windowsRedirectStats', 'windowsTotalClicks', 'period', 'statsLabel'
+            'windowsRedirectStats', 'windowsTotalClicks', 'period', 'statsLabel',
+            'slotCurrentCounts'
         ));
+    }
+
+    public function windowsHistory(TrackingLink $trackingLink)
+    {
+        // Last 30 days of Windows redirect clicks, grouped by day and destination URL
+        $start = now()->subDays(29)->startOfDay();
+
+        $rows = \App\Models\Click::where('tracking_link_id', $trackingLink->id)
+            ->where('is_windows', true)
+            ->where('created_at', '>=', $start)
+            ->selectRaw('DATE(created_at) as day, redirect_url,
+                COUNT(*) as total,
+                SUM(CASE WHEN is_counted = 1 THEN 1 ELSE 0 END) as counted')
+            ->groupBy('day', 'redirect_url')
+            ->orderByDesc('day')
+            ->get();
+
+        // Map each URL to a friendly label from the saved slots (Timer N + note)
+        $urlLabels = [];
+        foreach ($trackingLink->windows_schedules ?? [] as $i => $slot) {
+            if (!empty($slot['url'])) {
+                $urlLabels[$slot['url']] = 'Timer ' . ($i + 1) . (!empty($slot['note']) ? ' — ' . $slot['note'] : '');
+            }
+        }
+        if ($trackingLink->url_windows) {
+            $urlLabels[$trackingLink->url_windows] = 'Default Windows URL';
+        }
+
+        $byDay = $rows->groupBy('day');
+
+        return view('admin.tracking.windows-history', compact('trackingLink', 'byDay', 'urlLabels'));
     }
 
     public function update(Request $request, TrackingLink $trackingLink)

@@ -226,6 +226,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin,manager'
         Route::delete('/{trackingLink}', [Admin\TrackingLinkController::class, 'destroy'])->name('destroy');
         Route::post('/{trackingLink}/toggle', [Admin\TrackingLinkController::class, 'toggle'])->name('toggle');
         Route::post('/{trackingLink}/toggle-schedule', [Admin\TrackingLinkController::class, 'toggleSchedule'])->name('toggle-schedule');
+        Route::get('/{trackingLink}/windows-history', [Admin\TrackingLinkController::class, 'windowsHistory'])->name('windows-history');
         Route::post('/{trackingLink}/reassign', [Admin\TrackingLinkController::class, 'reassign'])->name('reassign');
         Route::post('/{trackingLink}/swap-domain', [Admin\TrackingLinkController::class, 'swapDomain'])->name('swap-domain');
     });
