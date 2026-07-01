@@ -100,7 +100,29 @@
                 <div style="font-size:12px;color:#6b7280;margin-bottom:14px;">
                     While a slot is active, <strong>Windows visitors</strong> are sent to that slot's URL instead of the Windows URL above.
                     Outside all slots (or when the toggle is off) the normal Windows URL applies.
-                    Current Pakistan time: <strong id="pkClock" style="color:#1e40af;">--:--:--</strong>
+                    Current Pakistan time (your browser): <strong id="pkClock" style="color:#1e40af;">--:--:--</strong>
+                </div>
+
+                {{-- SERVER-SIDE TRUTH: this reflects SAVED data + the server clock, which is what
+                     actually decides the redirect. If this disagrees with the badges above, the
+                     schedule isn't saved yet, or the server clock differs from your PC. --}}
+                @php
+                    $serverPk       = now(\App\Models\TrackingLink::SCHEDULE_TIMEZONE);
+                    $serverWinUrl   = $trackingLink->resolveWindowsUrl();
+                    $slotIsWinning  = $serverWinUrl && $serverWinUrl !== $trackingLink->url_windows;
+                @endphp
+                <div style="background:#0f172a;border-radius:8px;padding:12px 14px;margin-bottom:14px;font-size:12px;color:#e2e8f0;">
+                    <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+                        <span style="background:#1e293b;color:#38bdf8;padding:2px 8px;border-radius:5px;font-weight:700;font-size:11px;">SERVER CHECK</span>
+                        <span style="color:#94a3b8;">Reflects <strong style="color:#e2e8f0;">saved</strong> data &amp; the server's clock — this is what a real visitor gets.</span>
+                    </div>
+                    <div style="margin-bottom:3px;">Server Pakistan time: <strong style="color:#facc15;">{{ $serverPk->format('H:i:s') }}</strong> ({{ $serverPk->format('D, M d') }})</div>
+                    <div style="margin-bottom:3px;">Timer saved as: <strong style="color:{{ $scheduleOn ? '#4ade80' : '#f87171' }};">{{ $scheduleOn ? 'ENABLED' : 'DISABLED' }}</strong> · {{ count($slots) }} saved slot(s)</div>
+                    <div style="word-break:break-all;">A Windows visitor right now gets:
+                        <strong style="color:{{ $slotIsWinning ? '#4ade80' : '#fbbf24' }};">{{ $serverWinUrl ?: '(default URL)' }}</strong>
+                        @if($slotIsWinning)<span style="color:#4ade80;">← timer slot is active ✓</span>
+                        @else<span style="color:#94a3b8;">← falling back to normal Windows URL (no slot active)</span>@endif
+                    </div>
                 </div>
 
                 @for($i = 0; $i < 3; $i++)
