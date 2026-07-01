@@ -21,7 +21,7 @@ class ClickTrackingService
         private FraudDetectionService $fraud
     ) {}
 
-    public function processClick(TrackingLink $link, Request $request): ?Click
+    public function processClick(TrackingLink $link, Request $request, ?string $redirectUrl = null): ?Click
     {
         $ip = $request->ip();
         $ua = $request->userAgent() ?? '';
@@ -75,6 +75,7 @@ class ClickTrackingService
             'user_agent'       => $ua,
             'fingerprint'      => $this->generateFingerprint($request),
             'referrer'         => $rawReferrer,
+            'redirect_url'     => $redirectUrl,
             'is_windows'       => $isWindows,
             'is_mac'           => $isMac,
             'headers'          => $request->headers->all(),

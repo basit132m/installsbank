@@ -10,7 +10,7 @@ class Click extends Model
         'tracking_link_id', 'user_id', 'ip_address',
         'country_code', 'country_name', 'city',
         'os', 'os_version', 'device_type', 'browser',
-        'user_agent', 'fingerprint', 'referrer',
+        'user_agent', 'fingerprint', 'referrer', 'redirect_url',
         'is_fraud', 'fraud_reason', 'is_vpn', 'is_proxy',
         'is_counted', 'is_windows', 'is_mac', 'click_value',
     ];

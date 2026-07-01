@@ -41,9 +41,10 @@ class TrackingController extends Controller
             return redirect()->away($redirectUrl);
         }
 
-        // Process click
+        // Process click — pass the resolved destination so we can report where
+        // Windows visitors were actually sent (timer-slot stats)
         try {
-            $this->trackingService->processClick($link, $request);
+            $this->trackingService->processClick($link, $request, $redirectUrl);
         } catch (\Exception $e) {
             \Log::error('Click tracking error: ' . $e->getMessage());
         }

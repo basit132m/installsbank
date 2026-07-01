@@ -177,6 +177,72 @@
                 </div>
             </div>
 
+            {{-- Windows redirect performance — how many Windows clicks each destination received --}}
+            <div style="border:1.5px solid #e5e7eb;border-radius:10px;padding:16px;margin-bottom:16px;">
+                <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;flex-wrap:wrap;">
+                    <svg width="16" height="16" fill="none" stroke="#059669" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+                    <span style="font-size:13px;font-weight:700;color:#374151;">Windows Redirect Performance</span>
+                    <div style="margin-left:auto;display:flex;gap:4px;flex-wrap:wrap;">
+                        @foreach(['today'=>'Today','7d'=>'7 Days','30d'=>'30 Days','all'=>'All'] as $val => $lbl)
+                        <a href="{{ route('admin.tracking.edit', ['trackingLink' => $trackingLink, 'stats' => $val]) }}#winstats"
+                           style="padding:3px 10px;border-radius:7px;font-size:11px;font-weight:700;text-decoration:none;{{ $period === $val ? 'background:#01BF63;color:#fff;' : 'background:#f3f4f6;color:#6b7280;' }}">{{ $lbl }}</a>
+                        @endforeach
+                    </div>
+                </div>
+                <div id="winstats" style="font-size:12px;color:#6b7280;margin-bottom:14px;">
+                    {{ $statsLabel }} · <strong>{{ number_format($windowsTotalClicks) }}</strong> total Windows click(s) on this link
+                </div>
+
+                @php
+                    // Sum how many Windows clicks landed on any configured timer-slot URL
+                    $slotCodes = collect($slots)->pluck('url')->filter()->unique();
+                @endphp
+
+                {{-- Per timer slot --}}
+                @foreach($slots as $i => $slot)
+                    @php
+                        $stat    = $windowsRedirectStats->get($slot['url'] ?? '__none__');
+                        $total   = (int) ($stat->total ?? 0);
+                        $counted = (int) ($stat->counted ?? 0);
+                    @endphp
+                    <div style="display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid #f3f4f6;border-radius:8px;margin-bottom:8px;background:#fafafa;">
+                        <span style="background:#ede9fe;color:#7c3aed;padding:2px 8px;border-radius:6px;font-size:11px;font-weight:700;flex-shrink:0;">TIMER {{ $i + 1 }}</span>
+                        <div style="flex:1;min-width:0;">
+                            <div style="font-size:12px;color:#374151;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ $slot['url'] ?? '—' }}</div>
+                            <div style="font-size:11px;color:#9ca3af;">{{ $slot['start'] ?? '?' }}–{{ $slot['end'] ?? '?' }} PKT{{ !empty($slot['note']) ? ' · '.$slot['note'] : '' }}</div>
+                        </div>
+                        <div style="text-align:right;flex-shrink:0;">
+                            <div style="font-size:18px;font-weight:900;color:#059669;line-height:1;">{{ number_format($total) }}</div>
+                            <div style="font-size:10px;color:#9ca3af;">{{ number_format($counted) }} counted</div>
+                        </div>
+                    </div>
+                @endforeach
+
+                {{-- Default Windows URL (when no slot active / timer off) --}}
+                @php
+                    $defStat  = $windowsRedirectStats->get($trackingLink->url_windows ?: '__none__');
+                    $defTotal = (int) ($defStat->total ?? 0);
+                    $defCount = (int) ($defStat->counted ?? 0);
+                @endphp
+                @if($trackingLink->url_windows)
+                <div style="display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid #f3f4f6;border-radius:8px;background:#fff;">
+                    <span style="background:#dbeafe;color:#1e40af;padding:2px 8px;border-radius:6px;font-size:11px;font-weight:700;flex-shrink:0;">DEFAULT</span>
+                    <div style="flex:1;min-width:0;">
+                        <div style="font-size:12px;color:#374151;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ $trackingLink->url_windows }}</div>
+                        <div style="font-size:11px;color:#9ca3af;">Normal Windows URL — used when no slot is active</div>
+                    </div>
+                    <div style="text-align:right;flex-shrink:0;">
+                        <div style="font-size:18px;font-weight:900;color:#059669;line-height:1;">{{ number_format($defTotal) }}</div>
+                        <div style="font-size:10px;color:#9ca3af;">{{ number_format($defCount) }} counted</div>
+                    </div>
+                </div>
+                @endif
+
+                <div style="font-size:11px;color:#9ca3af;margin-top:10px;">
+                    Counts are matched by the exact destination URL a visitor was redirected to. If you change a slot's URL, past clicks stay attributed to the old URL.
+                </div>
+            </div>
+
             <div style="background:#fef3c7;border:1px solid #fde68a;border-radius:8px;padding:12px;margin-bottom:16px;">
                 <div style="font-size:13px;font-weight:600;color:#92400e;margin-bottom:4px;">Note</div>
                 <div style="font-size:13px;color:#92400e;">Changes take effect immediately. All active clicks will redirect to the new URLs.</div>

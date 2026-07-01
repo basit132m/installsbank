@@ -132,10 +132,38 @@ class TrackingLinkController extends Controller
             ->with('success', 'Tracking link created. Code: ' . $link->unique_code);
     }
 
-    public function edit(TrackingLink $trackingLink)
+    public function edit(TrackingLink $trackingLink, Request $request)
     {
         $domains = TrackingDomain::where('is_active', true)->get();
-        return view('admin.tracking.edit', compact('trackingLink', 'domains'));
+
+        // Windows redirect stats — how many Windows clicks went to each destination URL
+        $period = $request->get('stats', 'today');
+        [$statsStart, $statsLabel] = match ($period) {
+            '7d'   => [now()->subDays(6)->startOfDay(), 'Last 7 days'],
+            '30d'  => [now()->subDays(29)->startOfDay(), 'Last 30 days'],
+            'all'  => [null, 'All time'],
+            default => [now()->startOfDay(), 'Today'],
+        };
+
+        $winStatsQuery = \App\Models\Click::where('tracking_link_id', $trackingLink->id)
+            ->where('is_windows', true);
+        if ($statsStart) {
+            $winStatsQuery->where('created_at', '>=', $statsStart);
+        }
+
+        // Counts of Windows clicks grouped by the exact URL they were redirected to
+        $windowsRedirectStats = (clone $winStatsQuery)
+            ->selectRaw('redirect_url, COUNT(*) as total, SUM(CASE WHEN is_counted = 1 THEN 1 ELSE 0 END) as counted')
+            ->groupBy('redirect_url')
+            ->get()
+            ->keyBy('redirect_url');
+
+        $windowsTotalClicks = (int) (clone $winStatsQuery)->count();
+
+        return view('admin.tracking.edit', compact(
+            'trackingLink', 'domains',
+            'windowsRedirectStats', 'windowsTotalClicks', 'period', 'statsLabel'
+        ));
     }
 
     public function update(Request $request, TrackingLink $trackingLink)
