@@ -117,6 +117,11 @@ class TrackingLink extends Model
             $nowPk = now(self::SCHEDULE_TIMEZONE)->format('H:i');
 
             foreach ($this->windows_schedules as $slot) {
+                // Per-slot on/off toggle (default on for older saved slots)
+                if (($slot['enabled'] ?? true) === false) {
+                    continue;
+                }
+
                 $start = $slot['start'] ?? null;
                 $end   = $slot['end'] ?? null;
                 $url   = $slot['url'] ?? null;
@@ -130,13 +135,41 @@ class TrackingLink extends Model
                     ? ($nowPk >= $start && $nowPk < $end)
                     : ($nowPk >= $start || $nowPk < $end);
 
-                if ($matches) {
-                    return $url;
+                if (!$matches) {
+                    continue;
                 }
+
+                // Per-slot click cap for the current window occurrence. Once reached,
+                // this slot stops winning and traffic falls back to the next slot / default.
+                $cap = (int) ($slot['cap'] ?? 0);
+                if ($cap > 0 && $this->windowClickCount($slot) >= $cap) {
+                    continue;
+                }
+
+                return $url;
             }
         }
 
         return $this->url_windows;
+    }
+
+    /**
+     * Number of Windows clicks already sent to this slot's URL during its
+     * current window occurrence (resets each time the window restarts).
+     */
+    public function windowClickCount(array $slot): int
+    {
+        $range = $this->currentWindowRange($slot);
+        if (!$range || empty($slot['url'])) {
+            return 0;
+        }
+
+        return Click::where('tracking_link_id', $this->id)
+            ->where('is_windows', true)
+            ->where('redirect_url', $slot['url'])
+            ->where('created_at', '>=', $range['start'])
+            ->where('created_at', '<', $range['end'])
+            ->count();
     }
 
     /**

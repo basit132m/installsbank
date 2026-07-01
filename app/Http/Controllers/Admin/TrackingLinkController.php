@@ -240,16 +240,33 @@ class TrackingLinkController extends Controller
             'schedule_url.*'     => 'nullable|url',
             'schedule_note'      => 'nullable|array|max:3',
             'schedule_note.*'    => 'nullable|string|max:150',
+            'schedule_enabled'   => 'nullable|array|max:3',
+            'schedule_enabled.*' => 'nullable|in:0,1',
+            'schedule_cap'       => 'nullable|array|max:3',
+            'schedule_cap.*'     => 'nullable|integer|min:1|max:100000000',
         ]);
 
-        // Build schedule slots — keep only rows where all three fields are filled
+        // Build schedule slots — keep only rows where start + end + URL are all filled.
+        // Fields are indexed 0..2 so per-slot enable/cap stay aligned with each row.
         $schedules = [];
-        foreach ($data['schedule_start'] ?? [] as $i => $start) {
-            $end  = $data['schedule_end'][$i] ?? null;
-            $url  = $data['schedule_url'][$i] ?? null;
-            $note = trim((string)($data['schedule_note'][$i] ?? ''));
+        foreach (range(0, 2) as $i) {
+            $start = $data['schedule_start'][$i] ?? null;
+            $end   = $data['schedule_end'][$i] ?? null;
+            $url   = $data['schedule_url'][$i] ?? null;
+            $note  = trim((string) ($data['schedule_note'][$i] ?? ''));
+            $cap   = $data['schedule_cap'][$i] ?? null;
+            $cap   = ($cap !== null && $cap !== '') ? max(1, (int) $cap) : null;
+            $slotOn = (($data['schedule_enabled'][$i] ?? '1') == '1');
+
             if ($start && $end && $url) {
-                $schedules[] = ['start' => $start, 'end' => $end, 'url' => $url, 'note' => $note ?: null];
+                $schedules[] = [
+                    'start'   => $start,
+                    'end'     => $end,
+                    'url'     => $url,
+                    'note'    => $note ?: null,
+                    'enabled' => $slotOn,
+                    'cap'     => $cap,
+                ];
             }
         }
 
