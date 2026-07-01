@@ -204,10 +204,15 @@
                             <span style="font-size:11px;color:#6b7280;font-weight:600;">{{ $link->trackingDomain?->domain ?? 'default' }}</span>
                         </div>
                         @if(!empty($link->windows_schedules))
+                        @php
+                            $slotSummary = collect($link->windows_schedules)
+                                ->map(fn($s, $i) => 'Timer '.($i+1).': '.($s['start'] ?? '?').'–'.($s['end'] ?? '?').' PKT'.(!empty($s['note']) ? ' — '.$s['note'] : ''))
+                                ->implode("\n");
+                        @endphp
                         <div style="margin-top:5px;">
                             <form method="POST" action="{{ route('admin.tracking.toggle-schedule', $link) }}" style="margin:0;display:inline;">
                                 @csrf
-                                <button title="{{ $link->windows_schedule_enabled ? 'Timer ON — click to turn off' : 'Timer OFF — click to turn on' }}"
+                                <button title="{{ ($link->windows_schedule_enabled ? 'Timer ON — click to turn off' : 'Timer OFF — click to turn on') . "\n" . $slotSummary }}"
                                         style="display:inline-flex;align-items:center;gap:4px;background:{{ $link->windows_schedule_enabled ? '#eff6ff' : '#f9fafb' }};color:{{ $link->windows_schedule_enabled ? '#1d4ed8' : '#9ca3af' }};border:1px solid {{ $link->windows_schedule_enabled ? '#bfdbfe' : '#e5e7eb' }};border-radius:20px;padding:3px 10px;font-size:11px;font-weight:700;cursor:pointer;">
                                     <svg width="10" height="10" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                                     Timer {{ $link->windows_schedule_enabled ? 'ON' : 'OFF' }} · {{ count($link->windows_schedules) }}

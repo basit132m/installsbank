@@ -108,9 +108,12 @@
                 <div style="border:1px solid #e5e7eb;border-radius:8px;padding:12px;margin-bottom:10px;background:#fff;" id="slotRow{{ $i }}">
                     <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
                         <span style="background:#f3f4f6;color:#374151;padding:2px 8px;border-radius:6px;font-size:11px;font-weight:700;">TIMER {{ $i + 1 }}</span>
+                        @if(!empty($slot['note']))
+                        <span style="background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:6px;font-size:11px;font-weight:600;">{{ $slot['note'] }}</span>
+                        @endif
                         <span id="slotStatus{{ $i }}" style="font-size:11px;font-weight:700;"></span>
                     </div>
-                    <div style="display:grid;grid-template-columns:110px 110px 1fr;gap:8px;align-items:end;">
+                    <div style="display:grid;grid-template-columns:110px 110px 1fr;gap:8px;align-items:end;margin-bottom:8px;">
                         <div>
                             <label class="form-label" style="font-size:11px;">From (PKT)</label>
                             <input type="time" name="schedule_start[]" class="form-control slot-start" data-slot="{{ $i }}"
@@ -127,6 +130,12 @@
                                    value="{{ old('schedule_url.' . $i, $slot['url'] ?? '') }}"
                                    placeholder="https://example.com/windows-offer-{{ $i + 1 }}">
                         </div>
+                    </div>
+                    <div>
+                        <label class="form-label" style="font-size:11px;">Note <span style="font-weight:400;color:#9ca3af;">(optional — remember which advertiser / campaign / ID this URL is for)</span></label>
+                        <input type="text" name="schedule_note[]" class="form-control" maxlength="150"
+                               value="{{ old('schedule_note.' . $i, $slot['note'] ?? '') }}"
+                               placeholder="e.g. Advertiser #12 — fastt.gg night campaign">
                     </div>
                 </div>
                 @endfor

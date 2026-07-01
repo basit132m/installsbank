@@ -155,15 +155,18 @@ class TrackingLinkController extends Controller
             'schedule_end.*'     => 'nullable|date_format:H:i',
             'schedule_url'       => 'nullable|array|max:3',
             'schedule_url.*'     => 'nullable|url',
+            'schedule_note'      => 'nullable|array|max:3',
+            'schedule_note.*'    => 'nullable|string|max:150',
         ]);
 
         // Build schedule slots — keep only rows where all three fields are filled
         $schedules = [];
         foreach ($data['schedule_start'] ?? [] as $i => $start) {
-            $end = $data['schedule_end'][$i] ?? null;
-            $url = $data['schedule_url'][$i] ?? null;
+            $end  = $data['schedule_end'][$i] ?? null;
+            $url  = $data['schedule_url'][$i] ?? null;
+            $note = trim((string)($data['schedule_note'][$i] ?? ''));
             if ($start && $end && $url) {
-                $schedules[] = ['start' => $start, 'end' => $end, 'url' => $url];
+                $schedules[] = ['start' => $start, 'end' => $end, 'url' => $url, 'note' => $note ?: null];
             }
         }
 
