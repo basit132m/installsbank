@@ -97,10 +97,19 @@
                         <span class="toggle-slider"></span>
                     </label>
                 </div>
-                <div style="font-size:12px;color:#6b7280;margin-bottom:14px;">
+                <div style="font-size:12px;color:#6b7280;margin-bottom:10px;">
                     While a slot is active, <strong>Windows visitors</strong> are sent to that slot's URL instead of the Windows URL above.
                     Outside all slots (or when the toggle is off) the normal Windows URL applies.
                     Current Pakistan time (your browser): <strong id="pkClock" style="color:#1e40af;">--:--:--</strong>
+                </div>
+
+                {{-- Live countdown: shows time remaining in the currently-active window --}}
+                <div id="activeCountdown" style="display:none;align-items:center;gap:10px;background:#ecfdf5;border:1.5px solid #6ee7b7;border-radius:8px;padding:10px 14px;margin-bottom:14px;">
+                    <svg width="18" height="18" fill="none" stroke="#059669" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    <div>
+                        <div style="font-size:12px;color:#065f46;font-weight:600;"><span id="countdownLabel">Timer 1</span> is active — redirecting Windows visitors now</div>
+                        <div style="font-size:13px;color:#047857;">Time remaining in this period: <strong id="countdownValue" style="font-size:15px;font-family:monospace;">--</strong></div>
+                    </div>
                 </div>
 
                 {{-- SERVER-SIDE TRUTH: this reflects SAVED data + the server clock, which is what
@@ -188,6 +197,26 @@
 function pkNow() {
     return new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Karachi' }));
 }
+// Seconds left until a window's end time, accounting for overnight (past-midnight) windows
+function secondsUntilEnd(now, start, end) {
+    const [eh, em] = end.split(':').map(Number);
+    const endDate = new Date(now);
+    endDate.setHours(eh, em, 0, 0);
+    // If the end boundary is not in the future, it belongs to tomorrow (overnight window)
+    if (endDate <= now) {
+        endDate.setDate(endDate.getDate() + 1);
+    }
+    return Math.max(0, Math.floor((endDate - now) / 1000));
+}
+
+function fmtDuration(totalSec) {
+    const pad = n => String(n).padStart(2, '0');
+    const h = Math.floor(totalSec / 3600);
+    const m = Math.floor((totalSec % 3600) / 60);
+    const s = totalSec % 60;
+    return (h > 0 ? h + 'h ' : '') + pad(m) + 'm ' + pad(s) + 's';
+}
+
 function updatePkClock() {
     const now = pkNow();
     const pad = n => String(n).padStart(2, '0');
@@ -197,6 +226,7 @@ function updatePkClock() {
     const nowHM = pad(now.getHours()) + ':' + pad(now.getMinutes());
     const scheduleOn = document.querySelector('input[name="windows_schedule_enabled"]').checked;
     let claimed = false; // lower-numbered timer wins on overlap
+    let activeIdx = -1, activeEnd = null;
 
     for (let i = 0; i < 3; i++) {
         const start = document.querySelector('.slot-start[data-slot="' + i + '"]')?.value;
@@ -212,11 +242,26 @@ function updatePkClock() {
 
         if (inWindow && !claimed) {
             claimed = true;
+            activeIdx = i; activeEnd = end;
             badge.textContent = scheduleOn ? '● ACTIVE NOW' : '● would be active (timer off)';
             badge.style.color = scheduleOn ? '#059669' : '#d97706';
         } else {
             badge.textContent = '○ inactive';
             badge.style.color = '#9ca3af';
+        }
+    }
+
+    // Countdown banner — only when a slot is active AND the timer is enabled
+    const banner = document.getElementById('activeCountdown');
+    if (banner) {
+        if (claimed && scheduleOn && activeEnd) {
+            const start = document.querySelector('.slot-start[data-slot="' + activeIdx + '"]')?.value;
+            document.getElementById('countdownLabel').textContent = 'Timer ' + (activeIdx + 1);
+            document.getElementById('countdownValue').textContent =
+                fmtDuration(secondsUntilEnd(now, start, activeEnd)) + '  (ends ' + activeEnd + ' PKT)';
+            banner.style.display = 'flex';
+        } else {
+            banner.style.display = 'none';
         }
     }
 }

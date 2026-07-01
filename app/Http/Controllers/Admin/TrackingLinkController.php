@@ -188,7 +188,8 @@ class TrackingLinkController extends Controller
             'windows_schedules'  => $schedules ?: null,
         ]);
 
-        return redirect()->route('admin.tracking.index')
+        // Stay on the edit page so the admin can immediately verify the SERVER CHECK box
+        return redirect()->route('admin.tracking.edit', $trackingLink)
             ->with('success', 'Tracking link updated successfully.');
     }
 
