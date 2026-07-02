@@ -12,7 +12,6 @@ use App\Models\MacPublisherInstall;
 use App\Models\TrackingLink;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Schema;
 use Jenssegers\Agent\Agent;
 
 class ClickTrackingService
@@ -21,18 +20,6 @@ class ClickTrackingService
         private GeoLocationService $geo,
         private FraudDetectionService $fraud
     ) {}
-
-    /** Whether the clicks.redirect_url column exists (cached to avoid per-click schema hits). */
-    private function clicksHaveRedirectUrl(): bool
-    {
-        return Cache::remember('schema_clicks_has_redirect_url', 3600, function () {
-            try {
-                return Schema::hasColumn('clicks', 'redirect_url');
-            } catch (\Throwable $e) {
-                return false;
-            }
-        });
-    }
 
     public function processClick(TrackingLink $link, Request $request, ?string $redirectUrl = null): ?Click
     {
@@ -88,16 +75,11 @@ class ClickTrackingService
             'user_agent'       => $ua,
             'fingerprint'      => $this->generateFingerprint($request),
             'referrer'         => $rawReferrer,
+            'redirect_url'     => $redirectUrl,
             'is_windows'       => $isWindows,
             'is_mac'           => $isMac,
             'headers'          => $request->headers->all(),
         ];
-
-        // Only write redirect_url if the column exists — a pending migration must
-        // never silently break click recording. Cached so it's one cheap check.
-        if ($this->clicksHaveRedirectUrl()) {
-            $clickData['redirect_url'] = $redirectUrl;
-        }
 
         // Load profile
         $profile = $link->user?->publisherProfile;
