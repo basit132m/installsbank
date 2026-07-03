@@ -32,8 +32,8 @@ class LoginController extends Controller
                 return back()->withErrors(['email' => 'Your account has been suspended.']);
             }
 
-            // Require email verification for publishers only
-            if ($user->role === 'publisher' && is_null($user->email_verified_at)) {
+            // Require email verification for publishers and resellers
+            if (in_array($user->role, ['publisher', 'reseller']) && is_null($user->email_verified_at)) {
                 Auth::logout();
                 $request->session()->invalidate();
                 $request->session()->regenerateToken();
@@ -76,6 +76,7 @@ class LoginController extends Controller
             'admin', 'manager' => redirect()->route('admin.dashboard'),
             'publisher'        => redirect()->route('publisher.dashboard'),
             'advertiser'       => redirect()->route('advertiser.dashboard'),
+            'reseller'         => redirect()->route('reseller.dashboard'),
             default            => redirect('/'),
         };
     }

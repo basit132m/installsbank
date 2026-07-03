@@ -15,6 +15,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'role'               => \App\Http\Middleware\RoleMiddleware::class,
             'publisher.approved' => \App\Http\Middleware\RequirePublisherApproved::class,
+            'reseller.approved'  => \App\Http\Middleware\RequireResellerApproved::class,
         ]);
         $middleware->prepend(\App\Http\Middleware\TrackingDomainGuard::class);
         $middleware->statefulApi();

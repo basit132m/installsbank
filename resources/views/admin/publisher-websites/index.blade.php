@@ -45,7 +45,12 @@
                     Full URL: <a href="{{ $website->website_url }}" target="_blank" style="color:#01BF63;">{{ $website->website_url }}</a>
                 </div>
                 <div style="font-size:12px;color:#6b7280;margin-bottom:4px;">
-                    Publisher: <a href="{{ route('admin.publishers.show', $website->user) }}" style="color:#3b82f6;font-weight:600;">{{ $website->user->name }}</a>
+                    @if($website->user->role === 'reseller')
+                        Reseller: <a href="{{ route('admin.resellers.show', $website->user) }}" style="color:#7c3aed;font-weight:600;">{{ $website->user->name }}</a>
+                        <span style="background:#ede9fe;color:#6d28d9;padding:1px 8px;border-radius:10px;font-size:10px;font-weight:800;">RESELLER</span>
+                    @else
+                        Publisher: <a href="{{ route('admin.publishers.show', $website->user) }}" style="color:#3b82f6;font-weight:600;">{{ $website->user->name }}</a>
+                    @endif
                     <span style="color:#9ca3af;">({{ $website->user->email }})</span>
                 </div>
                 <div style="font-size:11px;color:#9ca3af;">Submitted {{ $website->created_at->diffForHumans() }}</div>

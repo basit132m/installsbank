@@ -54,6 +54,11 @@ class User extends Authenticatable
         return $this->role === 'advertiser';
     }
 
+    public function isReseller(): bool
+    {
+        return $this->role === 'reseller';
+    }
+
     public function advertiserProfile()
     {
         return $this->hasOne(AdvertiserProfile::class);

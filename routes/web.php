@@ -45,6 +45,8 @@ Route::get('/login', [LoginController::class, 'showLogin'])->name('login');
 Route::post('/login', [LoginController::class, 'login']);
 Route::get('/register', [RegisterController::class, 'showRegister'])->name('register');
 Route::post('/register', [RegisterController::class, 'register']);
+Route::get('/register/reseller', [App\Http\Controllers\Auth\ResellerRegisterController::class, 'showRegister'])->name('reseller.register.show');
+Route::post('/register/reseller', [App\Http\Controllers\Auth\ResellerRegisterController::class, 'register'])->name('reseller.register');
 Route::post('/logout', [LoginController::class, 'logout'])->name('logout')->middleware('auth');
 
 // Password reset
@@ -92,6 +94,14 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin,manager'
         Route::get('/', [Admin\PublisherWebsiteController::class, 'index'])->name('index');
         Route::post('/{publisherWebsite}/approve', [Admin\PublisherWebsiteController::class, 'approve'])->name('approve');
         Route::post('/{publisherWebsite}/reject', [Admin\PublisherWebsiteController::class, 'reject'])->name('reject');
+    });
+
+    // Resellers
+    Route::prefix('resellers')->name('resellers.')->group(function () {
+        Route::get('/', [Admin\ResellerController::class, 'index'])->name('index');
+        Route::get('/{user}', [Admin\ResellerController::class, 'show'])->name('show');
+        Route::post('/{user}/activate', [Admin\ResellerController::class, 'activate'])->name('activate');
+        Route::post('/{user}/suspend', [Admin\ResellerController::class, 'suspend'])->name('suspend');
     });
 
     // Contracts
@@ -423,5 +433,32 @@ Route::prefix('publisher')->name('publisher.')->middleware(['auth', 'role:publis
         Route::post('/contract/{contract}/reject', [Publisher\ContractController::class, 'reject'])->name('contract.reject');
         Route::post('/contract-change-request', [Publisher\ContractChangeRequestController::class, 'store'])->name('contract-change.store');
         Route::post('/rate-increase-request', [Publisher\RateIncreaseRequestController::class, 'store'])->name('rate-increase.store');
+    });
+});
+
+// Reseller panel — restricted: websites + stats only
+Route::prefix('reseller')->name('reseller.')->middleware(['auth', 'role:reseller'])->group(function () {
+
+    // ── Always accessible (pending + active) ──────────────────────────────
+    Route::get('/dashboard', [App\Http\Controllers\Reseller\DashboardController::class, 'index'])->name('dashboard');
+
+    Route::get('/notifications', function () {
+        $notifications = \App\Models\PublisherNotification::where('user_id', auth()->id())
+            ->orderByDesc('created_at')->paginate(20);
+        \App\Models\PublisherNotification::where('user_id', auth()->id())->whereNull('read_at')->update(['read_at' => now()]);
+        return view('reseller.notifications', compact('notifications'));
+    })->name('notifications.index');
+
+    Route::get('/profile', [App\Http\Controllers\Reseller\ProfileController::class, 'show'])->name('profile');
+    Route::post('/profile', [App\Http\Controllers\Reseller\ProfileController::class, 'update'])->name('profile.update');
+    Route::post('/profile/password', [App\Http\Controllers\Reseller\ProfileController::class, 'updatePassword'])->name('profile.password');
+
+    // ── Requires approved account ─────────────────────────────────────────
+    Route::middleware('reseller.approved')->group(function () {
+        Route::get('/stats', [App\Http\Controllers\Reseller\StatsController::class, 'index'])->name('stats');
+        Route::get('/live-stats', [App\Http\Controllers\Reseller\LiveStatsController::class, 'index'])->name('live-stats');
+
+        Route::get('/websites', [App\Http\Controllers\Reseller\WebsiteController::class, 'index'])->name('websites.index');
+        Route::post('/websites', [App\Http\Controllers\Reseller\WebsiteController::class, 'store'])->name('websites.store');
     });
 });

@@ -42,7 +42,9 @@ class VerificationController extends Controller
 
         session()->flash('show_welcome', true);
 
-        return redirect()->route('publisher.dashboard')
+        $dashboard = $user->role === 'reseller' ? 'reseller.dashboard' : 'publisher.dashboard';
+
+        return redirect()->route($dashboard)
             ->with('success', 'Your email has been verified! Your account is now pending admin review.');
     }
 
