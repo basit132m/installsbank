@@ -28,7 +28,11 @@
                 @if($website->isPending())
                     <span class="badge badge-warning">Pending Review — Ad Code Requested</span>
                 @elseif($website->isApproved())
-                    <span class="badge badge-success">Approved</span>
+                    @if($website->trackingLink && !$website->trackingLink->is_active)
+                        <span class="badge badge-warning">Paused</span>
+                    @else
+                        <span class="badge badge-success">Approved</span>
+                    @endif
                 @else
                     <span class="badge badge-danger">Rejected</span>
                 @endif

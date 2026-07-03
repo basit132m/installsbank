@@ -94,6 +94,9 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin,manager'
         Route::get('/', [Admin\PublisherWebsiteController::class, 'index'])->name('index');
         Route::post('/{publisherWebsite}/approve', [Admin\PublisherWebsiteController::class, 'approve'])->name('approve');
         Route::post('/{publisherWebsite}/reject', [Admin\PublisherWebsiteController::class, 'reject'])->name('reject');
+        Route::post('/{publisherWebsite}/change-domain', [Admin\PublisherWebsiteController::class, 'changeDomain'])->name('change-domain');
+        Route::post('/{publisherWebsite}/toggle-suspend', [Admin\PublisherWebsiteController::class, 'toggleSuspend'])->name('toggle-suspend');
+        Route::delete('/{publisherWebsite}', [Admin\PublisherWebsiteController::class, 'destroy'])->name('destroy');
     });
 
     // Resellers
