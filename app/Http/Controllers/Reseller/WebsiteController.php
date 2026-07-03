@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Reseller;
 
 use App\Http\Controllers\Controller;
+use App\Models\Click;
 use App\Models\PublisherWebsite;
 use Illuminate\Http\Request;
 
@@ -14,7 +15,34 @@ class WebsiteController extends Controller
         $websites = PublisherWebsite::with('trackingLink.trackingDomain')
             ->where('user_id', $user->id)->latest()->get();
 
-        return view('reseller.websites.index', compact('user', 'websites'));
+        // Divider-applied all-time valid clicks per link — never show the raw
+        // unique_clicks counter to the reseller.
+        $divider         = $user->clickDivider;
+        $dividerValue    = ($divider && $divider->is_enabled)          ? max(1, (float)$divider->divider_value)     : 1;
+        $macDividerValue = ($divider && $divider->mac_divider_enabled) ? max(1, (float)$divider->mac_divider_value) : 1;
+
+        $linkIds = $websites->pluck('tracking_link_id')->filter()->all();
+
+        $validByLink = [];
+        if (!empty($linkIds)) {
+            $rawPerLink = Click::whereIn('tracking_link_id', $linkIds)
+                ->where('is_counted', true)
+                ->selectRaw('tracking_link_id,
+                    SUM(CASE WHEN is_windows = 1 THEN 1 ELSE 0 END) as w,
+                    SUM(CASE WHEN is_mac = 1 THEN 1 ELSE 0 END) as m,
+                    SUM(CASE WHEN is_windows = 0 AND is_mac = 0 THEN 1 ELSE 0 END) as o')
+                ->groupBy('tracking_link_id')
+                ->get();
+
+            foreach ($rawPerLink as $r) {
+                $validByLink[$r->tracking_link_id] =
+                      (int) floor((int)$r->w / $dividerValue)
+                    + (int) floor((int)$r->m / $macDividerValue)
+                    + (int) $r->o;
+            }
+        }
+
+        return view('reseller.websites.index', compact('user', 'websites', 'validByLink'));
     }
 
     public function store(Request $request)

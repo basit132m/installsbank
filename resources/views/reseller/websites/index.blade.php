@@ -68,7 +68,7 @@
     <div style="margin-top:16px;padding-top:16px;border-top:1px solid #f3f4f6;">
         <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:12px;">
             <div style="background:#f5f3ff;padding:5px 12px;border-radius:12px;font-size:12px;color:#5b21b6;font-weight:600;">
-                ✓ {{ number_format($link->unique_clicks) }} valid clicks
+                ✓ {{ number_format($validByLink[$link->id] ?? 0) }} valid clicks
             </div>
             <div style="font-size:12px;color:#9ca3af;">
                 Tracking code: <span style="font-family:monospace;color:#374151;font-weight:600;">{{ $link->unique_code }}</span>
