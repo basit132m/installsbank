@@ -78,12 +78,47 @@
                 </div>
             </div>
 
+            @php $currentFormat = old('url_format', $trackingLink->url_format ?: 'track'); @endphp
+            <div style="margin-bottom:14px;">
+                <label class="tl-label">Tracking URL Structure</label>
+                <select name="url_format" class="form-control form-select" onchange="updateUrlPreview()" id="urlFormatSelect">
+                    @foreach(\App\Models\TrackingLink::URL_FORMATS as $key => $meta)
+                        <option value="{{ $key }}" {{ $currentFormat === $key ? 'selected' : '' }}>{{ $meta['label'] }}</option>
+                    @endforeach
+                </select>
+                <div style="font-size:12px;color:#9ca3af;margin-top:6px;">
+                    Vary the URL shape so the tracker is harder to fingerprint. Current URL:
+                    <code id="urlPreview" style="color:#7c3aed;font-weight:600;word-break:break-all;">{{ $trackingLink->tracking_url }}</code>
+                </div>
+            </div>
+
             <div>
                 <label class="tl-label">Default Destination URL <span style="color:#ef4444;">*</span></label>
                 <input type="url" name="original_url" class="form-control" value="{{ old('original_url', $trackingLink->original_url) }}" required placeholder="https://example.com/download">
                 <div style="font-size:12px;color:#9ca3af;margin-top:5px;">Used when no device-specific URL is set, or for devices not listed below. <a href="{{ route('admin.tracking-domains.index') }}" style="color:var(--primary);">Manage domains →</a></div>
             </div>
         </div>
+
+        @php
+            $fmtBase = $trackingLink->trackingDomain && $trackingLink->trackingDomain->is_active
+                ? rtrim($trackingLink->trackingDomain->base_url, '/')
+                : rtrim(url('/'), '/');
+            $fmtSegments = [];
+            foreach (\App\Models\TrackingLink::URL_FORMATS as $k => $m) { $fmtSegments[$k] = $m['segment']; }
+        @endphp
+        <script>
+        const FMT_BASE = @json($fmtBase);
+        const FMT_CODE = @json($trackingLink->unique_code);
+        const FMT_SEG  = @json($fmtSegments);
+        function updateUrlPreview() {
+            const fmt = document.getElementById('urlFormatSelect').value;
+            const seg = FMT_SEG[fmt] || 'track';
+            const url = seg === 'query'
+                ? FMT_BASE + '/r?c=' + FMT_CODE
+                : FMT_BASE + '/' + seg + '/' + FMT_CODE;
+            document.getElementById('urlPreview').textContent = url;
+        }
+        </script>
 
         {{-- ══════════ DEVICE URLS ══════════ --}}
         <div class="tl-section">

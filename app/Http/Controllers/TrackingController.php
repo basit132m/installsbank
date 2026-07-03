@@ -14,6 +14,18 @@ class TrackingController extends Controller
 
     public function track(string $code, Request $request)
     {
+        return $this->resolve($code, $request);
+    }
+
+    /** Query-string style: /r?c=CODE (alternate URL structure). */
+    public function trackQuery(Request $request)
+    {
+        $code = (string) ($request->query('c') ?? $request->query('id') ?? '');
+        return $this->resolve($code, $request);
+    }
+
+    private function resolve(string $code, Request $request)
+    {
         $link = TrackingLink::where('unique_code', $code)->where('is_active', true)->first();
 
         if (!$link) {

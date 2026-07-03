@@ -93,15 +93,24 @@
                 <div style="font-size:13px;font-weight:700;color:#065f46;margin-bottom:12px;">✓ Approve & Create Ad Code</div>
                 <form method="POST" action="{{ route('admin.publisher-websites.approve', $website) }}">
                     @csrf
-                    <div class="form-group" style="margin-bottom:10px;">
-                        <label class="form-label" style="font-size:12px;">Tracking Domain (ad code URL)</label>
-                        <select name="tracking_domain_id" class="form-control form-select" style="font-size:12px;">
-                            <option value="">Default — installsbank.com</option>
-                            @foreach($domains as $d)
-                                <option value="{{ $d->id }}">{{ $d->domain }}{{ $d->label ? ' — ' . $d->label : '' }}</option>
-                            @endforeach
-                        </select>
-                        <div style="font-size:10px;color:#059669;margin-top:3px;">Pick a custom domain to serve this reseller's/publisher's ad code URL.</div>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;">
+                        <div>
+                            <label class="form-label" style="font-size:12px;">Tracking Domain</label>
+                            <select name="tracking_domain_id" class="form-control form-select" style="font-size:12px;">
+                                <option value="">Default — installsbank.com</option>
+                                @foreach($domains as $d)
+                                    <option value="{{ $d->id }}">{{ $d->domain }}{{ $d->label ? ' — ' . $d->label : '' }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div>
+                            <label class="form-label" style="font-size:12px;">URL Structure</label>
+                            <select name="url_format" class="form-control form-select" style="font-size:12px;">
+                                @foreach(\App\Models\TrackingLink::URL_FORMATS as $key => $meta)
+                                    <option value="{{ $key }}">{{ $meta['label'] }}</option>
+                                @endforeach
+                            </select>
+                        </div>
                     </div>
                     <div class="form-group" style="margin-bottom:10px;">
                         <label class="form-label" style="font-size:12px;">Destination URL (Windows / Main) *</label>
@@ -153,13 +162,13 @@
         @if($website->isApproved() && $website->trackingLink)
         @php $wlink = $website->trackingLink; @endphp
         <div style="margin-top:14px;display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">
-            <!-- Change domain -->
+            <!-- Change domain + URL structure -->
             <form method="POST" action="{{ route('admin.publisher-websites.change-domain', $website) }}"
-                  style="display:flex;gap:8px;align-items:flex-end;background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:10px 12px;">
+                  style="display:flex;gap:8px;align-items:flex-end;background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:10px 12px;flex-wrap:wrap;">
                 @csrf
                 <div>
                     <label class="form-label" style="font-size:11px;">Ad Code Domain</label>
-                    <select name="tracking_domain_id" class="form-control form-select" style="font-size:12px;min-width:200px;">
+                    <select name="tracking_domain_id" class="form-control form-select" style="font-size:12px;min-width:180px;">
                         <option value="">Default — installsbank.com</option>
                         @foreach($domains as $d)
                             <option value="{{ $d->id }}" {{ $wlink->tracking_domain_id == $d->id ? 'selected' : '' }}>
@@ -168,7 +177,15 @@
                         @endforeach
                     </select>
                 </div>
-                <button type="submit" class="btn btn-primary btn-sm">Update Domain</button>
+                <div>
+                    <label class="form-label" style="font-size:11px;">URL Structure</label>
+                    <select name="url_format" class="form-control form-select" style="font-size:12px;min-width:180px;">
+                        @foreach(\App\Models\TrackingLink::URL_FORMATS as $key => $meta)
+                            <option value="{{ $key }}" {{ ($wlink->url_format ?: 'track') === $key ? 'selected' : '' }}>{{ $meta['label'] }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <button type="submit" class="btn btn-primary btn-sm">Update URL</button>
             </form>
 
             <!-- Suspend / resume -->

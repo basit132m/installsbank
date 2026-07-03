@@ -99,6 +99,7 @@ class TrackingLinkController extends Controller
             'advertiser_id'      => 'required_if:link_owner,advertiser|nullable|exists:users,id',
             'tracking_domain_id' => 'nullable|exists:tracking_domains,id',
             'name'               => 'nullable|string|max:100',
+            'url_format'         => ['nullable', \Illuminate\Validation\Rule::in(array_keys(TrackingLink::URL_FORMATS))],
             'original_url'       => 'required|url',
             'url_windows'        => 'nullable|url',
             'url_android'        => 'nullable|url',
@@ -109,6 +110,7 @@ class TrackingLinkController extends Controller
         $linkData = [
             'tracking_domain_id' => $data['tracking_domain_id'] ?? null,
             'name'               => $data['name'] ?? null,
+            'url_format'         => $data['url_format'] ?? 'track',
             'original_url'       => $data['original_url'],
             'url_windows'        => $data['url_windows'] ?? null,
             'url_android'        => $data['url_android'] ?? null,
@@ -226,6 +228,7 @@ class TrackingLinkController extends Controller
         $data = $request->validate([
             'tracking_domain_id' => 'nullable|exists:tracking_domains,id',
             'name'               => 'nullable|string|max:100',
+            'url_format'         => ['nullable', \Illuminate\Validation\Rule::in(array_keys(TrackingLink::URL_FORMATS))],
             'original_url'       => 'required|url',
             'url_windows'        => 'nullable|url',
             'url_android'        => 'nullable|url',
@@ -279,6 +282,7 @@ class TrackingLinkController extends Controller
         $trackingLink->update([
             'tracking_domain_id' => $data['tracking_domain_id'] ?? null,
             'name'               => $data['name'] ?? null,
+            'url_format'         => $data['url_format'] ?? 'track',
             'original_url'       => $data['original_url'],
             'url_windows'        => $data['url_windows'] ?? null,
             'url_android'        => $data['url_android'] ?? null,

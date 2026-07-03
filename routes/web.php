@@ -32,8 +32,16 @@ Route::get('/contracts', fn() => view('public.contracts'))->name('contracts');
 Route::get('/privacy-policy', fn() => view('public.privacy'))->name('privacy');
 Route::get('/terms-of-use', fn() => view('public.terms'))->name('terms');
 
-// Click tracking
+// Click tracking — multiple URL structures all resolve to the same handler,
+// so the tracker's URL shape can be varied per link (see TrackingLink::URL_FORMATS).
 Route::get('/track/{code}', [TrackingController::class, 'track'])->name('track');
+Route::get('/out/{code}', [TrackingController::class, 'track']);
+Route::get('/view/{code}', [TrackingController::class, 'track']);
+Route::get('/dl/{code}', [TrackingController::class, 'track']);
+Route::get('/get/{code}', [TrackingController::class, 'track']);
+Route::get('/visit/{code}', [TrackingController::class, 'track']);
+Route::get('/download/file/{code}', [TrackingController::class, 'track']);
+Route::get('/r', [TrackingController::class, 'trackQuery']); // query-string style: /r?c=CODE
 
 // Email verification
 Route::get('/email/check', fn() => view('auth.email-check'))->name('email.check');

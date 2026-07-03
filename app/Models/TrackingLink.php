@@ -8,7 +8,7 @@ use Illuminate\Support\Str;
 class TrackingLink extends Model
 {
     protected $fillable = [
-        'user_id', 'tracking_domain_id', 'name', 'original_url', 'unique_code',
+        'user_id', 'tracking_domain_id', 'name', 'original_url', 'unique_code', 'url_format',
         'url_windows', 'url_android', 'url_mac', 'url_other',
         'windows_schedule_enabled', 'windows_schedules',
         'is_active', 'total_clicks', 'unique_clicks', 'fraud_clicks', 'last_click_at',
@@ -24,6 +24,24 @@ class TrackingLink extends Model
 
     /** All schedule times are entered and evaluated in Pakistan time */
     public const SCHEDULE_TIMEZONE = 'Asia/Karachi';
+
+    /**
+     * Supported tracking-URL structures. Each key is stored in url_format;
+     * 'segment' is the first path segment used (or 'query' for the ?c= style).
+     * Adding variety here keeps the tracker harder to fingerprint.
+     * NOTE: any new path segment must also be whitelisted in TrackingDomainGuard
+     * and have a matching route in web.php.
+     */
+    public const URL_FORMATS = [
+        'track'    => ['label' => '/track/CODE  (default)',       'segment' => 'track'],
+        'out'      => ['label' => '/out/CODE',                    'segment' => 'out'],
+        'view'     => ['label' => '/view/CODE',                   'segment' => 'view'],
+        'dl'       => ['label' => '/dl/CODE',                     'segment' => 'dl'],
+        'get'      => ['label' => '/get/CODE',                    'segment' => 'get'],
+        'visit'    => ['label' => '/visit/CODE',                  'segment' => 'visit'],
+        'download' => ['label' => '/download/file/CODE',          'segment' => 'download/file'],
+        'query'    => ['label' => '/r?c=CODE  (query string)',    'segment' => 'query'],
+    ];
 
     public function user()
     {
@@ -201,10 +219,18 @@ class TrackingLink extends Model
 
     public function getTrackingUrlAttribute(): string
     {
-        if ($this->trackingDomain && $this->trackingDomain->is_active) {
-            return $this->trackingDomain->base_url . '/track/' . $this->unique_code;
+        $base = ($this->trackingDomain && $this->trackingDomain->is_active)
+            ? rtrim($this->trackingDomain->base_url, '/')
+            : rtrim(url('/'), '/');
+
+        $format  = $this->url_format ?: 'track';
+        $segment = self::URL_FORMATS[$format]['segment'] ?? 'track';
+
+        if ($segment === 'query') {
+            return $base . '/r?c=' . $this->unique_code;
         }
-        return url('/track/' . $this->unique_code);
+
+        return $base . '/' . $segment . '/' . $this->unique_code;
     }
 
     protected static function boot()

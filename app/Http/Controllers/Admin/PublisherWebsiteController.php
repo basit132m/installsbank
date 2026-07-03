@@ -34,6 +34,7 @@ class PublisherWebsiteController extends Controller
 
         $request->validate([
             'tracking_domain_id' => 'nullable|exists:tracking_domains,id',
+            'url_format'         => ['nullable', \Illuminate\Validation\Rule::in(array_keys(TrackingLink::URL_FORMATS))],
             'original_url'       => 'required|url',
             'url_windows'        => 'nullable|url',
             'url_android'        => 'nullable|url',
@@ -42,11 +43,12 @@ class PublisherWebsiteController extends Controller
         ]);
 
         // Create a dedicated tracking link locked to this domain.
-        // tracking_domain_id chooses which custom domain serves the /track URL
-        // (null = default installsbank.com).
+        // tracking_domain_id chooses which custom domain serves the tracking URL,
+        // url_format chooses the URL structure (both null = default).
         $link = TrackingLink::create([
             'user_id'            => $publisherWebsite->user_id,
             'tracking_domain_id' => $request->tracking_domain_id ?: null,
+            'url_format'         => $request->url_format ?: 'track',
             'name'               => 'Website: ' . $publisherWebsite->domain,
             'original_url'       => $request->original_url,
             'url_windows'        => $request->url_windows ?: null,
@@ -95,6 +97,7 @@ class PublisherWebsiteController extends Controller
     {
         $request->validate([
             'tracking_domain_id' => 'nullable|exists:tracking_domains,id',
+            'url_format'         => ['nullable', \Illuminate\Validation\Rule::in(array_keys(TrackingLink::URL_FORMATS))],
         ]);
 
         if (!$publisherWebsite->isApproved() || !$publisherWebsite->trackingLink) {
@@ -103,11 +106,12 @@ class PublisherWebsiteController extends Controller
 
         $publisherWebsite->trackingLink->update([
             'tracking_domain_id' => $request->tracking_domain_id ?: null,
+            'url_format'         => $request->url_format ?: 'track',
         ]);
 
         $newDomain = $publisherWebsite->trackingLink->trackingDomain?->domain ?? 'default (installsbank.com)';
 
-        return back()->with('success', "Ad code domain for {$publisherWebsite->domain} changed to {$newDomain}.");
+        return back()->with('success', "Ad code URL for {$publisherWebsite->domain} updated (domain: {$newDomain}).");
     }
 
     /**

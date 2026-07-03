@@ -21,7 +21,12 @@ class TrackingDomainGuard
         });
 
         if (in_array($host, $trackingDomains, true)) {
-            if (!$request->is('track/*', 'download', 'go/*', 'favicon.ico')) {
+            // Allow every supported tracking-URL structure on custom domains
+            $allowed = [
+                'track/*', 'out/*', 'view/*', 'dl/*', 'get/*', 'visit/*',
+                'download', 'download/file/*', 'r', 'go/*', 'favicon.ico',
+            ];
+            if (!$request->is(...$allowed)) {
                 abort(404);
             }
         }
