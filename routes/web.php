@@ -458,6 +458,7 @@ Route::prefix('reseller')->name('reseller.')->middleware(['auth', 'role:reseller
 
     // ── Requires approved account ─────────────────────────────────────────
     Route::middleware('reseller.approved')->group(function () {
+        Route::get('/overview', [App\Http\Controllers\Reseller\OverviewController::class, 'index'])->name('overview');
         Route::get('/stats', [App\Http\Controllers\Reseller\StatsController::class, 'index'])->name('stats');
         Route::get('/live-stats', [App\Http\Controllers\Reseller\LiveStatsController::class, 'index'])->name('live-stats');
 
