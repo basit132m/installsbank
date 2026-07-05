@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ $meta['title'] }} — {{ $reportNo }}</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Dancing+Script:wght@600;700&display=swap" rel="stylesheet">
     <style>
         * { margin:0; padding:0; box-sizing:border-box; }
         :root { --ink:#0f172a; --muted:#64748b; --line:#e5e7eb; --green:#01BF63; --accent:#4f46e5; }
@@ -38,9 +38,10 @@
         .rp-badge .rid { font-family:monospace; font-size:12px; color:var(--muted); }
         .rp-badge .rdate { font-size:12px; color:var(--muted); margin-top:2px; }
 
-        .rp-title { margin-top:26px; }
-        .rp-title h1 { font-size:26px; font-weight:900; letter-spacing:-.5px; }
-        .rp-meta { display:flex; gap:26px; margin-top:14px; flex-wrap:wrap; }
+        .rp-title { margin-top:26px; text-align:center; }
+        .rp-title h1 { font-size:28px; font-weight:900; letter-spacing:-.5px; }
+        .rp-meta { display:flex; gap:34px; margin-top:14px; flex-wrap:wrap; justify-content:center; }
+        .rp-meta .m { text-align:center; }
         .rp-meta .m .l { font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); }
         .rp-meta .m .v { font-size:14px; font-weight:700; margin-top:2px; }
 
@@ -66,17 +67,33 @@
         table.data tfoot td { border-top:2px solid var(--ink); border-bottom:none; font-weight:900; font-size:14px; padding-top:11px; }
         .flag { width:22px; height:16px; border-radius:2px; vertical-align:middle; margin-right:8px; object-fit:cover; }
 
-        .rp-foot { margin-top:40px; display:flex; align-items:flex-end; justify-content:space-between; gap:20px; border-top:1px solid var(--line); padding-top:20px; }
-        .rp-foot .note { font-size:11px; color:var(--muted); line-height:1.7; max-width:60%; }
+        /* Commercial terms */
+        .terms { display:flex; gap:14px; flex-wrap:wrap; }
+        .terms .term { flex:1; min-width:150px; background:#f8fafc; border:1px solid var(--line); border-radius:12px; padding:14px 16px; }
+        .terms .term .tl { font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.05em; color:var(--muted); }
+        .terms .term .tv { font-size:18px; font-weight:900; color:var(--ink); margin-top:4px; }
+
+        /* Centered disclaimer note */
+        .note-centered { margin-top:30px; text-align:center; font-size:11px; color:var(--muted); line-height:1.8; max-width:520px; margin-left:auto; margin-right:auto; }
+
+        .rp-foot { margin-top:26px; display:flex; align-items:flex-end; justify-content:space-between; gap:20px; border-top:1px solid var(--line); padding-top:22px; }
         .stamp-wrap { text-align:center; }
         .stamp-wrap img { height:120px; object-fit:contain; }
         .stamp-wrap .lbl { font-size:11px; color:var(--muted); font-weight:600; margin-top:4px; }
-        .sig-line { border-top:1.5px solid var(--ink); width:190px; margin-top:6px; padding-top:5px; font-size:11px; color:var(--muted); text-align:center; }
+
+        /* E-signature */
+        .sig-wrap { text-align:center; }
+        .esign { font-family:'Dancing Script',cursive; font-size:40px; font-weight:700; color:#1e3a8a; line-height:1; }
+        .sig-line { border-top:1.5px solid var(--ink); width:210px; margin:2px auto 0; }
+        .sig-name { font-size:13px; font-weight:800; margin-top:6px; }
+        .sig-role { font-size:11px; color:var(--muted); margin-top:1px; }
 
         .watermark {
-            position:absolute; top:44%; left:50%; transform:translate(-50%,-50%) rotate(-24deg);
-            font-size:120px; font-weight:900; color:rgba(15,23,42,.035); letter-spacing:2px; pointer-events:none; white-space:nowrap;
+            position:absolute; top:46%; left:50%; transform:translate(-50%,-50%) rotate(-18deg);
+            width:78%; opacity:.05; pointer-events:none; z-index:0;
         }
+        .watermark img { width:100%; }
+        .sheet > *:not(.watermark) { position:relative; z-index:1; }
 
         @media print {
             @page { size:A4; margin:0; }
@@ -102,7 +119,9 @@
     </div>
 
     <div class="sheet">
-        <div class="watermark">INSTALLS BANK</div>
+        <div class="watermark">
+            <img src="{{ $logoUrl }}" alt="" onerror="this.parentNode.style.display='none'">
+        </div>
 
         {{-- Header --}}
         <div class="rp-head">
@@ -185,13 +204,38 @@
             </table>
         </div>
 
-        {{-- Footer with stamp --}}
+        {{-- Commercial terms --}}
+        @if($meta['rate'] || $meta['payment_terms'] || $meta['tracking_code'])
+        <div class="section">
+            <h2><span class="dot" style="background:#d97706;"></span>Commercial Terms</h2>
+            <div class="terms">
+                @if($meta['rate'])
+                <div class="term"><div class="tl">Offered Rate</div><div class="tv">${{ $meta['rate'] }} <span style="font-size:12px;font-weight:600;color:var(--muted);">/ day</span></div></div>
+                @endif
+                @if($meta['payment_terms'])
+                <div class="term"><div class="tl">Payment Terms</div><div class="tv">{{ $meta['payment_terms'] }}</div></div>
+                @endif
+                @if($meta['tracking_code'])
+                <div class="term"><div class="tl">Publisher Tracking Code</div><div class="tv" style="font-family:monospace;">{{ $meta['tracking_code'] }}</div></div>
+                @endif
+            </div>
+        </div>
+        @endif
+
+        {{-- Centered note --}}
+        <div class="note-centered">
+            This report summarizes click activity recorded by Installs Bank's tracking system for the stated
+            period and source. Figures represent {{ $meta['title'] }} data and are provided for testing and
+            verification purposes.
+        </div>
+
+        {{-- Signature + stamp --}}
         <div class="rp-foot">
-            <div class="note">
-                This report summarizes click activity recorded by Installs Bank's tracking system for the stated
-                period and source. Figures represent {{ $meta['title'] }} data and are provided for testing and
-                verification purposes.
-                <div class="sig-line">Authorized Signature</div>
+            <div class="sig-wrap">
+                <div class="esign">Williams Smith</div>
+                <div class="sig-line"></div>
+                <div class="sig-name">Williams Smith</div>
+                <div class="sig-role">Installs Bank — Chief Executive Officer</div>
             </div>
             <div class="stamp-wrap">
                 <img src="{{ $stampUrl }}" alt="Official Stamp" onerror="this.style.display='none';document.getElementById('stampLbl').style.display='none';">

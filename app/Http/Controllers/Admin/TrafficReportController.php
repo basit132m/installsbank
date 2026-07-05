@@ -117,12 +117,20 @@ class TrafficReportController extends Controller
             ->sortByDesc('value')->values()->all();
 
         $m = $p['meta'] ?? [];
+
+        // Rate offered per day — keep only digits and a decimal point
+        $rateRaw = trim((string) ($m['rate'] ?? ''));
+        $rate    = $rateRaw !== '' ? preg_replace('/[^0-9.]/', '', $rateRaw) : '';
+
         $meta = [
-            'title'        => Str::limit((string) ($m['title'] ?? 'Traffic Testing Report'), 150, ''),
-            'prepared_for' => $m['prepared_for'] ? Str::limit((string) $m['prepared_for'], 150, '') : null,
-            'date_from'    => (string) ($m['date_from'] ?? ''),
-            'date_to'      => (string) ($m['date_to'] ?? ''),
-            'target'       => (string) ($m['target'] ?? 'All Traffic'),
+            'title'         => Str::limit((string) ($m['title'] ?? 'Traffic Testing Report'), 150, ''),
+            'prepared_for'  => $m['prepared_for'] ? Str::limit((string) $m['prepared_for'], 150, '') : null,
+            'date_from'     => (string) ($m['date_from'] ?? ''),
+            'date_to'       => (string) ($m['date_to'] ?? ''),
+            'target'        => Str::limit((string) ($m['target'] ?? 'All Traffic'), 120, '') ?: 'All Traffic',
+            'rate'          => ($rate !== '' && (float) $rate > 0) ? $rate : null,
+            'payment_terms' => $m['payment_terms'] ? Str::limit((string) $m['payment_terms'], 60, '') : null,
+            'tracking_code' => $m['tracking_code'] ? Str::limit(preg_replace('/[^A-Za-z0-9\-_]/', '', (string) $m['tracking_code']), 60, '') : null,
         ];
 
         $reportNo    = 'IB-' . now()->format('Ymd') . '-' . strtoupper(Str::random(4));

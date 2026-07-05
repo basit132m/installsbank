@@ -17,6 +17,42 @@
         Edit any number below. Change the <strong>Total Clicks</strong> and the OS &amp; Geo breakdowns rescale automatically. Edit a single OS or country and the other breakdown re-balances so everything always sums to the total.
     </div>
 
+    {{-- Report details (shown on the PDF) --}}
+    <div class="card" style="margin-bottom:20px;">
+        <div class="card-title mb-4">Report Details</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+            <div class="form-group" style="margin:0;">
+                <label class="form-label">Traffic Source Name</label>
+                <input type="text" id="sourceInput" class="form-control" value="{{ $meta['target'] }}" placeholder="e.g. Full Oyun (Reseller)">
+                <div style="font-size:11px;color:#9ca3af;margin-top:4px;">Editable — this text appears as "Traffic Source" on the report.</div>
+            </div>
+            <div class="form-group" style="margin:0;">
+                <label class="form-label">Publisher Tracking Code (optional)</label>
+                <input type="text" id="codeInput" class="form-control" value="" placeholder="e.g. OMT2703TAZ">
+            </div>
+            <div class="form-group" style="margin:0;">
+                <label class="form-label">Offered Rate / Day (optional)</label>
+                <div style="display:flex;align-items:center;gap:6px;">
+                    <span style="font-size:16px;font-weight:700;color:#6b7280;">$</span>
+                    <input type="number" id="rateInput" class="form-control" step="0.0001" min="0" value="" placeholder="0.00">
+                    <span style="font-size:13px;color:#6b7280;white-space:nowrap;">/ day</span>
+                </div>
+            </div>
+            <div class="form-group" style="margin:0;">
+                <label class="form-label">Payment Terms (optional)</label>
+                <div style="display:flex;gap:8px;">
+                    <select id="payTermSelect" class="form-control form-select" onchange="toggleCustomDays()">
+                        <option value="">— None —</option>
+                        <option value="7 Days Advance">7 Days Advance</option>
+                        <option value="15 Days Advance">15 Days Advance</option>
+                        <option value="custom">Custom days advance…</option>
+                    </select>
+                    <input type="number" id="customDays" class="form-control" min="1" placeholder="Days" style="display:none;max-width:110px;">
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;" class="reportGrid">
 
         {{-- Total --}}
@@ -166,8 +202,28 @@ document.getElementById('totalInput').addEventListener('change', e => {
     render();
 });
 
+function toggleCustomDays() {
+    const isCustom = document.getElementById('payTermSelect').value === 'custom';
+    document.getElementById('customDays').style.display = isCustom ? '' : 'none';
+}
+
+function buildPaymentTerms() {
+    const sel = document.getElementById('payTermSelect').value;
+    if (sel === 'custom') {
+        const d = parseInt(document.getElementById('customDays').value) || 0;
+        return d > 0 ? (d + ' Days Advance') : '';
+    }
+    return sel;
+}
+
 document.getElementById('genForm').addEventListener('submit', () => {
-    document.getElementById('payload').value = JSON.stringify({ total, os, geo, meta: META });
+    const meta = Object.assign({}, META, {
+        target:        (document.getElementById('sourceInput').value || '').trim() || META.target,
+        tracking_code: (document.getElementById('codeInput').value || '').trim(),
+        rate:          (document.getElementById('rateInput').value || '').trim(),
+        payment_terms: buildPaymentTerms(),
+    });
+    document.getElementById('payload').value = JSON.stringify({ total, os, geo, meta });
 });
 
 function escapeHtml(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
