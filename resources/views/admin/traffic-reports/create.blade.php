@@ -21,14 +21,22 @@
         <form method="POST" action="{{ route('admin.traffic-reports.fetch') }}">
             @csrf
 
+            {{-- Quick date presets --}}
+            <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;">
+                @foreach(['today'=>'Today','yesterday'=>'Yesterday','7days'=>'Last 7 Days','30days'=>'Last 30 Days','this_month'=>'This Month','last_month'=>'Last Month'] as $key => $lbl)
+                    <button type="button" class="preset-btn" data-preset="{{ $key }}"
+                            style="padding:6px 14px;border-radius:8px;font-size:12px;font-weight:700;border:1.5px solid #e5e7eb;background:#fff;color:#6b7280;cursor:pointer;">{{ $lbl }}</button>
+                @endforeach
+            </div>
+
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;">
                 <div class="form-group" style="margin:0;">
                     <label class="form-label">From Date *</label>
-                    <input type="date" name="date_from" class="form-control" value="{{ old('date_from', now()->subDays(6)->toDateString()) }}" required>
+                    <input type="date" id="dateFrom" name="date_from" class="form-control" value="{{ old('date_from', now()->subDays(6)->toDateString()) }}" required>
                 </div>
                 <div class="form-group" style="margin:0;">
                     <label class="form-label">To Date *</label>
-                    <input type="date" name="date_to" class="form-control" value="{{ old('date_to', now()->toDateString()) }}" required>
+                    <input type="date" id="dateTo" name="date_to" class="form-control" value="{{ old('date_to', now()->toDateString()) }}" required>
                 </div>
             </div>
 
@@ -76,4 +84,42 @@
         </form>
     </div>
 </div>
+
+<script>
+(function () {
+    const fromEl = document.getElementById('dateFrom');
+    const toEl   = document.getElementById('dateTo');
+    const iso    = d => d.toISOString().slice(0, 10);
+
+    function range(preset) {
+        const now = new Date();
+        const t   = new Date(now.getFullYear(), now.getMonth(), now.getDate()); // today, midnight local
+        let from = new Date(t), to = new Date(t);
+        switch (preset) {
+            case 'today':      break;
+            case 'yesterday':  from.setDate(t.getDate() - 1); to.setDate(t.getDate() - 1); break;
+            case '7days':      from.setDate(t.getDate() - 6); break;
+            case '30days':     from.setDate(t.getDate() - 29); break;
+            case 'this_month': from = new Date(t.getFullYear(), t.getMonth(), 1); break;
+            case 'last_month':
+                from = new Date(t.getFullYear(), t.getMonth() - 1, 1);
+                to   = new Date(t.getFullYear(), t.getMonth(), 0);
+                break;
+        }
+        return [iso(from), iso(to)];
+    }
+
+    document.querySelectorAll('.preset-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const [f, tt] = range(btn.dataset.preset);
+            fromEl.value = f;
+            toEl.value   = tt;
+            document.querySelectorAll('.preset-btn').forEach(b => {
+                b.style.background = '#fff'; b.style.color = '#6b7280'; b.style.borderColor = '#e5e7eb';
+            });
+            btn.style.background = '#01BF63'; btn.style.color = '#fff'; btn.style.borderColor = '#01BF63';
+        });
+    });
+})();
+</script>
 @endsection
