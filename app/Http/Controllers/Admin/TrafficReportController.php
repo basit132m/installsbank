@@ -124,6 +124,16 @@ class TrafficReportController extends Controller
             ->filter(fn($r) => $r['value'] > 0)
             ->sortByDesc('value')->values()->all();
 
+        // Keep the "Other" bucket at the very end of each breakdown
+        $moveOtherLast = function (array $rows): array {
+            $c      = collect($rows);
+            $others = $c->filter(fn($r) => strtolower(trim($r['label'])) === 'other')->values();
+            $rest   = $c->reject(fn($r) => strtolower(trim($r['label'])) === 'other')->values();
+            return $rest->concat($others)->values()->all();
+        };
+        $os  = $moveOtherLast($os);
+        $geo = $moveOtherLast($geo);
+
         $m = $p['meta'] ?? [];
 
         // Rate offered per day — keep only digits and a decimal point
