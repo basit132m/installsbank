@@ -156,6 +156,21 @@
             <div class="r">Period total across all sources<br>{{ !empty($meta['period_label']) ? $meta['period_label'] : $days.' day(s) reporting window' }}</div>
         </div>
 
+        @if(!empty($split))
+        <div class="section">
+            <h2><span class="dot" style="background:#7c3aed;"></span>24-Hour Split</h2>
+            <div class="terms">
+                @foreach($split as $s)
+                @php $sp = $total > 0 ? round($s['value'] / $total * 100, 1) : 0; @endphp
+                <div class="term">
+                    <div class="tl">{{ $s['label'] }}</div>
+                    <div class="tv">{{ number_format($s['value']) }} <span style="font-size:12px;font-weight:600;color:var(--muted);">clicks · {{ $sp }}%</span></div>
+                </div>
+                @endforeach
+            </div>
+        </div>
+        @endif
+
         <div class="section">
             <h2><span class="dot" style="background:#4f46e5;"></span>Clicks by Operating System</h2>
             <table class="data">

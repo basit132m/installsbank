@@ -9,15 +9,16 @@ class TrafficReport extends Model
     protected $fillable = [
         'generated_by', 'report_no', 'title', 'prepared_for', 'target',
         'date_from', 'date_to', 'period_label', 'click_type', 'total',
-        'os_data', 'geo_data', 'rate', 'payment_terms', 'tracking_code',
+        'os_data', 'geo_data', 'split_data', 'rate', 'payment_terms', 'tracking_code',
     ];
 
     protected $casts = [
-        'date_from' => 'date',
-        'date_to'   => 'date',
-        'os_data'   => 'array',
-        'geo_data'  => 'array',
-        'total'     => 'integer',
+        'date_from'  => 'date',
+        'date_to'    => 'date',
+        'os_data'    => 'array',
+        'geo_data'   => 'array',
+        'split_data' => 'array',
+        'total'      => 'integer',
     ];
 
     public function generatedBy()

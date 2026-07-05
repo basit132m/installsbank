@@ -99,6 +99,20 @@ class TrafficReportController extends Controller
         }
         if ($otherGeo > 0) $geo[] = ['code' => '', 'label' => 'Other', 'value' => $otherGeo];
 
+        // 24-hour split — only for the 48-hour window: break the total into the
+        // most-recent 24h and the previous 24h so they can be shown separately.
+        $split = [];
+        if ($mode === '48h') {
+            $splitQuery = fn($start, $end) => Click::whereBetween('created_at', [$start, $end])
+                ->when($data['click_type'] === 'valid', fn($q) => $q->where('is_counted', true))
+                ->when(!empty($data['user_id']), fn($q) => $q->where('user_id', $data['user_id']))
+                ->count();
+            $split = [
+                ['label' => 'Last 24 Hours',     'value' => (int) $splitQuery(now()->subHours(24), now())],
+                ['label' => 'Previous 24 Hours', 'value' => (int) $splitQuery(now()->subHours(48), now()->subHours(24))],
+            ];
+        }
+
         $targetName = 'All Traffic';
         if (!empty($data['user_id'])) {
             $u = User::find($data['user_id']);
@@ -115,7 +129,7 @@ class TrafficReportController extends Controller
             'target'       => $targetName,
         ];
 
-        return view('admin.traffic-reports.preview', compact('total', 'os', 'geo', 'meta'));
+        return view('admin.traffic-reports.preview', compact('total', 'os', 'geo', 'split', 'meta'));
     }
 
     /** Step 3 — render the print-ready report from the (possibly edited) values. */
@@ -143,6 +157,10 @@ class TrafficReportController extends Controller
             ])
             ->filter(fn($r) => $r['value'] > 0)
             ->sortByDesc('value')->values()->all();
+
+        $split = collect($p['split'] ?? [])
+            ->map(fn($r) => ['label' => (string) ($r['label'] ?? '—'), 'value' => max(0, (int) ($r['value'] ?? 0))])
+            ->values()->all();
 
         // Keep the "Other" bucket at the very end of each breakdown
         $moveOtherLast = function (array $rows): array {
@@ -188,6 +206,7 @@ class TrafficReportController extends Controller
             'total'         => $total,
             'os_data'       => $os,
             'geo_data'      => $geo,
+            'split_data'    => $split ?: null,
             'rate'          => $meta['rate'],
             'payment_terms' => $meta['payment_terms'],
             'tracking_code' => $meta['tracking_code'],
@@ -217,6 +236,7 @@ class TrafficReportController extends Controller
         $total = (int) $report->total;
         $os    = $report->os_data ?: [];
         $geo   = $report->geo_data ?: [];
+        $split = $report->split_data ?: [];
 
         $meta = [
             'title'         => $report->title,
@@ -236,7 +256,7 @@ class TrafficReportController extends Controller
         $stampUrl    = 'https://installsbank.com/images/report-stamp.png';
 
         return view('admin.traffic-reports.report', compact(
-            'total', 'os', 'geo', 'meta', 'reportNo', 'generatedAt', 'logoUrl', 'stampUrl'
+            'total', 'os', 'geo', 'split', 'meta', 'reportNo', 'generatedAt', 'logoUrl', 'stampUrl'
         ));
     }
 }

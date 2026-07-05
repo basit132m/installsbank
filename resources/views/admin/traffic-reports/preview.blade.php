@@ -65,6 +65,27 @@
             <div style="font-size:12px;color:#9ca3af;max-width:280px;">Original fetched total: <strong>{{ number_format($total) }}</strong>. Changing this scales both breakdowns proportionally.</div>
         </div>
 
+        {{-- 24-hour split (48h reports only) --}}
+        @if(!empty($split))
+        <div class="card" style="grid-column:1 / -1;">
+            <div class="card-title mb-1">24-Hour Split</div>
+            <div style="font-size:12px;color:#9ca3af;margin-bottom:14px;">The two 24-hour halves of this 48-hour window, shown separately on the report.</div>
+            <table style="width:100%;">
+                <thead><tr>
+                    <th style="text-align:left;">Window</th>
+                    <th style="text-align:right;width:140px;">Clicks</th>
+                    <th style="text-align:right;width:60px;">%</th>
+                </tr></thead>
+                <tbody id="splitBody"></tbody>
+                <tfoot><tr style="border-top:2px solid #e5e7eb;">
+                    <td style="padding:10px 0;font-weight:800;">Total</td>
+                    <td style="text-align:right;font-weight:800;" id="splitSum">0</td>
+                    <td style="text-align:right;font-weight:700;color:#9ca3af;">100%</td>
+                </tr></tfoot>
+            </table>
+        </div>
+        @endif
+
         {{-- OS --}}
         <div class="card">
             <div class="card-title mb-4">Clicks by Operating System</div>
@@ -122,9 +143,11 @@
 @push('scripts')
 <script>
 const META = @json($meta);
-let total  = {{ $total }};
-let os  = @json($os);   // [{label, value}]
-let geo = @json($geo);  // [{code, label, value}]
+let total = {{ $total }};
+let os    = @json($os);    // [{label, value}]
+let geo   = @json($geo);   // [{code, label, value}]
+let split = @json($split ?? []); // [{label, value}] — 48h reports only
+const cats = { os, geo, split };
 
 // Largest-remainder proportional scaling so a category sums exactly to target
 function scaleCategory(arr, target) {
@@ -156,6 +179,18 @@ function pct(v) { return total > 0 ? (v / total * 100).toFixed(1) : '0.0'; }
 function render() {
     document.getElementById('totalInput').value = total;
 
+    const splitBody = document.getElementById('splitBody');
+    if (splitBody) {
+        splitBody.innerHTML = split.map((r, i) => `
+            <tr>
+                <td style="padding:8px 0;font-weight:600;">${escapeHtml(r.label)}</td>
+                <td style="text-align:right;"><input type="number" min="0" value="${r.value}" data-cat="split" data-i="${i}"
+                    style="width:130px;text-align:right;border:1px solid #e5e7eb;border-radius:6px;padding:5px 8px;font-weight:700;"></td>
+                <td style="text-align:right;color:#6b7280;">${pct(r.value)}%</td>
+            </tr>`).join('');
+        document.getElementById('splitSum').textContent = fmt(split.reduce((a, b) => a + b.value, 0));
+    }
+
     const osBody = document.getElementById('osBody');
     osBody.innerHTML = os.map((r, i) => `
         <tr>
@@ -184,12 +219,15 @@ function render() {
 }
 
 function bindInputs() {
-    document.querySelectorAll('#osBody input, #geoBody input').forEach(inp => {
+    document.querySelectorAll('#osBody input, #geoBody input, #splitBody input').forEach(inp => {
         inp.addEventListener('change', e => {
             const cat = e.target.dataset.cat, i = +e.target.dataset.i;
-            const val = Math.max(0, parseInt(e.target.value) || 0);
-            if (cat === 'os')  { os[i].value = val;  total = os.reduce((a, b) => a + b.value, 0);  scaleCategory(geo, total); }
-            else               { geo[i].value = val; total = geo.reduce((a, b) => a + b.value, 0); scaleCategory(os, total); }
+            cats[cat][i].value = Math.max(0, parseInt(e.target.value) || 0);
+            total = cats[cat].reduce((a, b) => a + b.value, 0);
+            // Rescale the other categories so everything stays equal to the total
+            ['os', 'geo', 'split'].forEach(name => {
+                if (name !== cat && cats[name] && cats[name].length) scaleCategory(cats[name], total);
+            });
             render();
         });
     });
@@ -199,6 +237,7 @@ document.getElementById('totalInput').addEventListener('change', e => {
     total = Math.max(0, parseInt(e.target.value) || 0);
     scaleCategory(os, total);
     scaleCategory(geo, total);
+    if (split.length) scaleCategory(split, total);
     render();
 });
 
@@ -223,7 +262,7 @@ document.getElementById('genForm').addEventListener('submit', () => {
         rate:          (document.getElementById('rateInput').value || '').trim(),
         payment_terms: buildPaymentTerms(),
     });
-    document.getElementById('payload').value = JSON.stringify({ total, os, geo, meta });
+    document.getElementById('payload').value = JSON.stringify({ total, os, geo, split, meta });
 });
 
 function escapeHtml(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
