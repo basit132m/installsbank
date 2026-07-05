@@ -53,9 +53,14 @@
         .hero .big { font-size:52px; font-weight:900; letter-spacing:-2px; line-height:1; margin-top:6px; }
         .hero .r { text-align:right; font-size:12px; color:#94a3b8; line-height:1.8; }
 
-        .section { margin-top:30px; }
-        .section h2 { font-size:15px; font-weight:800; display:flex; align-items:center; gap:8px; margin-bottom:14px; }
+        .section { margin-top:26px; }
+        .section h2 { font-size:15px; font-weight:800; display:flex; align-items:center; gap:8px; margin-bottom:12px; }
         .section h2 .dot { width:10px; height:10px; border-radius:3px; }
+
+        /* OS + Geo side by side to keep the report compact */
+        .breakdowns { display:grid; grid-template-columns:1fr 1fr; gap:24px; margin-top:26px; align-items:start; }
+        .breakdowns .section { margin-top:0; }
+        @media (max-width:700px) { .breakdowns { grid-template-columns:1fr; } }
 
         table.data { width:100%; border-collapse:collapse; }
         table.data th { text-align:left; font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.05em; color:var(--muted); padding:8px 10px; border-bottom:1.5px solid var(--line); }
@@ -95,11 +100,16 @@
         .watermark img { width:100%; }
         .sheet > *:not(.watermark) { position:relative; z-index:1; }
 
+        /* Keep blocks from splitting / orphaning across pages */
+        .hero, .terms .term, .section h2, .rp-closing { break-inside:avoid; page-break-inside:avoid; }
+        table.data tr { break-inside:avoid; page-break-inside:avoid; }
+        .rp-closing { margin-top:26px; }
+
         @media print {
             @page { size:A4; margin:0; }
             body { background:#fff; }
             .toolbar { display:none; }
-            .sheet { width:auto; min-height:auto; margin:0; box-shadow:none; padding:16mm 15mm; }
+            .sheet { width:auto; min-height:auto; margin:0; box-shadow:none; padding:14mm 15mm; }
         }
     </style>
 </head>
@@ -160,6 +170,7 @@
             </div>
         </div>
 
+        <div class="breakdowns">
         {{-- OS breakdown --}}
         @php $osColors = ['#4f46e5','#01BF63','#0891b2','#d97706','#ef4444','#7c3aed','#ec4899','#14b8a6','#64748b']; @endphp
         <div class="section">
@@ -203,10 +214,12 @@
                 <tfoot><tr><td>Total</td><td class="num">{{ number_format(collect($geo)->sum('value')) }}</td><td class="pct">100%</td></tr></tfoot>
             </table>
         </div>
+        </div> {{-- /breakdowns --}}
 
+        <div class="rp-closing">
         {{-- Commercial terms --}}
         @if($meta['rate'] || $meta['payment_terms'] || $meta['tracking_code'])
-        <div class="section">
+        <div class="section" style="margin-top:26px;">
             <h2><span class="dot" style="background:#d97706;"></span>Commercial Terms</h2>
             <div class="terms">
                 @if($meta['rate'])
@@ -242,6 +255,7 @@
                 <div class="lbl" id="stampLbl">Official Stamp</div>
             </div>
         </div>
+        </div> {{-- /rp-closing --}}
     </div>
 </body>
 </html>
