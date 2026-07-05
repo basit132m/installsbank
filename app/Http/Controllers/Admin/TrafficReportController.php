@@ -33,7 +33,7 @@ class TrafficReportController extends Controller
     public function fetch(Request $request)
     {
         $data = $request->validate([
-            'range_mode'   => 'nullable|in:custom,24h,48h',
+            'range_mode'   => 'nullable|in:custom,24h,48h,24h_prev',
             'date_from'    => 'required|date',
             'date_to'      => 'required|date|after_or_equal:date_from',
             'user_id'      => 'nullable|exists:users,id',
@@ -49,6 +49,11 @@ class TrafficReportController extends Controller
             $from = now()->subHours(24);
             $to   = now();
             $periodLabel = 'Last 24 Hours';
+        } elseif ($mode === '24h_prev') {
+            // The 24-hour block before the most recent 24 hours (24–48h ago)
+            $from = now()->subHours(48);
+            $to   = now()->subHours(24);
+            $periodLabel = 'Previous 24 Hours';
         } elseif ($mode === '48h') {
             $from = now()->subHours(48);
             $to   = now();

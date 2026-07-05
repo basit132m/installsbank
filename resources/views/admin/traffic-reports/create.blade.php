@@ -27,11 +27,12 @@
 
             {{-- Rolling-window presets --}}
             <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;">
-                @foreach(['24h'=>'Last 24 Hours','48h'=>'Last 48 Hours'] as $key => $lbl)
-                    <button type="button" class="preset-btn roll-btn" data-preset="{{ $key }}"
+                @foreach(['24h'=>'Last 24 Hours','24h_prev'=>'Previous 24 Hours','48h'=>'Last 48 Hours'] as $key => $lbl)
+                    <button type="button" class="preset-btn roll-btn" data-preset="{{ $key }}" data-rlabel="{{ $lbl }}"
                             style="padding:6px 14px;border-radius:8px;font-size:12px;font-weight:700;border:1.5px solid #ddd6fe;background:#f5f3ff;color:#6d28d9;cursor:pointer;">⏱ {{ $lbl }}</button>
                 @endforeach
             </div>
+            <div style="font-size:11px;color:#9ca3af;margin-bottom:8px;">Generate the last 24h and the previous 24h as two separate reports if you want to split a 48-hour span.</div>
 
             {{-- Quick date presets --}}
             <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;">
@@ -143,12 +144,12 @@
             btn.style.color = '#fff';
             btn.style.borderColor = btn.style.background;
 
-            if (preset === '24h' || preset === '48h') {
+            if (btn.classList.contains('roll-btn')) {
                 // Rolling window — dates are just placeholders (today) so validation passes
                 modeEl.value = preset;
                 const t = iso(new Date());
                 fromEl.value = t; toEl.value = t;
-                document.getElementById('rollLabel').textContent = preset === '24h' ? 'Last 24 Hours' : 'Last 48 Hours';
+                document.getElementById('rollLabel').textContent = btn.dataset.rlabel || 'rolling';
                 rollNote.style.display = 'block';
             } else {
                 modeEl.value = 'custom';
