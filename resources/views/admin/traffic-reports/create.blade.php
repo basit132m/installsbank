@@ -4,6 +4,8 @@
 
 @section('content')
 <div style="max-width:720px;">
+    <a href="{{ route('admin.traffic-reports.index') }}" class="btn btn-ghost btn-sm" style="margin-bottom:16px;">← Saved Reports</a>
+
 
     <div style="background:linear-gradient(135deg,#0f172a,#1e293b);border-radius:16px;padding:24px 28px;margin-bottom:24px;">
         <div style="display:flex;align-items:center;gap:14px;">

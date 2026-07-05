@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Click;
+use App\Models\TrafficReport;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -11,6 +12,13 @@ use Illuminate\Support\Str;
 
 class TrafficReportController extends Controller
 {
+    /** Saved reports list. */
+    public function index()
+    {
+        $reports = TrafficReport::with('generatedBy')->latest()->paginate(20);
+        return view('admin.traffic-reports.index', compact('reports'));
+    }
+
     /** Step 1 — the selection form. */
     public function create()
     {
@@ -133,13 +141,66 @@ class TrafficReportController extends Controller
             'tracking_code' => $m['tracking_code'] ? Str::limit(preg_replace('/[^A-Za-z0-9\-_]/', '', (string) $m['tracking_code']), 60, '') : null,
         ];
 
-        $reportNo    = 'IB-' . now()->format('Ymd') . '-' . strtoupper(Str::random(4));
-        $generatedAt = now()->format('M d, Y H:i');
+        $reportNo = 'IB-' . now()->format('Ymd') . '-' . strtoupper(Str::random(4));
 
-        // Stamp / logo — served from the live images path; the stamp is optional and
-        // hides itself if the admin hasn't uploaded it yet.
-        $logoUrl  = 'https://installsbank.com/images/installs-bank.webp';
-        $stampUrl = 'https://installsbank.com/images/report-stamp.png';
+        // Persist so every generated report is saved and re-openable
+        $report = TrafficReport::create([
+            'generated_by'  => auth()->id(),
+            'report_no'     => $reportNo,
+            'title'         => $meta['title'],
+            'prepared_for'  => $meta['prepared_for'],
+            'target'        => $meta['target'],
+            'date_from'     => $meta['date_from'] ?: now()->toDateString(),
+            'date_to'       => $meta['date_to'] ?: now()->toDateString(),
+            'click_type'    => in_array(($m['click_type'] ?? 'valid'), ['valid', 'all']) ? $m['click_type'] : 'valid',
+            'total'         => $total,
+            'os_data'       => $os,
+            'geo_data'      => $geo,
+            'rate'          => $meta['rate'],
+            'payment_terms' => $meta['payment_terms'],
+            'tracking_code' => $meta['tracking_code'],
+        ]);
+
+        return $this->renderReport($report);
+    }
+
+    /** Re-open a saved report. */
+    public function show(TrafficReport $trafficReport)
+    {
+        return $this->renderReport($trafficReport);
+    }
+
+    /** Delete a saved report. */
+    public function destroy(TrafficReport $trafficReport)
+    {
+        $no = $trafficReport->report_no;
+        $trafficReport->delete();
+        return redirect()->route('admin.traffic-reports.index')
+            ->with('success', "Report {$no} deleted.");
+    }
+
+    /** Render the print-ready report from a saved record. */
+    private function renderReport(TrafficReport $report)
+    {
+        $total = (int) $report->total;
+        $os    = $report->os_data ?: [];
+        $geo   = $report->geo_data ?: [];
+
+        $meta = [
+            'title'         => $report->title,
+            'prepared_for'  => $report->prepared_for,
+            'date_from'     => $report->date_from->toDateString(),
+            'date_to'       => $report->date_to->toDateString(),
+            'target'        => $report->target,
+            'rate'          => $report->rate,
+            'payment_terms' => $report->payment_terms,
+            'tracking_code' => $report->tracking_code,
+        ];
+
+        $reportNo    = $report->report_no;
+        $generatedAt = $report->created_at->format('M d, Y H:i');
+        $logoUrl     = 'https://installsbank.com/images/installs-bank.webp';
+        $stampUrl    = 'https://installsbank.com/images/report-stamp.png';
 
         return view('admin.traffic-reports.report', compact(
             'total', 'os', 'geo', 'meta', 'reportNo', 'generatedAt', 'logoUrl', 'stampUrl'

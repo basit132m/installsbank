@@ -117,9 +117,12 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin,manager'
 
     // Traffic testing reports (PDF)
     Route::prefix('traffic-reports')->name('traffic-reports.')->group(function () {
-        Route::get('/', [Admin\TrafficReportController::class, 'create'])->name('create');
+        Route::get('/', [Admin\TrafficReportController::class, 'index'])->name('index');
+        Route::get('/create', [Admin\TrafficReportController::class, 'create'])->name('create');
         Route::post('/fetch', [Admin\TrafficReportController::class, 'fetch'])->name('fetch');
         Route::post('/generate', [Admin\TrafficReportController::class, 'generate'])->name('generate');
+        Route::get('/{trafficReport}', [Admin\TrafficReportController::class, 'show'])->name('show');
+        Route::delete('/{trafficReport}', [Admin\TrafficReportController::class, 'destroy'])->name('destroy');
     });
 
     // Contracts
