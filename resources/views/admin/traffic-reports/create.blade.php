@@ -23,12 +23,26 @@
         <form method="POST" action="{{ route('admin.traffic-reports.fetch') }}">
             @csrf
 
+            <input type="hidden" name="range_mode" id="rangeMode" value="custom">
+
+            {{-- Rolling-window presets --}}
+            <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;">
+                @foreach(['24h'=>'Last 24 Hours','48h'=>'Last 48 Hours'] as $key => $lbl)
+                    <button type="button" class="preset-btn roll-btn" data-preset="{{ $key }}"
+                            style="padding:6px 14px;border-radius:8px;font-size:12px;font-weight:700;border:1.5px solid #ddd6fe;background:#f5f3ff;color:#6d28d9;cursor:pointer;">⏱ {{ $lbl }}</button>
+                @endforeach
+            </div>
+
             {{-- Quick date presets --}}
             <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;">
                 @foreach(['today'=>'Today','yesterday'=>'Yesterday','7days'=>'Last 7 Days','30days'=>'Last 30 Days','this_month'=>'This Month','last_month'=>'Last Month'] as $key => $lbl)
                     <button type="button" class="preset-btn" data-preset="{{ $key }}"
                             style="padding:6px 14px;border-radius:8px;font-size:12px;font-weight:700;border:1.5px solid #e5e7eb;background:#fff;color:#6b7280;cursor:pointer;">{{ $lbl }}</button>
                 @endforeach
+            </div>
+
+            <div id="rollNote" style="display:none;background:#f5f3ff;border:1.5px solid #ddd6fe;border-radius:8px;padding:10px 14px;margin-bottom:12px;font-size:12px;color:#6d28d9;">
+                Using a <strong id="rollLabel"></strong> rolling window (based on the exact current time). The date fields below are ignored.
             </div>
 
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;">
@@ -111,17 +125,46 @@
         return [iso(from), iso(to)];
     }
 
+    const modeEl  = document.getElementById('rangeMode');
+    const rollNote = document.getElementById('rollNote');
+
+    function clearActive() {
+        document.querySelectorAll('.preset-btn').forEach(b => {
+            if (b.classList.contains('roll-btn')) { b.style.background = '#f5f3ff'; b.style.color = '#6d28d9'; b.style.borderColor = '#ddd6fe'; }
+            else { b.style.background = '#fff'; b.style.color = '#6b7280'; b.style.borderColor = '#e5e7eb'; }
+        });
+    }
+
     document.querySelectorAll('.preset-btn').forEach(btn => {
         btn.addEventListener('click', () => {
-            const [f, tt] = range(btn.dataset.preset);
-            fromEl.value = f;
-            toEl.value   = tt;
-            document.querySelectorAll('.preset-btn').forEach(b => {
-                b.style.background = '#fff'; b.style.color = '#6b7280'; b.style.borderColor = '#e5e7eb';
-            });
-            btn.style.background = '#01BF63'; btn.style.color = '#fff'; btn.style.borderColor = '#01BF63';
+            const preset = btn.dataset.preset;
+            clearActive();
+            btn.style.background = btn.classList.contains('roll-btn') ? '#7c3aed' : '#01BF63';
+            btn.style.color = '#fff';
+            btn.style.borderColor = btn.style.background;
+
+            if (preset === '24h' || preset === '48h') {
+                // Rolling window — dates are just placeholders (today) so validation passes
+                modeEl.value = preset;
+                const t = iso(new Date());
+                fromEl.value = t; toEl.value = t;
+                document.getElementById('rollLabel').textContent = preset === '24h' ? 'Last 24 Hours' : 'Last 48 Hours';
+                rollNote.style.display = 'block';
+            } else {
+                modeEl.value = 'custom';
+                rollNote.style.display = 'none';
+                const [f, tt] = range(preset);
+                fromEl.value = f; toEl.value = tt;
+            }
         });
     });
+
+    // Editing dates manually switches back to a custom calendar range
+    [fromEl, toEl].forEach(el => el.addEventListener('input', () => {
+        modeEl.value = 'custom';
+        rollNote.style.display = 'none';
+        clearActive();
+    }));
 })();
 </script>
 @endsection

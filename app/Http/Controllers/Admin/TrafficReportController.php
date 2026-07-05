@@ -33,6 +33,7 @@ class TrafficReportController extends Controller
     public function fetch(Request $request)
     {
         $data = $request->validate([
+            'range_mode'   => 'nullable|in:custom,24h,48h',
             'date_from'    => 'required|date',
             'date_to'      => 'required|date|after_or_equal:date_from',
             'user_id'      => 'nullable|exists:users,id',
@@ -41,8 +42,21 @@ class TrafficReportController extends Controller
             'prepared_for' => 'nullable|string|max:150',
         ]);
 
-        $from = Carbon::parse($data['date_from'])->startOfDay();
-        $to   = Carbon::parse($data['date_to'])->endOfDay();
+        // Rolling hour windows take precedence over the calendar dates
+        $mode        = $data['range_mode'] ?? 'custom';
+        $periodLabel = null;
+        if ($mode === '24h') {
+            $from = now()->subHours(24);
+            $to   = now();
+            $periodLabel = 'Last 24 Hours';
+        } elseif ($mode === '48h') {
+            $from = now()->subHours(48);
+            $to   = now();
+            $periodLabel = 'Last 48 Hours';
+        } else {
+            $from = Carbon::parse($data['date_from'])->startOfDay();
+            $to   = Carbon::parse($data['date_to'])->endOfDay();
+        }
 
         $base = Click::whereBetween('created_at', [$from, $to]);
         if ($data['click_type'] === 'valid') {
@@ -91,6 +105,7 @@ class TrafficReportController extends Controller
             'prepared_for' => $data['prepared_for'] ?? null,
             'date_from'    => $from->toDateString(),
             'date_to'      => $to->toDateString(),
+            'period_label' => $periodLabel,
             'click_type'   => $data['click_type'],
             'target'       => $targetName,
         ];
@@ -145,6 +160,7 @@ class TrafficReportController extends Controller
             'prepared_for'  => $m['prepared_for'] ? Str::limit((string) $m['prepared_for'], 150, '') : null,
             'date_from'     => (string) ($m['date_from'] ?? ''),
             'date_to'       => (string) ($m['date_to'] ?? ''),
+            'period_label'  => $m['period_label'] ? Str::limit((string) $m['period_label'], 60, '') : null,
             'target'        => Str::limit((string) ($m['target'] ?? 'All Traffic'), 120, '') ?: 'All Traffic',
             'rate'          => ($rate !== '' && (float) $rate > 0) ? $rate : null,
             'payment_terms' => $m['payment_terms'] ? Str::limit((string) $m['payment_terms'], 60, '') : null,
@@ -162,6 +178,7 @@ class TrafficReportController extends Controller
             'target'        => $meta['target'],
             'date_from'     => $meta['date_from'] ?: now()->toDateString(),
             'date_to'       => $meta['date_to'] ?: now()->toDateString(),
+            'period_label'  => $meta['period_label'],
             'click_type'    => in_array(($m['click_type'] ?? 'valid'), ['valid', 'all']) ? $m['click_type'] : 'valid',
             'total'         => $total,
             'os_data'       => $os,
@@ -201,6 +218,7 @@ class TrafficReportController extends Controller
             'prepared_for'  => $report->prepared_for,
             'date_from'     => $report->date_from->toDateString(),
             'date_to'       => $report->date_to->toDateString(),
+            'period_label'  => $report->period_label,
             'target'        => $report->target,
             'rate'          => $report->rate,
             'payment_terms' => $report->payment_terms,

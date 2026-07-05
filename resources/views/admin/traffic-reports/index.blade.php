@@ -29,7 +29,11 @@
                     <div style="font-size:12px;color:#9ca3af;">{{ $r->target }}{{ $r->prepared_for ? ' · for '.$r->prepared_for : '' }}</div>
                 </td>
                 <td style="font-size:13px;color:#6b7280;white-space:nowrap;">
-                    {{ $r->date_from->format('M d, Y') }} – {{ $r->date_to->format('M d, Y') }}
+                    @if($r->period_label)
+                        <span style="color:#6d28d9;font-weight:600;">{{ $r->period_label }}</span>
+                    @else
+                        {{ $r->date_from->format('M d, Y') }} – {{ $r->date_to->format('M d, Y') }}
+                    @endif
                     <div style="font-size:11px;color:#9ca3af;">{{ ucfirst($r->click_type) }} clicks</div>
                 </td>
                 <td style="text-align:right;font-weight:800;color:#01BF63;">{{ number_format($r->total) }}</td>

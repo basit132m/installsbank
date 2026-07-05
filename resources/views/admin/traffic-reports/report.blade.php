@@ -115,8 +115,9 @@
     </div>
 
     @php
-        $days     = \Carbon\Carbon::parse($meta['date_from'])->diffInDays(\Carbon\Carbon::parse($meta['date_to'])) + 1;
-        $periodTxt = \Carbon\Carbon::parse($meta['date_from'])->format('M d, Y') . ' – ' . \Carbon\Carbon::parse($meta['date_to'])->format('M d, Y');
+        $days      = \Carbon\Carbon::parse($meta['date_from'])->diffInDays(\Carbon\Carbon::parse($meta['date_to'])) + 1;
+        $dateRange = \Carbon\Carbon::parse($meta['date_from'])->format('M d, Y') . ' – ' . \Carbon\Carbon::parse($meta['date_to'])->format('M d, Y');
+        $periodTxt = !empty($meta['period_label']) ? $meta['period_label'] : $dateRange;
         $osColors = ['#4f46e5','#01BF63','#0891b2','#d97706','#ef4444','#7c3aed','#ec4899','#14b8a6','#64748b'];
     @endphp
 
@@ -152,7 +153,7 @@
                 <div class="l">Total Clicks</div>
                 <div class="big">{{ number_format($total) }}</div>
             </div>
-            <div class="r">Period total across all sources<br>{{ $days }} day(s) reporting window</div>
+            <div class="r">Period total across all sources<br>{{ !empty($meta['period_label']) ? $meta['period_label'] : $days.' day(s) reporting window' }}</div>
         </div>
 
         <div class="section">
