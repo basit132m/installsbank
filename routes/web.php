@@ -115,6 +115,13 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin,manager'
         Route::post('/{user}/suspend', [Admin\ResellerController::class, 'suspend'])->name('suspend');
     });
 
+    // Traffic testing reports (PDF)
+    Route::prefix('traffic-reports')->name('traffic-reports.')->group(function () {
+        Route::get('/', [Admin\TrafficReportController::class, 'create'])->name('create');
+        Route::post('/fetch', [Admin\TrafficReportController::class, 'fetch'])->name('fetch');
+        Route::post('/generate', [Admin\TrafficReportController::class, 'generate'])->name('generate');
+    });
+
     // Contracts
     Route::prefix('contracts')->name('contracts.')->group(function () {
         Route::get('/', [Admin\ContractController::class, 'index'])->name('index');
