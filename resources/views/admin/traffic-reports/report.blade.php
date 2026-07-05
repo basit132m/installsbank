@@ -80,7 +80,7 @@
 
         .note-centered { margin-top:34px; text-align:center; font-size:12px; color:var(--muted); line-height:1.9; max-width:540px; margin-left:auto; margin-right:auto; }
 
-        .rp-foot { margin-top:36px; display:flex; align-items:flex-end; justify-content:space-between; gap:20px; border-top:1px solid var(--line); padding-top:26px; }
+        .rp-foot { margin-top:36px; display:flex; flex-direction:column; align-items:center; gap:22px; border-top:1px solid var(--line); padding-top:28px; }
         .stamp-wrap { text-align:center; }
         .stamp-wrap img { height:130px; object-fit:contain; }
         .stamp-wrap .lbl { font-size:11px; color:var(--muted); font-weight:600; margin-top:4px; }
