@@ -395,11 +395,13 @@
                 @if($pendingResellers > 0)<span class="nav-badge warning">{{ $pendingResellers }}</span>@endif
             </a>
 
+            @if(auth()->user()->hasPermission('can_generate_reports'))
             <div class="nav-section-title">Tools</div>
             <a href="{{ route('admin.traffic-reports.index') }}" class="nav-item {{ request()->routeIs('admin.traffic-reports.*') ? 'active' : '' }}">
                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
                 Traffic Reports
             </a>
+            @endif
 
             <div class="nav-section-title">Advertisers</div>
             <a href="{{ route('admin.advertisers.index') }}" class="nav-item {{ request()->routeIs('admin.advertisers.*') ? 'active' : '' }}">

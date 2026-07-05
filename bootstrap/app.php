@@ -14,6 +14,7 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->alias([
             'role'               => \App\Http\Middleware\RoleMiddleware::class,
+            'permission'         => \App\Http\Middleware\CheckManagerPermission::class,
             'publisher.approved' => \App\Http\Middleware\RequirePublisherApproved::class,
             'reseller.approved'  => \App\Http\Middleware\RequireResellerApproved::class,
         ]);

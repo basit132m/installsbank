@@ -82,6 +82,7 @@ class ManagerController extends Controller
             'can_manage_support', 'can_manage_live_chat',
             'can_view_stats',
             'can_send_broadcast_emails',
+            'can_generate_reports',
         ];
         $result = [];
         foreach ($perms as $perm) {

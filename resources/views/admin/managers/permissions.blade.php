@@ -48,6 +48,9 @@
                 'Communications' => [
                     'can_send_broadcast_emails' => 'Send Broadcast Emails to Publishers',
                 ],
+                'Tools' => [
+                    'can_generate_reports' => 'Generate Traffic Reports',
+                ],
             ];
             @endphp
 
