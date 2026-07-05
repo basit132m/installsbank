@@ -235,6 +235,13 @@
             This report summarizes click activity recorded by Installs Bank's tracking system for the stated
             period and source. Figures represent {{ $meta['title'] }} data and are provided for testing and
             verification purposes.
+            @if($meta['rate'])
+            The offered rate stated above is the <strong>maximum rate we can offer</strong> for this traffic.
+            @endif
+            If you have any concerns, feel free to contact us at
+            <a href="https://wa.me/19707426488" style="color:#0f172a;font-weight:600;">wa.me/19707426488</a>
+            or
+            <a href="https://t.me/installsbank" style="color:#0f172a;font-weight:600;">t.me/installsbank</a>.
         </div>
 
         <div class="rp-foot">
