@@ -134,6 +134,37 @@ class PortalStatsService
         return array_values(array_filter($rows, fn($r) => $r['value'] > 0));
     }
 
+    /** Totals + country breakdown for a selected period (today / yesterday / 7days). */
+    public function periodAggregate(PortalAccount $account, string $period): array
+    {
+        $today = today();
+        [$from, $to, $label] = match ($period) {
+            'today'     => [$today->copy(),              $today->copy(),          'Today'],
+            'yesterday' => [$today->copy()->subDay(),    $today->copy()->subDay(),'Yesterday'],
+            default     => [$today->copy()->subDays(6),  $today->copy(),          'Last 7 Days'],
+        };
+
+        $map   = $this->resolveRange($account, $from, $to);
+        $total = 0;
+        $agg   = [];
+
+        for ($d = $from->copy(); $d->lte($to); $d->addDay()) {
+            $key    = $d->toDateString();
+            $total += $map[$key]['shown'] ?? 0;
+            foreach (($map[$key]['countries'] ?? []) as $c) {
+                $code = $c['code'] ?? '';
+                if (!isset($agg[$code])) $agg[$code] = ['code' => $code, 'name' => $c['name'] ?? 'Other', 'value' => 0];
+                $agg[$code]['value'] += (int) ($c['value'] ?? 0);
+            }
+        }
+
+        return [
+            'label'     => $label,
+            'total'     => $total,
+            'countries' => collect($agg)->sortByDesc('value')->values()->all(),
+        ];
+    }
+
     /** Build everything the dashboard needs. */
     public function dashboard(PortalAccount $account): array
     {

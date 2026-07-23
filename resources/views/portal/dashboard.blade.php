@@ -80,16 +80,26 @@
             <div id="chart"></div>
         </div>
 
-        {{-- Country breakdown --}}
+        {{-- Filtered breakdown --}}
         <div class="card">
-            <h2>Clicks by Country</h2>
-            <div class="sub">Windows clicks · last 30 days</div>
-            @if(count($data['countries']) > 0)
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:14px;">
+                <div>
+                    <h2 style="margin:0;">Clicks by Country</h2>
+                    <div class="sub" style="margin:2px 0 0;">Windows clicks · {{ $periodData['label'] }} · <strong style="color:#0f172a;">{{ number_format($periodData['total']) }}</strong> total</div>
+                </div>
+                <div style="display:flex;gap:6px;flex-wrap:wrap;">
+                    @foreach(['today'=>'Today','yesterday'=>'Yesterday','7days'=>'Last 7 Days'] as $key => $lbl)
+                    <a href="?period={{ $key }}"
+                       style="padding:6px 14px;border-radius:8px;font-size:12px;font-weight:700;text-decoration:none;{{ $period === $key ? 'background:#0ea5e9;color:#fff;' : 'background:#f1f5f9;color:#64748b;' }}">{{ $lbl }}</a>
+                    @endforeach
+                </div>
+            </div>
+            @if(count($periodData['countries']) > 0)
             <div style="max-height:420px;overflow-y:auto;">
                 <table>
                     <thead><tr><th>Country</th><th style="text-align:right;">Clicks</th></tr></thead>
                     <tbody>
-                        @foreach($data['countries'] as $c)
+                        @foreach($periodData['countries'] as $c)
                         <tr>
                             <td>
                                 @if(!empty($c['code']))<img class="flag" src="https://flagcdn.com/32x24/{{ $c['code'] }}.png" onerror="this.style.display='none'">@endif
@@ -102,7 +112,7 @@
                 </table>
             </div>
             @else
-            <div style="text-align:center;padding:30px;color:#94a3b8;font-size:13px;">No data yet.</div>
+            <div style="text-align:center;padding:30px;color:#94a3b8;font-size:13px;">No clicks in this period.</div>
             @endif
         </div>
     </div>
