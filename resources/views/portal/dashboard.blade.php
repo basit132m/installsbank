@@ -75,8 +75,18 @@
 
         {{-- Chart --}}
         <div class="card">
-            <h2>Clicks — Last 14 Days</h2>
-            <div class="sub">Windows clicks per day</div>
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:14px;">
+                <div>
+                    <h2 style="margin:0;">Clicks</h2>
+                    <div class="sub" style="margin:2px 0 0;">Windows clicks · {{ $chart['title'] }}</div>
+                </div>
+                <div style="display:flex;gap:6px;flex-wrap:wrap;">
+                    @foreach(['today'=>'Today','yesterday'=>'Yesterday','7days'=>'Last 7 Days'] as $key => $lbl)
+                    <a href="?period={{ $key }}"
+                       style="padding:6px 14px;border-radius:8px;font-size:12px;font-weight:700;text-decoration:none;{{ $period === $key ? 'background:#0ea5e9;color:#fff;' : 'background:#f1f5f9;color:#64748b;' }}">{{ $lbl }}</a>
+                    @endforeach
+                </div>
+            </div>
             <div id="chart"></div>
         </div>
 
@@ -118,16 +128,17 @@
     </div>
 
     <script>
-    const chartData = @json($data['chart']);
+    const chartData = @json($chart['points']);
     new ApexCharts(document.getElementById('chart'), {
         series: [{ name: 'Clicks', data: chartData.map(d => d.clicks) }],
         chart: { type: 'area', height: 260, toolbar: { show: false }, fontFamily: 'inherit' },
         stroke: { curve: 'smooth', width: 2 },
         fill: { type: 'gradient', gradient: { opacityFrom: 0.35, opacityTo: 0.05 } },
         colors: ['#0ea5e9'],
-        xaxis: { categories: chartData.map(d => d.date), labels: { style: { fontSize: '11px' } } },
+        xaxis: { categories: chartData.map(d => d.label), labels: { style: { fontSize: '11px' }, rotate: -45, rotateAlways: false } },
         dataLabels: { enabled: false },
-        grid: { borderColor: '#f1f5f9' }
+        grid: { borderColor: '#f1f5f9' },
+        tooltip: { y: { formatter: v => v.toLocaleString() + ' clicks' } }
     }).render();
     </script>
 </body>

@@ -165,6 +165,83 @@ class PortalStatsService
         ];
     }
 
+    /**
+     * Chart series for the selected period: daily points for "7days",
+     * hourly points (scaled to the day's shown total) for today/yesterday.
+     */
+    public function chartFor(PortalAccount $account, string $period): array
+    {
+        $today = today();
+
+        if ($period === '7days') {
+            $from = $today->copy()->subDays(6);
+            $map  = $this->resolveRange($account, $from, $today);
+            $points = [];
+            for ($d = $from->copy(); $d->lte($today); $d->addDay()) {
+                $points[] = ['label' => $d->format('M d'), 'clicks' => $map[$d->toDateString()]['shown'] ?? 0];
+            }
+            return ['title' => 'Last 7 Days', 'points' => $points];
+        }
+
+        // today / yesterday → hourly, real hourly distribution scaled to the shown total
+        $day   = $period === 'yesterday' ? $today->copy()->subDay() : $today->copy();
+        $map   = $this->resolveRange($account, $day, $day);
+        $shown = $map[$day->toDateString()]['shown'] ?? 0;
+
+        $hourly = array_fill(0, 24, 0);
+        if ($account->tracking_link_id) {
+            $rows = Click::where('tracking_link_id', $account->tracking_link_id)
+                ->whereDate('created_at', $day->toDateString())
+                ->where('is_counted', true)
+                ->where('is_windows', true)
+                ->selectRaw('HOUR(created_at) as h, COUNT(*) as c')
+                ->groupBy('h')->pluck('c', 'h');
+            foreach ($rows as $h => $c) { $hourly[(int) $h] = (int) $c; }
+        }
+
+        // Only show up to the current hour for "today"; full day for "yesterday"
+        $maxHour = $period === 'yesterday' ? 23 : (int) now()->format('G');
+        $slice   = array_slice($hourly, 0, $maxHour + 1);
+        $scaled  = $this->scaleValues($slice, $shown);
+
+        $points = [];
+        foreach ($scaled as $h => $v) {
+            $points[] = ['label' => sprintf('%02d:00', $h), 'clicks' => $v];
+        }
+
+        return ['title' => $period === 'yesterday' ? 'Yesterday (hourly)' : 'Today (hourly)', 'points' => $points];
+    }
+
+    /** Largest-remainder scale of a flat int array, preserving order and length. */
+    private function scaleValues(array $vals, int $target): array
+    {
+        $n = count($vals);
+        if ($n === 0) return [];
+        if ($target <= 0) return array_fill(0, $n, 0);
+
+        $cur = array_sum($vals);
+        if ($cur <= 0) {
+            $base = intdiv($target, $n);
+            $rem  = $target - $base * $n;
+            $out  = [];
+            for ($i = 0; $i < $n; $i++) $out[] = $base + ($i < $rem ? 1 : 0);
+            return $out;
+        }
+
+        $floors = []; $rema = []; $sum = 0;
+        foreach ($vals as $v) {
+            $exact = $v * $target / $cur;
+            $f = (int) floor($exact);
+            $floors[] = $f; $rema[] = $exact - $f; $sum += $f;
+        }
+        $left = $target - $sum;
+        $idx  = range(0, $n - 1);
+        usort($idx, fn($a, $b) => $rema[$b] <=> $rema[$a]);
+        for ($k = 0; $k < $left; $k++) $floors[$idx[$k % $n]]++;
+
+        return $floors;
+    }
+
     /** Build everything the dashboard needs. */
     public function dashboard(PortalAccount $account): array
     {

@@ -20,7 +20,8 @@ class DashboardController extends Controller
 
         $data       = $stats->dashboard($account);
         $periodData = $stats->periodAggregate($account, $period);
+        $chart      = $stats->chartFor($account, $period);
 
-        return view('portal.dashboard', compact('account', 'data', 'period', 'periodData'));
+        return view('portal.dashboard', compact('account', 'data', 'period', 'periodData', 'chart'));
     }
 }
