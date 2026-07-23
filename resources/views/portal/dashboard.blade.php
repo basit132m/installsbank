@@ -67,10 +67,10 @@
 
         {{-- Stat cards --}}
         <div class="grid">
-            <div class="stat"><div class="v">{{ number_format($data['today']) }}</div><div class="k">Clicks Today</div></div>
-            <div class="stat"><div class="v">{{ number_format($data['week']) }}</div><div class="k">This Week</div></div>
-            <div class="stat"><div class="v">{{ number_format($data['month']) }}</div><div class="k">This Month</div></div>
-            <div class="stat"><div class="v">{{ number_format($data['all_time']) }}</div><div class="k">All Time</div></div>
+            <div class="stat"><div class="v" id="liveToday">{{ number_format($data['today']) }}</div><div class="k">Clicks Today <span id="liveDot" style="display:inline-block;width:7px;height:7px;border-radius:50%;background:#22c55e;margin-left:4px;vertical-align:middle;"></span></div></div>
+            <div class="stat"><div class="v" id="liveWeek">{{ number_format($data['week']) }}</div><div class="k">This Week</div></div>
+            <div class="stat"><div class="v" id="liveMonth">{{ number_format($data['month']) }}</div><div class="k">This Month</div></div>
+            <div class="stat"><div class="v" id="liveAll">{{ number_format($data['all_time']) }}</div><div class="k">All Time</div></div>
         </div>
 
         {{-- Chart --}}
@@ -95,7 +95,7 @@
             <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:14px;">
                 <div>
                     <h2 style="margin:0;">Clicks by Country</h2>
-                    <div class="sub" style="margin:2px 0 0;">Windows clicks · {{ $periodData['label'] }} · <strong style="color:#0f172a;">{{ number_format($periodData['total']) }}</strong> total</div>
+                    <div class="sub" style="margin:2px 0 0;">Windows clicks · {{ $periodData['label'] }} · <strong style="color:#0f172a;" id="livePeriodTotal">{{ number_format($periodData['total']) }}</strong> total</div>
                 </div>
                 <div style="display:flex;gap:6px;flex-wrap:wrap;">
                     @foreach(['today'=>'Today','yesterday'=>'Yesterday','7days'=>'Last 7 Days'] as $key => $lbl)
@@ -140,6 +140,36 @@
         grid: { borderColor: '#f1f5f9' },
         tooltip: { y: { formatter: v => v.toLocaleString() + ' clicks' } }
     }).render();
+
+    // ── Live auto-refresh (polls every 20s) ──
+    (function () {
+        const period = @json($period);
+        const url = @json(route('portal.live')) + '?period=' + encodeURIComponent(period);
+        const set = (id, val) => { const el = document.getElementById(id); if (el && val !== undefined) el.textContent = Number(val).toLocaleString(); };
+
+        function pulse() {
+            const d = document.getElementById('liveDot');
+            if (!d) return;
+            d.style.transform = 'scale(1.6)'; d.style.transition = 'transform .2s';
+            setTimeout(() => { d.style.transform = 'scale(1)'; }, 200);
+        }
+
+        function tick() {
+            fetch(url, { headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' } })
+                .then(r => r.ok ? r.json() : null)
+                .then(j => {
+                    if (!j) return;
+                    set('liveToday', j.today);
+                    set('liveWeek', j.week);
+                    set('liveMonth', j.month);
+                    set('liveAll', j.all_time);
+                    set('livePeriodTotal', j.period_total);
+                    pulse();
+                })
+                .catch(() => {});
+        }
+        setInterval(tick, 20000);
+    })();
     </script>
 </body>
 </html>

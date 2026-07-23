@@ -503,5 +503,6 @@ Route::prefix('portal')->name('portal.')->group(function () {
 
     Route::middleware('auth:portal')->group(function () {
         Route::get('/', [App\Http\Controllers\Portal\DashboardController::class, 'index'])->name('dashboard');
+        Route::get('/live', [App\Http\Controllers\Portal\DashboardController::class, 'live'])->name('live');
     });
 });
