@@ -42,6 +42,12 @@ return [
             'driver' => 'session',
             'provider' => 'users',
         ],
+
+        // Isolated white-label dashboard accounts
+        'portal' => [
+            'driver' => 'session',
+            'provider' => 'portal_accounts',
+        ],
     ],
 
     /*
@@ -65,6 +71,11 @@ return [
         'users' => [
             'driver' => 'eloquent',
             'model' => env('AUTH_MODEL', User::class),
+        ],
+
+        'portal_accounts' => [
+            'driver' => 'eloquent',
+            'model' => App\Models\PortalAccount::class,
         ],
 
         // 'users' => [

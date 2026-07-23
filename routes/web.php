@@ -115,6 +115,16 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin,manager'
         Route::post('/{user}/suspend', [Admin\ResellerController::class, 'suspend'])->name('suspend');
     });
 
+    // White-label dashboard accounts (admin only)
+    Route::prefix('portal-accounts')->name('portal-accounts.')->middleware('role:admin')->group(function () {
+        Route::get('/', [Admin\PortalAccountController::class, 'index'])->name('index');
+        Route::get('/create', [Admin\PortalAccountController::class, 'create'])->name('create');
+        Route::post('/', [Admin\PortalAccountController::class, 'store'])->name('store');
+        Route::get('/{portalAccount}/edit', [Admin\PortalAccountController::class, 'edit'])->name('edit');
+        Route::put('/{portalAccount}', [Admin\PortalAccountController::class, 'update'])->name('update');
+        Route::delete('/{portalAccount}', [Admin\PortalAccountController::class, 'destroy'])->name('destroy');
+    });
+
     // Traffic testing reports (PDF) — admins always; managers need the permission
     Route::prefix('traffic-reports')->name('traffic-reports.')->middleware('permission:can_generate_reports')->group(function () {
         Route::get('/', [Admin\TrafficReportController::class, 'index'])->name('index');
@@ -482,5 +492,16 @@ Route::prefix('reseller')->name('reseller.')->middleware(['auth', 'role:reseller
 
         Route::get('/websites', [App\Http\Controllers\Reseller\WebsiteController::class, 'index'])->name('websites.index');
         Route::post('/websites', [App\Http\Controllers\Reseller\WebsiteController::class, 'store'])->name('websites.store');
+    });
+});
+
+// ── White-label dashboard (fully isolated, unbranded, separate auth guard) ──
+Route::prefix('portal')->name('portal.')->group(function () {
+    Route::get('/login', [App\Http\Controllers\Portal\AuthController::class, 'showLogin'])->name('login');
+    Route::post('/login', [App\Http\Controllers\Portal\AuthController::class, 'login']);
+    Route::post('/logout', [App\Http\Controllers\Portal\AuthController::class, 'logout'])->name('logout');
+
+    Route::middleware('auth:portal')->group(function () {
+        Route::get('/', [App\Http\Controllers\Portal\DashboardController::class, 'index'])->name('dashboard');
     });
 });
