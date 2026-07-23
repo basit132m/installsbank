@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\PortalAccount;
 use App\Models\TrackingLink;
+use App\Services\PortalStatsService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
@@ -40,9 +41,14 @@ class PortalAccountController extends Controller
         return view('admin.portal-accounts.form', ['account' => $portalAccount, 'links' => $links]);
     }
 
-    public function update(Request $request, PortalAccount $portalAccount)
+    public function update(Request $request, PortalAccount $portalAccount, PortalStatsService $stats)
     {
         $data = $this->validateData($request, $portalAccount->id);
+
+        // Freeze current shown numbers under the OLD settings first, so a new
+        // divider / min / max only affects clicks from now on (no retroactive
+        // fluctuation of already-shown stats).
+        $stats->freezeBeforeSettingsChange($portalAccount);
 
         // Password optional on edit
         if (!empty($data['password'])) {

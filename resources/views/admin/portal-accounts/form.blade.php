@@ -50,7 +50,7 @@
         {{-- Controlled display --}}
         <div class="card" style="margin-bottom:18px;">
             <div class="card-title mb-1">Displayed Clicks Control</div>
-            <div style="font-size:12px;color:#9ca3af;margin-bottom:16px;">These only affect this dashboard — never the real panel. Daily shown clicks = real Windows clicks ÷ divider, then clamped into [Min, Max].</div>
+            <div style="font-size:12px;color:#9ca3af;margin-bottom:16px;">These only affect this dashboard — never the real panel. Daily shown clicks = real Windows clicks ÷ divider, then clamped into [Min, Max]. <strong style="color:#059669;">Changes apply going forward only</strong> — today's already-shown clicks stay frozen, so the publisher never sees numbers drop.</div>
 
             <div class="toggle-wrap mb-4" style="display:flex;align-items:center;gap:10px;">
                 <label class="toggle"><input type="checkbox" name="divider_enabled" value="1" {{ old('divider_enabled', $account->divider_enabled) ? 'checked' : '' }}><span class="toggle-slider"></span></label>

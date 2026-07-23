@@ -46,7 +46,8 @@ class PortalStatsService
                 continue;
             }
 
-            $computed = $this->compute($account, $d);
+            $computed = $this->compute($account, $d, $row);
+            // Preserve raw_base / cursor_at — only update the derived display values
             PortalDailyStat::updateOrCreate(
                 ['portal_account_id' => $account->id, 'date' => $key],
                 [
@@ -61,27 +62,38 @@ class PortalStatsService
         return $map;
     }
 
-    /** Compute one day's controlled numbers from real Windows clicks. */
-    private function compute(PortalAccount $account, Carbon $date): array
+    /**
+     * Compute one day's controlled numbers.
+     * shown = raw_base (frozen under previous settings) + floor(clicks since
+     * cursor_at ÷ current divider), then clamped into [min, max]. This makes a
+     * divider change affect ONLY clicks that arrive after the change.
+     */
+    private function compute(PortalAccount $account, Carbon $date, ?PortalDailyStat $row = null): array
     {
         $divider = $account->effectiveDivider();
+        $cursor  = $row && $row->cursor_at ? $row->cursor_at : $date->copy()->startOfDay();
+        $base    = $row ? (int) $row->raw_base : 0;
 
-        $rows = collect();
+        $since    = 0;
+        $fullRows = collect();
         if ($account->tracking_link_id) {
-            $rows = Click::where('tracking_link_id', $account->tracking_link_id)
-                ->whereDate('created_at', $date->toDateString())
+            $dayQuery = fn() => Click::where('tracking_link_id', $account->tracking_link_id)
                 ->where('is_counted', true)
                 ->where('is_windows', true)
+                ->whereDate('created_at', $date->toDateString());
+
+            $since    = (int) $dayQuery()->where('created_at', '>', $cursor)->count();
+            $fullRows = $dayQuery()
                 ->selectRaw("COALESCE(NULLIF(country_code, ''), 'XX') as cc,
                              COALESCE(NULLIF(country_name, ''), 'Unknown') as cn,
                              COUNT(*) as c")
                 ->groupBy('cc', 'cn')->get();
         }
 
-        $realTotal = (int) $rows->sum('c');
-        $shown     = (int) floor($realTotal / $divider);
+        $rawTotal = $base + (int) floor($since / $divider);
 
         // Clamp into [min, max]
+        $shown = $rawTotal;
         if ($account->min_clicks !== null && $shown < $account->min_clicks) {
             $shown = (int) $account->min_clicks;
         }
@@ -89,8 +101,8 @@ class PortalStatsService
             $shown = (int) $account->max_clicks;
         }
 
-        // Per-country divided values, then scaled so they sum to the shown total
-        $countries = $rows->map(fn($r) => [
+        // Country proportions from the full day, scaled to sum to the shown total
+        $countries = $fullRows->map(fn($r) => [
             'code'  => strtolower($r->cc),
             'name'  => $r->cn,
             'value' => (int) floor((int) $r->c / $divider),
@@ -99,6 +111,51 @@ class PortalStatsService
         $countries = $this->scaleTo($countries, $shown);
 
         return ['shown' => $shown, 'countries' => $countries];
+    }
+
+    /**
+     * Freeze current shown values BEFORE the admin changes divider/min/max, so
+     * the new settings only apply to clicks from now on:
+     *  - lock all past (unfinalized) days at the current settings
+     *  - fold today's shown-so-far into raw_base using the current divider and
+     *    move the cursor to now, so later clicks divide by the new divider.
+     * Call this while the account still holds the OLD settings.
+     */
+    public function freezeBeforeSettingsChange(PortalAccount $account): void
+    {
+        $today = today();
+        $start = Carbon::parse($account->created_at)->startOfDay();
+        if ($start->lt($today->copy()->subDays(365))) {
+            $start = $today->copy()->subDays(365);
+        }
+
+        $yesterday = $today->copy()->subDay();
+        if ($yesterday->gte($start)) {
+            $this->resolveRange($account, $start, $yesterday); // finalizes past days at old settings
+        }
+
+        $divider = $account->effectiveDivider();
+        $row     = PortalDailyStat::firstOrNew([
+            'portal_account_id' => $account->id,
+            'date'              => $today->toDateString(),
+        ]);
+        $cursor = $row->cursor_at ?: $today->copy()->startOfDay();
+
+        $since = 0;
+        if ($account->tracking_link_id) {
+            $since = (int) Click::where('tracking_link_id', $account->tracking_link_id)
+                ->where('is_counted', true)
+                ->where('is_windows', true)
+                ->whereDate('created_at', $today->toDateString())
+                ->where('created_at', '>', $cursor)
+                ->count();
+        }
+
+        $row->raw_base  = (int) ($row->raw_base ?? 0) + (int) floor($since / $divider);
+        $row->cursor_at = now();
+        $row->finalized = false;
+        if ($row->shown_clicks === null) $row->shown_clicks = 0;
+        $row->save();
     }
 
     /** Largest-remainder scale of country rows so they sum exactly to $target. */
