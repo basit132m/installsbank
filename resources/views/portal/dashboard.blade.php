@@ -61,7 +61,7 @@
                 <div class="code">{{ $account->trackingLink?->unique_code ?? '—' }}</div>
             </div>
             <div style="text-align:right;font-size:12px;color:#94a3b8;">
-                Windows traffic only<br>Updated live
+                Windows &amp; mac traffic only<br>Updated live
             </div>
         </div>
 
