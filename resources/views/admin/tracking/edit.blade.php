@@ -92,25 +92,20 @@
                 </div>
             </div>
 
-            {{-- JS smartlink --}}
+            {{-- JS link --}}
             <div style="border:1.5px solid #e5e7eb;border-radius:10px;padding:14px 16px;margin-bottom:14px;background:#fafafa;">
                 <div style="font-size:13px;font-weight:700;color:#374151;margin-bottom:4px;display:flex;align-items:center;gap:6px;">
                     <svg width="15" height="15" fill="none" stroke="#f59e0b" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/></svg>
-                    JavaScript Smartlink
+                    JavaScript (.js) Link
                 </div>
-                <div style="font-size:12px;color:#9ca3af;margin-bottom:10px;">A <code>.js</code> file on this link's own domain. When embedded, it sends the visitor to the tracking URL (clicks are still counted).</div>
+                <div style="font-size:12px;color:#9ca3af;margin-bottom:10px;">A <code>.js</code> URL on this link's own domain that returns <strong>only the direct tracking link</strong> as plain text.</div>
 
                 <label class="tl-label">.js Link</label>
-                <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px;flex-wrap:wrap;">
+                <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px;flex-wrap:wrap;">
                     <code id="jsUrl" style="flex:1;min-width:220px;background:#0f172a;color:#a5f3fc;padding:9px 12px;border-radius:8px;font-size:12px;word-break:break-all;">{{ $trackingLink->js_url }}</code>
                     <button type="button" class="btn btn-ghost btn-sm" onclick="copyText('{{ $trackingLink->js_url }}', this)">Copy</button>
                 </div>
-
-                <label class="tl-label">Embed Snippet</label>
-                <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
-                    <code id="jsSnippet" style="flex:1;min-width:220px;background:#0f172a;color:#e2e8f0;padding:9px 12px;border-radius:8px;font-size:12px;word-break:break-all;">&lt;script src="{{ $trackingLink->js_url }}"&gt;&lt;/script&gt;</code>
-                    <button type="button" class="btn btn-ghost btn-sm" onclick="copyText('&lt;script src=&quot;{{ $trackingLink->js_url }}&quot;&gt;&lt;/script&gt;'.replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&quot;/g,'"'), this)">Copy</button>
-                </div>
+                <div style="font-size:11px;color:#9ca3af;">Returns: <code style="color:#7c3aed;">{{ $trackingLink->tracking_url }}</code></div>
             </div>
 
             <div>
