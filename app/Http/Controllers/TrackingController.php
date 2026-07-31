@@ -24,6 +24,29 @@ class TrackingController extends Controller
         return $this->resolve($code, $request);
     }
 
+    /**
+     * JS smartlink: /js/{code}.js — included via <script src>. On load it sends
+     * the visitor to the tracking URL (which records the click and redirects to
+     * the OS-specific destination). The link is also exposed as window.__smartlink.
+     */
+    public function js(string $code)
+    {
+        $link = TrackingLink::where('unique_code', $code)->where('is_active', true)->first();
+
+        if (!$link) {
+            return response("/* invalid or inactive code */", 404)
+                ->header('Content-Type', 'application/javascript; charset=utf-8');
+        }
+
+        $url  = json_encode($link->tracking_url, JSON_UNESCAPED_SLASHES);
+        $body = "(function(){try{window.__smartlink={$url};}catch(e){}"
+              . "window.location.href={$url};})();";
+
+        return response($body, 200)
+            ->header('Content-Type', 'application/javascript; charset=utf-8')
+            ->header('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0');
+    }
+
     private function resolve(string $code, Request $request)
     {
         $link = TrackingLink::where('unique_code', $code)->where('is_active', true)->first();

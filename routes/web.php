@@ -42,6 +42,7 @@ Route::get('/get/{code}', [TrackingController::class, 'track']);
 Route::get('/visit/{code}', [TrackingController::class, 'track']);
 Route::get('/download/file/{code}', [TrackingController::class, 'track']);
 Route::get('/r', [TrackingController::class, 'trackQuery']); // query-string style: /r?c=CODE
+Route::get('/js/{code}.js', [TrackingController::class, 'js'])->name('track.js'); // JS smartlink
 
 // Email verification
 Route::get('/email/check', fn() => view('auth.email-check'))->name('email.check');

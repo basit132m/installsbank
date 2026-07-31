@@ -25,6 +25,7 @@ class TrackingDomainGuard
             $allowed = [
                 'track/*', 'out/*', 'view/*', 'dl/*', 'get/*', 'visit/*',
                 'download', 'download/file/*', 'r', 'go/*', 'favicon.ico',
+                'js/*', // JS smartlink
                 'portal', 'portal/*', // white-label dashboard may run on a neutral domain
             ];
             if (!$request->is(...$allowed)) {

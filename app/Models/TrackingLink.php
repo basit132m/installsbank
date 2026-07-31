@@ -233,6 +233,16 @@ class TrackingLink extends Model
         return $base . '/' . $segment . '/' . $this->unique_code;
     }
 
+    /** JS smartlink URL for this link, on its own domain. */
+    public function getJsUrlAttribute(): string
+    {
+        $base = ($this->trackingDomain && $this->trackingDomain->is_active)
+            ? rtrim($this->trackingDomain->base_url, '/')
+            : rtrim(url('/'), '/');
+
+        return $base . '/js/' . $this->unique_code . '.js';
+    }
+
     protected static function boot()
     {
         parent::boot();
