@@ -116,8 +116,8 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin,manager'
         Route::post('/{user}/suspend', [Admin\ResellerController::class, 'suspend'])->name('suspend');
     });
 
-    // White-label dashboard accounts (admin only)
-    Route::prefix('portal-accounts')->name('portal-accounts.')->middleware('role:admin')->group(function () {
+    // White-label dashboard accounts (admins always; managers need the permission)
+    Route::prefix('portal-accounts')->name('portal-accounts.')->middleware('permission:can_manage_dashboards')->group(function () {
         Route::get('/', [Admin\PortalAccountController::class, 'index'])->name('index');
         Route::get('/create', [Admin\PortalAccountController::class, 'create'])->name('create');
         Route::post('/', [Admin\PortalAccountController::class, 'store'])->name('store');

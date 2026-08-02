@@ -49,7 +49,8 @@
                     'can_send_broadcast_emails' => 'Send Broadcast Emails to Publishers',
                 ],
                 'Tools' => [
-                    'can_generate_reports' => 'Generate Traffic Reports',
+                    'can_generate_reports'  => 'Generate Traffic Reports',
+                    'can_manage_dashboards' => 'Manage White-Label Dashboard Accounts',
                 ],
             ];
             @endphp

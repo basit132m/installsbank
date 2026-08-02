@@ -83,6 +83,7 @@ class ManagerController extends Controller
             'can_view_stats',
             'can_send_broadcast_emails',
             'can_generate_reports',
+            'can_manage_dashboards',
         ];
         $result = [];
         foreach ($perms as $perm) {

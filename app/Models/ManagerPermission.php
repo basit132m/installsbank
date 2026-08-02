@@ -31,6 +31,7 @@ class ManagerPermission extends Model
         'can_send_broadcast_emails',
         // Tools
         'can_generate_reports',
+        'can_manage_dashboards',
     ];
 
     protected $casts = [
@@ -57,6 +58,7 @@ class ManagerPermission extends Model
         'can_view_stats'                  => 'boolean',
         'can_send_broadcast_emails'       => 'boolean',
         'can_generate_reports'            => 'boolean',
+        'can_manage_dashboards'           => 'boolean',
     ];
 
     public function user()
