@@ -115,6 +115,7 @@
     </div>
 
     @php
+        $branded   = $meta['show_branding'] ?? true;
         $days      = \Carbon\Carbon::parse($meta['date_from'])->diffInDays(\Carbon\Carbon::parse($meta['date_to'])) + 1;
         $dateRange = \Carbon\Carbon::parse($meta['date_from'])->format('M d, Y') . ' – ' . \Carbon\Carbon::parse($meta['date_to'])->format('M d, Y');
         $periodTxt = !empty($meta['period_label']) ? $meta['period_label'] : $dateRange;
@@ -123,13 +124,20 @@
 
     {{-- ══════════ PAGE 1 — Overview + Clicks by OS ══════════ --}}
     <div class="page">
+        @if($branded)
         <div class="watermark"><img src="{{ $logoUrl }}" alt="" onerror="this.parentNode.style.display='none'"></div>
+        @endif
 
         <div class="rp-head">
             <div>
+                @if($branded)
                 <img class="rp-logo" src="{{ $logoUrl }}" alt="Installs Bank"
                      onerror="this.outerHTML='<div style=&quot;font-size:22px;font-weight:900;color:#0f172a&quot;>Installs Bank</div>'">
                 <div class="co">Installs Bank · Traffic Analytics<br>installsbank.com</div>
+                @else
+                <div style="font-size:20px;font-weight:900;color:#0f172a;">{{ $meta['title'] }}</div>
+                <div class="co">Traffic Analytics Report</div>
+                @endif
             </div>
             <div class="rp-badge">
                 <div class="rid">{{ $reportNo }}</div>
@@ -192,9 +200,9 @@
 
     {{-- ══════════ PAGE 2 — Clicks by Country ══════════ --}}
     <div class="page">
-        <div class="watermark"><img src="{{ $logoUrl }}" alt="" onerror="this.parentNode.style.display='none'"></div>
+        @if($branded)<div class="watermark"><img src="{{ $logoUrl }}" alt="" onerror="this.parentNode.style.display='none'"></div>@endif
         <div class="rp-head-min">
-            <img src="{{ $logoUrl }}" alt="Installs Bank" onerror="this.style.display='none'">
+            @if($branded)<img src="{{ $logoUrl }}" alt="Installs Bank" onerror="this.style.display='none'">@endif
             <div class="mid">{{ $meta['title'] }} · {{ $periodTxt }}</div>
             <div class="rid">{{ $reportNo }}</div>
         </div>
@@ -223,9 +231,9 @@
 
     {{-- ══════════ PAGE 3 — Commercial Terms + Signature ══════════ --}}
     <div class="page">
-        <div class="watermark"><img src="{{ $logoUrl }}" alt="" onerror="this.parentNode.style.display='none'"></div>
+        @if($branded)<div class="watermark"><img src="{{ $logoUrl }}" alt="" onerror="this.parentNode.style.display='none'"></div>@endif
         <div class="rp-head-min">
-            <img src="{{ $logoUrl }}" alt="Installs Bank" onerror="this.style.display='none'">
+            @if($branded)<img src="{{ $logoUrl }}" alt="Installs Bank" onerror="this.style.display='none'">@endif
             <div class="mid">{{ $meta['title'] }} · {{ $periodTxt }}</div>
             <div class="rid">{{ $reportNo }}</div>
         </div>
@@ -248,16 +256,18 @@
         @endif
 
         <div class="note-centered">
-            This report summarizes click activity recorded by Installs Bank's tracking system for the stated
+            This report summarizes click activity recorded by {{ $branded ? "Installs Bank's" : 'our' }} tracking system for the stated
             period and source. Figures represent {{ $meta['title'] }} data and are provided for testing and
             verification purposes.
             @if($meta['rate'])
             The offered rate stated above is the <strong>maximum rate we can offer</strong> for this traffic.
             @endif
+            @if($branded)
             If you have any concerns, feel free to contact us at
             <a href="https://wa.me/19707426488" style="color:#0f172a;font-weight:600;">wa.me/19707426488</a>
             or
             <a href="https://t.me/installsbank" style="color:#0f172a;font-weight:600;">t.me/installsbank</a>.
+            @endif
         </div>
 
         <div class="rp-foot">
@@ -265,7 +275,7 @@
                 <div class="esign">Williams Smith</div>
                 <div class="sig-line"></div>
                 <div class="sig-name">Williams Smith</div>
-                <div class="sig-role">Installs Bank — Chief Executive Officer</div>
+                <div class="sig-role">{{ $branded ? 'Installs Bank — Chief Executive Officer' : 'Chief Executive Officer' }}</div>
             </div>
             <div class="stamp-wrap">
                 <img src="{{ $stampUrl }}" alt="Official Stamp" onerror="this.style.display='none';document.getElementById('stampLbl').style.display='none';">

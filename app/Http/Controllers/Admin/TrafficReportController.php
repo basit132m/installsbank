@@ -40,6 +40,7 @@ class TrafficReportController extends Controller
             'click_type'   => 'required|in:valid,all',
             'title'        => 'nullable|string|max:150',
             'prepared_for' => 'nullable|string|max:150',
+            'show_branding' => 'nullable|boolean',
         ]);
 
         // Rolling hour windows take precedence over the calendar dates
@@ -120,13 +121,14 @@ class TrafficReportController extends Controller
         }
 
         $meta = [
-            'title'        => $data['title'] ?: 'Traffic Testing Report',
-            'prepared_for' => $data['prepared_for'] ?? null,
-            'date_from'    => $from->toDateString(),
-            'date_to'      => $to->toDateString(),
-            'period_label' => $periodLabel,
-            'click_type'   => $data['click_type'],
-            'target'       => $targetName,
+            'title'         => $data['title'] ?: 'Traffic Testing Report',
+            'prepared_for'  => $data['prepared_for'] ?? null,
+            'date_from'     => $from->toDateString(),
+            'date_to'       => $to->toDateString(),
+            'period_label'  => $periodLabel,
+            'click_type'    => $data['click_type'],
+            'target'        => $targetName,
+            'show_branding' => $request->boolean('show_branding'),
         ];
 
         return view('admin.traffic-reports.preview', compact('total', 'os', 'geo', 'split', 'meta'));
@@ -185,6 +187,7 @@ class TrafficReportController extends Controller
             'date_to'       => (string) ($m['date_to'] ?? ''),
             'period_label'  => $m['period_label'] ? Str::limit((string) $m['period_label'], 60, '') : null,
             'target'        => Str::limit((string) ($m['target'] ?? 'All Traffic'), 120, '') ?: 'All Traffic',
+            'show_branding' => (bool) ($m['show_branding'] ?? true),
             'rate'          => ($rate !== '' && (float) $rate > 0) ? $rate : null,
             'payment_terms' => $m['payment_terms'] ? Str::limit((string) $m['payment_terms'], 60, '') : null,
             'tracking_code' => $m['tracking_code'] ? Str::limit(preg_replace('/[^A-Za-z0-9\-_]/', '', (string) $m['tracking_code']), 60, '') : null,
@@ -197,6 +200,7 @@ class TrafficReportController extends Controller
             'generated_by'  => auth()->id(),
             'report_no'     => $reportNo,
             'title'         => $meta['title'],
+            'show_branding' => $meta['show_branding'],
             'prepared_for'  => $meta['prepared_for'],
             'target'        => $meta['target'],
             'date_from'     => $meta['date_from'] ?: now()->toDateString(),
@@ -240,6 +244,7 @@ class TrafficReportController extends Controller
 
         $meta = [
             'title'         => $report->title,
+            'show_branding' => (bool) $report->show_branding,
             'prepared_for'  => $report->prepared_for,
             'date_from'     => $report->date_from->toDateString(),
             'date_to'       => $report->date_to->toDateString(),

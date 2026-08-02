@@ -86,7 +86,7 @@
                 </div>
             </div>
 
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px;">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;">
                 <div class="form-group" style="margin:0;">
                     <label class="form-label">Report Title</label>
                     <input type="text" name="title" class="form-control" value="{{ old('title', 'Traffic Testing Report') }}" placeholder="Traffic Testing Report">
@@ -95,6 +95,16 @@
                     <label class="form-label">Prepared For (optional)</label>
                     <input type="text" name="prepared_for" class="form-control" value="{{ old('prepared_for') }}" placeholder="Client / Advertiser name">
                 </div>
+            </div>
+
+            <div class="form-group" style="border:1.5px solid #e5e7eb;border-radius:10px;padding:12px 14px;margin-bottom:20px;">
+                <label style="display:flex;gap:10px;align-items:flex-start;cursor:pointer;margin:0;">
+                    <input type="checkbox" name="show_branding" value="1" {{ old('show_branding', '1') ? 'checked' : '' }} style="margin-top:3px;">
+                    <span>
+                        <strong style="font-size:13px;">Show Installs Bank branding</strong><br>
+                        <span style="font-size:12px;color:#9ca3af;">Includes the logo, the "Installs Bank" name and installsbank.com on the report. Uncheck for a fully unbranded report.</span>
+                    </span>
+                </label>
             </div>
 
             <button type="submit" class="btn btn-primary">Fetch Data →</button>
