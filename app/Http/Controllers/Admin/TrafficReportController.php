@@ -26,7 +26,13 @@ class TrafficReportController extends Controller
             ->orderBy('name')
             ->get(['id', 'name', 'email', 'role']);
 
-        return view('admin.traffic-reports.create', compact('users'));
+        $links = \App\Models\TrackingLink::with('user')->orderByDesc('id')->get()
+            ->map(fn($l) => [
+                'id'    => $l->id,
+                'label' => $l->unique_code . ' — ' . ($l->user?->name ?? 'Unassigned') . ($l->name ? ' (' . $l->name . ')' : ''),
+            ]);
+
+        return view('admin.traffic-reports.create', compact('users', 'links'));
     }
 
     /** Step 2 — fetch the real numbers and show the editable preview panel. */
@@ -36,7 +42,8 @@ class TrafficReportController extends Controller
             'range_mode'   => 'nullable|in:custom,24h,48h,24h_prev',
             'date_from'    => 'required|date',
             'date_to'      => 'required|date|after_or_equal:date_from',
-            'user_id'      => 'nullable|exists:users,id',
+            'user_id'          => 'nullable|exists:users,id',
+            'tracking_link_id' => 'nullable|exists:tracking_links,id',
             'click_type'   => 'required|in:valid,all',
             'title'        => 'nullable|string|max:150',
             'prepared_for' => 'nullable|string|max:150',
@@ -64,11 +71,16 @@ class TrafficReportController extends Controller
             $to   = Carbon::parse($data['date_to'])->endOfDay();
         }
 
+        // A specific tracking link takes precedence over the publisher/reseller source
+        $linkId = $data['tracking_link_id'] ?? null;
+
         $base = Click::whereBetween('created_at', [$from, $to]);
         if ($data['click_type'] === 'valid') {
             $base->where('is_counted', true);
         }
-        if (!empty($data['user_id'])) {
+        if ($linkId) {
+            $base->where('tracking_link_id', $linkId);
+        } elseif (!empty($data['user_id'])) {
             $base->where('user_id', $data['user_id']);
         }
 
@@ -106,7 +118,8 @@ class TrafficReportController extends Controller
         if ($mode === '48h') {
             $splitQuery = fn($start, $end) => Click::whereBetween('created_at', [$start, $end])
                 ->when($data['click_type'] === 'valid', fn($q) => $q->where('is_counted', true))
-                ->when(!empty($data['user_id']), fn($q) => $q->where('user_id', $data['user_id']))
+                ->when($linkId, fn($q) => $q->where('tracking_link_id', $linkId))
+                ->when(!$linkId && !empty($data['user_id']), fn($q) => $q->where('user_id', $data['user_id']))
                 ->count();
             $split = [
                 ['label' => 'Last 24 Hours',     'value' => (int) $splitQuery(now()->subHours(24), now())],
@@ -115,7 +128,12 @@ class TrafficReportController extends Controller
         }
 
         $targetName = 'All Traffic';
-        if (!empty($data['user_id'])) {
+        if ($linkId) {
+            $l = \App\Models\TrackingLink::with('user')->find($linkId);
+            $targetName = $l
+                ? ('Link ' . $l->unique_code . ($l->user ? ' — ' . $l->user->name : ''))
+                : 'Unknown link';
+        } elseif (!empty($data['user_id'])) {
             $u = User::find($data['user_id']);
             $targetName = $u ? ($u->name . ' (' . ucfirst($u->role) . ')') : 'Unknown';
         }

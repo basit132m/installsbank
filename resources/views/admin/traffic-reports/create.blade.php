@@ -69,7 +69,18 @@
                         @endforeach
                     </optgroup>
                 </select>
-                <div style="font-size:12px;color:#9ca3af;margin-top:4px;">Leave as "All Traffic" for a platform-wide report, or pick a specific account.</div>
+                <div style="font-size:12px;color:#9ca3af;margin-top:4px;">Leave as "All Traffic" for a platform-wide report, or pick a specific account (covers all of that account's links).</div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Or a Specific Tracking Link</label>
+                <select name="tracking_link_id" class="form-control form-select">
+                    <option value="">— Use the traffic source above —</option>
+                    @foreach($links as $l)
+                        <option value="{{ $l['id'] }}" {{ old('tracking_link_id') == $l['id'] ? 'selected' : '' }}>{{ $l['label'] }}</option>
+                    @endforeach
+                </select>
+                <div style="font-size:12px;color:#9ca3af;margin-top:4px;">Pick a single link to report on just that tracking code. <strong>If set, this overrides the traffic source above.</strong></div>
             </div>
 
             <div class="form-group">
