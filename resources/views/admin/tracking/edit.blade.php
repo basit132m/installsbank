@@ -213,7 +213,7 @@
             </div>
 
             {{-- SLOT CARDS --}}
-            @for($i = 0; $i < 3; $i++)
+            @for($i = 0; $i < 5; $i++)
             @php
                 $slot        = $slots[$i] ?? null;
                 $slotEnabled = old('schedule_enabled.'.$i, ($slot['enabled'] ?? true)) ? true : false;
@@ -403,7 +403,7 @@ function updatePkClock() {
     const masterOn = document.querySelector('input[name="windows_schedule_enabled"]').checked;
     let claimed = false, activeIdx = -1, activeEnd = null;
 
-    for (let i = 0; i < 3; i++) {
+    for (let i = 0; i < 5; i++) {
         const start   = document.querySelector('.slot-start[data-slot="' + i + '"]')?.value;
         const end     = document.querySelector('.slot-end[data-slot="' + i + '"]')?.value;
         const enabled = document.querySelector('.slot-enabled[data-slot="' + i + '"]')?.checked;

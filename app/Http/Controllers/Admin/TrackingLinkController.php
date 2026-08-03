@@ -235,24 +235,24 @@ class TrackingLinkController extends Controller
             'url_mac'            => 'nullable|url',
             'url_other'          => 'nullable|url',
             'windows_schedule_enabled' => 'boolean',
-            'schedule_start'     => 'nullable|array|max:3',
+            'schedule_start'     => 'nullable|array|max:5',
             'schedule_start.*'   => 'nullable|date_format:H:i',
-            'schedule_end'       => 'nullable|array|max:3',
+            'schedule_end'       => 'nullable|array|max:5',
             'schedule_end.*'     => 'nullable|date_format:H:i',
-            'schedule_url'       => 'nullable|array|max:3',
+            'schedule_url'       => 'nullable|array|max:5',
             'schedule_url.*'     => 'nullable|url',
-            'schedule_note'      => 'nullable|array|max:3',
+            'schedule_note'      => 'nullable|array|max:5',
             'schedule_note.*'    => 'nullable|string|max:150',
-            'schedule_enabled'   => 'nullable|array|max:3',
+            'schedule_enabled'   => 'nullable|array|max:5',
             'schedule_enabled.*' => 'nullable|in:0,1',
-            'schedule_cap'       => 'nullable|array|max:3',
+            'schedule_cap'       => 'nullable|array|max:5',
             'schedule_cap.*'     => 'nullable|integer|min:1|max:100000000',
         ]);
 
         // Build schedule slots — keep only rows where start + end + URL are all filled.
         // Fields are indexed 0..2 so per-slot enable/cap stay aligned with each row.
         $schedules = [];
-        foreach (range(0, 2) as $i) {
+        foreach (range(0, 4) as $i) {
             $start = $data['schedule_start'][$i] ?? null;
             $end   = $data['schedule_end'][$i] ?? null;
             $url   = $data['schedule_url'][$i] ?? null;
