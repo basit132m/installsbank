@@ -27,20 +27,27 @@ class TrackingLink extends Model
 
     /**
      * Supported tracking-URL structures. Each key is stored in url_format;
-     * 'segment' is the first path segment used (or 'query' for the ?c= style).
+     * 'path' is the URL path template ({code} is replaced with the unique code).
      * Adding variety here keeps the tracker harder to fingerprint.
-     * NOTE: any new path segment must also be whitelisted in TrackingDomainGuard
-     * and have a matching route in web.php.
+     * NOTE: any new path must also be whitelisted in TrackingDomainGuard and have
+     * a matching route in web.php.
      */
     public const URL_FORMATS = [
-        'track'    => ['label' => '/track/CODE  (default)',       'segment' => 'track'],
-        'out'      => ['label' => '/out/CODE',                    'segment' => 'out'],
-        'view'     => ['label' => '/view/CODE',                   'segment' => 'view'],
-        'dl'       => ['label' => '/dl/CODE',                     'segment' => 'dl'],
-        'get'      => ['label' => '/get/CODE',                    'segment' => 'get'],
-        'visit'    => ['label' => '/visit/CODE',                  'segment' => 'visit'],
-        'download' => ['label' => '/download/file/CODE',          'segment' => 'download/file'],
-        'query'    => ['label' => '/r?c=CODE  (query string)',    'segment' => 'query'],
+        'track'    => ['label' => '/track/CODE  (default)',            'path' => 'track/{code}'],
+        'out'      => ['label' => '/out/CODE',                         'path' => 'out/{code}'],
+        'view'     => ['label' => '/view/CODE',                        'path' => 'view/{code}'],
+        'dl'       => ['label' => '/dl/CODE',                          'path' => 'dl/{code}'],
+        'get'      => ['label' => '/get/CODE',                         'path' => 'get/{code}'],
+        'visit'    => ['label' => '/visit/CODE',                       'path' => 'visit/{code}'],
+        'download' => ['label' => '/download/file/CODE',               'path' => 'download/file/{code}'],
+        'query'    => ['label' => '/r?c=CODE  (query string)',         'path' => 'r?c={code}'],
+        // Download-style (blend in as a real file download)
+        'zip'      => ['label' => '/download/CODE/setup.zip',          'path' => 'download/{code}/setup.zip'],
+        'rar'      => ['label' => '/download/CODE/setup.rar',          'path' => 'download/{code}/setup.rar'],
+        'dlzip'    => ['label' => '/downloads/CODE.zip',               'path' => 'downloads/{code}.zip'],
+        'dlrar'    => ['label' => '/downloads/CODE.rar',               'path' => 'downloads/{code}.rar'],
+        'setupzip' => ['label' => '/download/setup/CODE.zip',          'path' => 'download/setup/{code}.zip'],
+        'filerar'  => ['label' => '/get/file/CODE.rar',                'path' => 'get/file/{code}.rar'],
     ];
 
     public function user()
@@ -223,14 +230,10 @@ class TrackingLink extends Model
             ? rtrim($this->trackingDomain->base_url, '/')
             : rtrim(url('/'), '/');
 
-        $format  = $this->url_format ?: 'track';
-        $segment = self::URL_FORMATS[$format]['segment'] ?? 'track';
+        $format = $this->url_format ?: 'track';
+        $path   = self::URL_FORMATS[$format]['path'] ?? 'track/{code}';
 
-        if ($segment === 'query') {
-            return $base . '/r?c=' . $this->unique_code;
-        }
-
-        return $base . '/' . $segment . '/' . $this->unique_code;
+        return $base . '/' . str_replace('{code}', $this->unique_code, $path);
     }
 
     /** JS smartlink URL for this link, on its own domain. */

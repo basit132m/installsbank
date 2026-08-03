@@ -24,7 +24,7 @@ class TrackingDomainGuard
             // Allow every supported tracking-URL structure on custom domains
             $allowed = [
                 'track/*', 'out/*', 'view/*', 'dl/*', 'get/*', 'visit/*',
-                'download', 'download/file/*', 'r', 'go/*', 'favicon.ico',
+                'download', 'download/*', 'downloads/*', 'r', 'go/*', 'favicon.ico',
                 'js/*', // JS smartlink
                 'portal', 'portal/*', // white-label dashboard may run on a neutral domain
             ];

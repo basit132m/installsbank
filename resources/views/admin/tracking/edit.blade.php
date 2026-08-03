@@ -119,20 +119,17 @@
             $fmtBase = $trackingLink->trackingDomain && $trackingLink->trackingDomain->is_active
                 ? rtrim($trackingLink->trackingDomain->base_url, '/')
                 : rtrim(url('/'), '/');
-            $fmtSegments = [];
-            foreach (\App\Models\TrackingLink::URL_FORMATS as $k => $m) { $fmtSegments[$k] = $m['segment']; }
+            $fmtPaths = [];
+            foreach (\App\Models\TrackingLink::URL_FORMATS as $k => $m) { $fmtPaths[$k] = $m['path']; }
         @endphp
         <script>
         const FMT_BASE = @json($fmtBase);
         const FMT_CODE = @json($trackingLink->unique_code);
-        const FMT_SEG  = @json($fmtSegments);
+        const FMT_PATH = @json($fmtPaths);
         function updateUrlPreview() {
             const fmt = document.getElementById('urlFormatSelect').value;
-            const seg = FMT_SEG[fmt] || 'track';
-            const url = seg === 'query'
-                ? FMT_BASE + '/r?c=' + FMT_CODE
-                : FMT_BASE + '/' + seg + '/' + FMT_CODE;
-            document.getElementById('urlPreview').textContent = url;
+            const path = (FMT_PATH[fmt] || 'track/{code}').replace('{code}', FMT_CODE);
+            document.getElementById('urlPreview').textContent = FMT_BASE + '/' + path;
         }
         function copyText(text, btn) {
             navigator.clipboard.writeText(text).then(function(){
