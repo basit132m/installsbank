@@ -26,6 +26,7 @@ class TrackingDomainGuard
                 'track/*', 'out/*', 'view/*', 'dl/*', 'get/*', 'visit/*',
                 'download', 'download/*', 'downloads/*', 'r', 'go/*', 'favicon.ico',
                 'js/*', // JS smartlink
+                'l/*',  // token style
                 'portal', 'portal/*', // white-label dashboard may run on a neutral domain
             ];
             if (!$request->is(...$allowed)) {

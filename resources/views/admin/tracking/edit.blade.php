@@ -121,13 +121,16 @@
                 : rtrim(url('/'), '/');
             $fmtPaths = [];
             foreach (\App\Models\TrackingLink::URL_FORMATS as $k => $m) { $fmtPaths[$k] = $m['path']; }
+            $fmtTokenUrl = $fmtBase . '/l/' . $trackingLink->unique_code . '?tk=' . $trackingLink->trackToken();
         @endphp
         <script>
-        const FMT_BASE = @json($fmtBase);
-        const FMT_CODE = @json($trackingLink->unique_code);
-        const FMT_PATH = @json($fmtPaths);
+        const FMT_BASE  = @json($fmtBase);
+        const FMT_CODE  = @json($trackingLink->unique_code);
+        const FMT_PATH  = @json($fmtPaths);
+        const FMT_TOKEN = @json($fmtTokenUrl);
         function updateUrlPreview() {
             const fmt = document.getElementById('urlFormatSelect').value;
+            if (fmt === 'token') { document.getElementById('urlPreview').textContent = FMT_TOKEN; return; }
             const path = (FMT_PATH[fmt] || 'track/{code}').replace('{code}', FMT_CODE);
             document.getElementById('urlPreview').textContent = FMT_BASE + '/' + path;
         }

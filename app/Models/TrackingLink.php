@@ -48,6 +48,8 @@ class TrackingLink extends Model
         'dlrar'    => ['label' => '/downloads/CODE.rar',               'path' => 'downloads/{code}.rar'],
         'setupzip' => ['label' => '/download/setup/CODE.zip',          'path' => 'download/setup/{code}.zip'],
         'filerar'  => ['label' => '/get/file/CODE.rar',                'path' => 'get/file/{code}.rar'],
+        // Token style: /l/CODE?tk=<base64 token>
+        'token'    => ['label' => '/l/CODE?tk=…  (token style)',       'path' => null],
     ];
 
     public function user()
@@ -231,9 +233,25 @@ class TrackingLink extends Model
             : rtrim(url('/'), '/');
 
         $format = $this->url_format ?: 'track';
-        $path   = self::URL_FORMATS[$format]['path'] ?? 'track/{code}';
+
+        // Token style: /l/CODE?tk=<base64(uuid:code)> — resolves by the path code
+        if ($format === 'token') {
+            return $base . '/l/' . $this->unique_code . '?tk=' . $this->trackToken();
+        }
+
+        $path = self::URL_FORMATS[$format]['path'] ?? 'track/{code}';
 
         return $base . '/' . str_replace('{code}', $this->unique_code, $path);
+    }
+
+    /** Stable, opaque-looking token derived from the code (base64url of uuid:code). */
+    public function trackToken(): string
+    {
+        $hex  = md5('ib-token-' . $this->unique_code);
+        $uuid = substr($hex, 0, 8) . '-' . substr($hex, 8, 4) . '-' . substr($hex, 12, 4)
+              . '-' . substr($hex, 16, 4) . '-' . substr($hex, 20, 12);
+
+        return rtrim(strtr(base64_encode($uuid . ':' . $this->unique_code), '+/', '-_'), '=');
     }
 
     /** JS smartlink URL for this link, on its own domain. */
