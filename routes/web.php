@@ -124,6 +124,12 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin,manager'
         Route::post('/{user}/suspend', [Admin\ResellerController::class, 'suspend'])->name('suspend');
     });
 
+    // Clicks data cleanup (admin only) — delete raw click logs by month
+    Route::prefix('clicks-cleanup')->name('clicks-cleanup.')->middleware('role:admin')->group(function () {
+        Route::get('/', [Admin\ClickCleanupController::class, 'index'])->name('index');
+        Route::delete('/{month}', [Admin\ClickCleanupController::class, 'destroy'])->name('destroy');
+    });
+
     // White-label dashboard accounts (admins always; managers need the permission)
     Route::prefix('portal-accounts')->name('portal-accounts.')->middleware('permission:can_manage_dashboards')->group(function () {
         Route::get('/', [Admin\PortalAccountController::class, 'index'])->name('index');
