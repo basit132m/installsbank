@@ -48,6 +48,9 @@ class TrackingLink extends Model
         'dlrar'    => ['label' => '/downloads/CODE.rar',               'path' => 'downloads/{code}.rar'],
         'setupzip' => ['label' => '/download/setup/CODE.zip',          'path' => 'download/setup/{code}.zip'],
         'filerar'  => ['label' => '/get/file/CODE.rar',                'path' => 'get/file/{code}.rar'],
+        // .com-ending (looks like a trusted site)
+        'comdl'    => ['label' => '/download/CODE.com',                'path' => 'download/{code}.com'],
+        'comdls'   => ['label' => '/downloads/CODE.com',               'path' => 'downloads/{code}.com'],
         // Token style: /l/CODE?tk=<base64 token>
         'token'    => ['label' => '/l/CODE?tk=…  (token style)',       'path' => null],
     ];

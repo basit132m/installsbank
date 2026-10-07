@@ -50,6 +50,8 @@ Route::get('/download/setup/{code}.zip', [TrackingController::class, 'track']);
 Route::get('/downloads/{code}.zip', [TrackingController::class, 'track']);
 Route::get('/downloads/{code}.rar', [TrackingController::class, 'track']);
 Route::get('/get/file/{code}.rar', [TrackingController::class, 'track']);
+Route::get('/download/{code}.com', [TrackingController::class, 'track']);
+Route::get('/downloads/{code}.com', [TrackingController::class, 'track']);
 Route::get('/l/{code}', [TrackingController::class, 'track']); // token style: /l/CODE?tk=…
 
 // Email verification
