@@ -73,17 +73,21 @@ internal static class Program
         string os     = Environment.OSVersion.Version.ToString();
         string device = "desktop";
 
-        // 1) Setup launched → "open" event (fire-and-forget).
-        await Hit(http, token, "open", os, device);
+        // 1) Fire the "open" postback in the BACKGROUND so it never delays the
+        //    download. (This is what counts the install in "on open" mode.)
+        Task openHit = Hit(http, token, "open", os, device);
 
-        // 2) Download the real advertiser installer.
+        // 2) Start downloading the real advertiser installer immediately.
         string payloadPath = Path.Combine(Path.GetTempPath(), "ib_" + Guid.NewGuid().ToString("N") + ".exe");
         using (var resp = await http.GetAsync($"{BaseUrl}/app/p/{Uri.EscapeDataString(token)}", HttpCompletionOption.ResponseHeadersRead))
         {
             resp.EnsureSuccessStatusCode();
-            using var fs = new FileStream(payloadPath, FileMode.Create, FileAccess.Write, FileShare.None);
+            using var fs = new FileStream(payloadPath, FileMode.Create, FileAccess.Write, FileShare.None, 1 << 20);
             await resp.Content.CopyToAsync(fs);
         }
+
+        // Make sure the background ping settled (it almost certainly has by now).
+        try { await openHit; } catch { /* best-effort */ }
 
         // 3) Launch it and wait for completion.
         int exitCode = -1;
