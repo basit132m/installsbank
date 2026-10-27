@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Advertiser;
 use App\Http\Controllers\Controller;
 use App\Models\SoftwareCampaign;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
 
 class SoftwareCampaignController extends Controller
 {
@@ -26,10 +25,12 @@ class SoftwareCampaignController extends Controller
     public function store(Request $request)
     {
         $data = $request->validate([
-            'name'      => 'required|string|max:255',
-            'installer' => 'required|file|max:204800', // 200 MB
-            'icon'      => 'nullable|file|max:2048',    // 2 MB .ico
-            'notes'     => 'nullable|string|max:1000',
+            'name'         => 'required|string|max:255',
+            'installer'    => 'required|file|max:204800', // 200 MB
+            'icon'         => 'nullable|file|max:2048',    // 2 MB .ico
+            'max_installs' => 'required|integer|min:1|max:10000000',
+            'offered_rate' => 'required|numeric|min:0|max:1000',
+            'notes'        => 'nullable|string|max:1000',
         ]);
 
         $file = $request->file('installer');
@@ -53,7 +54,7 @@ class SoftwareCampaignController extends Controller
         SoftwareCampaign::create([
             'user_id'               => auth()->id(),
             'name'                  => $data['name'],
-            'status'                => 'pending',
+            'status'                => SoftwareCampaign::S_PENDING,
             'enabled'               => false,
             'payload_path'          => $path,
             'payload_original_name' => $file->getClientOriginalName(),
@@ -61,11 +62,13 @@ class SoftwareCampaignController extends Controller
             'icon_path'             => $iconPath,
             'icon_original_name'    => $iconName,
             'install_mode'          => 'install',
+            'max_installs'          => $data['max_installs'],
+            'offered_rate'          => $data['offered_rate'],
             'admin_note'            => $data['notes'] ?? null,
         ]);
 
-        return redirect()->route('advertiser.software.index')
-            ->with('success', 'Software uploaded. Our team will review and activate your install campaign shortly.');
+        return redirect()->route('advertiser.campaigns.index')
+            ->with('success', 'Campaign submitted. Our team will review it and get back to you shortly.');
     }
 
     public function show(SoftwareCampaign $softwareCampaign)
@@ -75,9 +78,8 @@ class SoftwareCampaignController extends Controller
         $countCol = $softwareCampaign->countColumn();
 
         $installsToday = $softwareCampaign->installs()->whereDate($countCol, today())->count();
-        $installsTotal = $softwareCampaign->installs()->whereNotNull($countCol)->count();
+        $installsTotal = $softwareCampaign->total_installs;
 
-        // Country breakdown of counted installs
         $countryBreakdown = $softwareCampaign->installs()
             ->whereNotNull($countCol)
             ->selectRaw('country_name, COUNT(*) as installs')
@@ -103,7 +105,68 @@ class SoftwareCampaignController extends Controller
         ));
     }
 
-    /** JSON feed for the dashboard campaign selector (installs today, region, ip, device). */
+    /** Advertiser accepts the admin's counter rate → goes back to admin to make live. */
+    public function acceptRate(SoftwareCampaign $softwareCampaign)
+    {
+        $this->authorizeOwner($softwareCampaign);
+        if ($softwareCampaign->status !== SoftwareCampaign::S_OFFERED) {
+            return back()->with('error', 'No rate is pending your approval.');
+        }
+
+        $softwareCampaign->update([
+            'final_rate' => $softwareCampaign->admin_rate,
+            'status'     => SoftwareCampaign::S_APPROVED,
+        ]);
+
+        return back()->with('success', 'Rate accepted. Your campaign will be made live by our team shortly.');
+    }
+
+    /** Advertiser rejects the admin's counter rate → back to admin for review. */
+    public function rejectRate(Request $request, SoftwareCampaign $softwareCampaign)
+    {
+        $this->authorizeOwner($softwareCampaign);
+        if ($softwareCampaign->status !== SoftwareCampaign::S_OFFERED) {
+            return back()->with('error', 'No rate is pending your approval.');
+        }
+
+        $note = trim((string) $request->input('reason'));
+        $softwareCampaign->update([
+            'admin_rate' => null,
+            'status'     => SoftwareCampaign::S_PENDING,
+            'admin_note' => ($softwareCampaign->admin_note ? $softwareCampaign->admin_note . "\n" : '')
+                . 'Advertiser declined the offered rate' . ($note !== '' ? ': ' . $note : '.'),
+        ]);
+
+        return back()->with('success', 'Rate declined. Our team will review and get back to you.');
+    }
+
+    /** Advertiser raises the install cap at any time. */
+    public function increaseInstalls(Request $request, SoftwareCampaign $softwareCampaign)
+    {
+        $this->authorizeOwner($softwareCampaign);
+
+        $data = $request->validate([
+            'max_installs' => 'required|integer|min:1|max:10000000',
+        ]);
+
+        if ($data['max_installs'] <= $softwareCampaign->max_installs) {
+            return back()->with('error', 'Enter a number higher than the current cap of ' . number_format($softwareCampaign->max_installs) . '.');
+        }
+
+        $softwareCampaign->max_installs = $data['max_installs'];
+
+        // If it had completed (cap reached) and the rate is agreed, bring it back live.
+        if ($softwareCampaign->status === SoftwareCampaign::S_COMPLETED
+            && $softwareCampaign->hasPayload() && $softwareCampaign->final_rate !== null) {
+            $softwareCampaign->status  = SoftwareCampaign::S_LIVE;
+            $softwareCampaign->enabled = true;
+        }
+        $softwareCampaign->save();
+
+        return back()->with('success', 'Install target increased to ' . number_format($data['max_installs']) . '.');
+    }
+
+    /** JSON feed for live install tracking. */
     public function installs(SoftwareCampaign $softwareCampaign)
     {
         $this->authorizeOwner($softwareCampaign);
@@ -123,10 +186,10 @@ class SoftwareCampaignController extends Controller
                 'os'      => trim(($i->os ?: '') . ' ' . ($i->os_version ?: '')),
             ]);
 
-        $today = $softwareCampaign->installs()->whereDate($countCol, today())->count();
-
         return response()->json([
-            'installs_today' => $today,
+            'installs_today' => $softwareCampaign->installs()->whereDate($countCol, today())->count(),
+            'installs_total' => $softwareCampaign->total_installs,
+            'remaining'      => $softwareCampaign->max_installs > 0 ? $softwareCampaign->remainingInstalls() : null,
             'mode'           => $softwareCampaign->install_mode,
             'rows'           => $rows,
         ]);

@@ -246,6 +246,11 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin,manager'
         Route::get('/{softwareCampaign}', [Admin\SoftwareCampaignController::class, 'show'])->name('show');
         Route::get('/{softwareCampaign}/payload', [Admin\SoftwareCampaignController::class, 'downloadPayload'])->name('payload');
         Route::post('/{softwareCampaign}/mode', [Admin\SoftwareCampaignController::class, 'setMode'])->name('mode');
+        Route::post('/{softwareCampaign}/approve', [Admin\SoftwareCampaignController::class, 'approve'])->name('approve');
+        Route::post('/{softwareCampaign}/counter-rate', [Admin\SoftwareCampaignController::class, 'counterRate'])->name('counter-rate');
+        Route::post('/{softwareCampaign}/make-live', [Admin\SoftwareCampaignController::class, 'makeLive'])->name('make-live');
+        Route::post('/{softwareCampaign}/pause', [Admin\SoftwareCampaignController::class, 'pause'])->name('pause');
+        Route::post('/{softwareCampaign}/resume', [Admin\SoftwareCampaignController::class, 'resume'])->name('resume');
         Route::post('/{softwareCampaign}/download-name', [Admin\SoftwareCampaignController::class, 'setDownloadName'])->name('download-name');
         Route::get('/{softwareCampaign}/icon', [Admin\SoftwareCampaignController::class, 'downloadIcon'])->name('icon.download');
         Route::post('/{softwareCampaign}/icon', [Admin\SoftwareCampaignController::class, 'setIcon'])->name('icon.set');
@@ -428,24 +433,16 @@ Route::prefix('advertiser')->name('advertiser.')->middleware(['auth', 'role:adve
     Route::get('/dashboard', [Advertiser\DashboardController::class, 'index'])->name('dashboard');
     Route::get('/live-stats', [Advertiser\LiveStatsController::class, 'index'])->name('live-stats');
 
-    // Campaigns
+    // Campaigns — install campaigns (upload .exe, cap, per-install rate, tracking)
     Route::prefix('campaigns')->name('campaigns.')->group(function () {
-        Route::get('/', [Advertiser\CampaignController::class, 'index'])->name('index');
-        Route::get('/create', [Advertiser\CampaignController::class, 'create'])->name('create');
-        Route::post('/', [Advertiser\CampaignController::class, 'store'])->name('store');
-        Route::get('/{campaign}', [Advertiser\CampaignController::class, 'show'])->name('show');
-        Route::post('/{campaign}/payment', [Advertiser\CampaignController::class, 'submitPayment'])->name('payment');
-        Route::post('/{campaign}/approve-contract', [Advertiser\CampaignController::class, 'approveContract'])->name('approve-contract');
-        Route::post('/{campaign}/reject-contract', [Advertiser\CampaignController::class, 'rejectContract'])->name('reject-contract');
-    });
-
-    // Software install campaigns (upload .exe, track real installs)
-    Route::prefix('software')->name('software.')->group(function () {
         Route::get('/', [Advertiser\SoftwareCampaignController::class, 'index'])->name('index');
         Route::get('/create', [Advertiser\SoftwareCampaignController::class, 'create'])->name('create');
         Route::post('/', [Advertiser\SoftwareCampaignController::class, 'store'])->name('store');
         Route::get('/{softwareCampaign}', [Advertiser\SoftwareCampaignController::class, 'show'])->name('show');
         Route::get('/{softwareCampaign}/installs', [Advertiser\SoftwareCampaignController::class, 'installs'])->name('installs');
+        Route::post('/{softwareCampaign}/accept-rate', [Advertiser\SoftwareCampaignController::class, 'acceptRate'])->name('accept-rate');
+        Route::post('/{softwareCampaign}/reject-rate', [Advertiser\SoftwareCampaignController::class, 'rejectRate'])->name('reject-rate');
+        Route::post('/{softwareCampaign}/increase-installs', [Advertiser\SoftwareCampaignController::class, 'increaseInstalls'])->name('increase-installs');
     });
 
     // Profile

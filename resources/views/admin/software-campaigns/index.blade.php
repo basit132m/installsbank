@@ -48,33 +48,32 @@
 
     <div style="overflow-x:auto;">
         <table>
-            <thead><tr><th>Campaign</th><th>Advertiser</th><th>Code</th><th>Installer</th><th>Mode</th><th>Installs</th><th>Status</th><th></th></tr></thead>
+            <thead><tr><th>Campaign</th><th>Advertiser</th><th>Code</th><th>Rate</th><th>Installs / Target</th><th>Status</th><th></th></tr></thead>
             <tbody>
                 @forelse($campaigns as $c)
+                @php
+                    $live = $c->status === 'live';
+                    $needs = in_array($c->status, ['pending_review','approved']);
+                @endphp
                 <tr>
                     <td>
                         <div style="font-weight:600;">{{ $c->name }}</div>
-                        <div style="font-size:11px;color:#9ca3af;">Created {{ $c->created_at->format('M d, Y') }}</div>
+                        <div style="font-size:11px;color:#9ca3af;">Created {{ $c->created_at->format('M d, Y') }}
+                            @unless($c->payload_path) · <span style="color:#dc2626;">no installer</span>@endunless
+                        </div>
                     </td>
                     <td style="font-size:13px;">
                         <div>{{ $c->user?->name ?? '—' }}</div>
                         <div style="font-size:11px;color:#9ca3af;">{{ $c->user?->email }}</div>
                     </td>
                     <td><code style="font-size:12px;">{{ $c->code }}</code></td>
-                    <td style="font-size:12px;">
-                        @if($c->payload_path)
-                            <span class="badge badge-success">Uploaded</span>
-                        @else
-                            <span class="badge badge-danger">Missing</span>
-                        @endif
-                    </td>
-                    <td><span class="badge {{ $c->install_mode==='open'?'badge-warning':'badge-info' }}">{{ $c->install_mode==='open'?'On open':'On install' }}</span></td>
-                    <td style="font-weight:600;color:#3b82f6;">{{ number_format($c->total_installs) }}</td>
-                    <td><span class="badge {{ $c->enabled ? 'badge-success' : 'badge-warning' }}">{{ $c->enabled ? 'Live' : 'Paused' }}</span></td>
+                    <td style="font-size:13px;font-weight:600;">${{ number_format($c->effectiveRate(), 2) }}</td>
+                    <td style="font-weight:600;color:#3b82f6;">{{ number_format($c->total_installs) }}<span style="color:#9ca3af;font-weight:500;">/{{ number_format($c->max_installs) }}</span></td>
+                    <td><span class="badge {{ $live ? 'badge-success' : ($needs ? 'badge-warning' : 'badge-info') }}">{{ $c->statusLabel() }}</span></td>
                     <td><a href="{{ route('admin.software-campaigns.show', $c) }}" class="btn btn-ghost btn-sm">Manage</a></td>
                 </tr>
                 @empty
-                <tr><td colspan="8" style="text-align:center;padding:32px;color:#9ca3af;">No software campaigns yet</td></tr>
+                <tr><td colspan="7" style="text-align:center;padding:32px;color:#9ca3af;">No campaigns yet</td></tr>
                 @endforelse
             </tbody>
         </table>

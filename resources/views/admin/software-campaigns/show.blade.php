@@ -20,12 +20,62 @@
 @endif
 
 {{-- Stat row --}}
-<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:16px;margin-bottom:20px;">
-    <div class="card"><div style="font-size:12px;color:#9ca3af;">Installs Today</div><div style="font-size:28px;font-weight:800;color:#3b82f6;">{{ number_format($installsToday) }}</div></div>
-    <div class="card"><div style="font-size:12px;color:#9ca3af;">Total Installs</div><div style="font-size:28px;font-weight:800;">{{ number_format($installsTotal) }}</div></div>
-    <div class="card"><div style="font-size:12px;color:#9ca3af;">Downloads</div><div style="font-size:28px;font-weight:800;color:#6b7280;">{{ number_format($downloadsTotal) }}</div></div>
-    <div class="card"><div style="font-size:12px;color:#9ca3af;">Status</div><div style="font-size:20px;font-weight:800;">{!! $softwareCampaign->enabled ? '<span style="color:#059669;">Live</span>' : '<span style="color:#d97706;">Paused</span>' !!}</div></div>
-    <div class="card"><div style="font-size:12px;color:#9ca3af;">Counting Mode</div><div style="font-size:20px;font-weight:800;">{{ $softwareCampaign->install_mode==='open'?'On open':'On install' }}</div></div>
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:16px;margin-bottom:20px;">
+    <div class="card"><div style="font-size:12px;color:#9ca3af;">Installs Today</div><div style="font-size:26px;font-weight:800;color:#3b82f6;">{{ number_format($installsToday) }}</div></div>
+    <div class="card"><div style="font-size:12px;color:#9ca3af;">Installs / Target</div><div style="font-size:26px;font-weight:800;">{{ number_format($installsTotal) }}<span style="font-size:14px;color:#9ca3af;font-weight:600;">/{{ number_format($softwareCampaign->max_installs) }}</span></div></div>
+    <div class="card"><div style="font-size:12px;color:#9ca3af;">Remaining</div><div style="font-size:26px;font-weight:800;color:#059669;">{{ number_format(max(0, $softwareCampaign->max_installs - $installsTotal)) }}</div></div>
+    <div class="card"><div style="font-size:12px;color:#9ca3af;">Downloads</div><div style="font-size:26px;font-weight:800;color:#6b7280;">{{ number_format($downloadsTotal) }}</div></div>
+    <div class="card"><div style="font-size:12px;color:#9ca3af;">Status</div><div style="font-size:18px;font-weight:800;">{{ $softwareCampaign->statusLabel() }}</div></div>
+    <div class="card"><div style="font-size:12px;color:#9ca3af;">Counting Mode</div><div style="font-size:18px;font-weight:800;">{{ $softwareCampaign->install_mode==='open'?'On open':'On install' }}</div></div>
+</div>
+
+{{-- Rate & approval workflow --}}
+<div class="card" style="margin-bottom:20px;">
+    <div class="card-title" style="margin-bottom:12px;">Rate &amp; Approval</div>
+    <div style="display:flex;gap:28px;flex-wrap:wrap;margin-bottom:16px;font-size:13px;">
+        <div><div style="color:#9ca3af;">Advertiser offered</div><div style="font-size:18px;font-weight:800;">${{ number_format($softwareCampaign->offered_rate, 2) }}</div></div>
+        @if($softwareCampaign->admin_rate !== null)
+        <div><div style="color:#9ca3af;">You proposed</div><div style="font-size:18px;font-weight:800;color:#d97706;">${{ number_format($softwareCampaign->admin_rate, 2) }}</div></div>
+        @endif
+        @if($softwareCampaign->final_rate !== null)
+        <div><div style="color:#9ca3af;">Agreed rate</div><div style="font-size:18px;font-weight:800;color:#059669;">${{ number_format($softwareCampaign->final_rate, 2) }}</div></div>
+        @endif
+    </div>
+
+    @if($softwareCampaign->status === 'pending_review')
+        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
+            <form method="POST" action="{{ route('admin.software-campaigns.approve', $softwareCampaign) }}">
+                @csrf
+                <button class="btn btn-primary btn-sm">Approve at ${{ number_format($softwareCampaign->offered_rate, 2) }}</button>
+            </form>
+            <form method="POST" action="{{ route('admin.software-campaigns.counter-rate', $softwareCampaign) }}" style="display:flex;gap:8px;align-items:center;">
+                @csrf
+                <span style="color:#9ca3af;font-size:13px;">or propose $</span>
+                <input type="number" name="admin_rate" step="0.01" min="0" class="form-control" style="width:110px;" value="{{ number_format($softwareCampaign->offered_rate, 2, '.', '') }}" required>
+                <button class="btn btn-ghost btn-sm">Send counter</button>
+            </form>
+        </div>
+    @elseif($softwareCampaign->status === 'rate_offered')
+        <div style="font-size:13px;color:#92400e;background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:10px 12px;">⏳ Waiting for the advertiser to accept your ${{ number_format($softwareCampaign->admin_rate, 2) }} proposal.</div>
+    @elseif($softwareCampaign->status === 'approved')
+        <form method="POST" action="{{ route('admin.software-campaigns.make-live', $softwareCampaign) }}">
+            @csrf
+            <button class="btn btn-primary btn-sm">Make live</button>
+            <span style="font-size:12px;color:#9ca3af;margin-left:8px;">Rate agreed at ${{ number_format($softwareCampaign->effectiveRate(), 2) }}. Make sure a stub is uploaded.</span>
+        </form>
+    @elseif($softwareCampaign->status === 'live')
+        <form method="POST" action="{{ route('admin.software-campaigns.pause', $softwareCampaign) }}">
+            @csrf
+            <button class="btn btn-ghost btn-sm" style="color:#d97706;">Pause campaign</button>
+        </form>
+    @elseif($softwareCampaign->status === 'paused')
+        <form method="POST" action="{{ route('admin.software-campaigns.resume', $softwareCampaign) }}">
+            @csrf
+            <button class="btn btn-primary btn-sm">Resume campaign</button>
+        </form>
+    @elseif($softwareCampaign->status === 'completed')
+        <div style="font-size:13px;color:#374151;">✓ Install target reached. The advertiser can raise the target to continue.</div>
+    @endif
 </div>
 
 <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px;" class="sw-grid">
@@ -60,16 +110,6 @@
                 <strong>On open</strong> — counted instantly the moment the user runs the setup.
             </label>
             <button class="btn btn-primary btn-sm">Save mode</button>
-        </form>
-
-        {{-- Enable / pause --}}
-        <form method="POST" action="{{ route('admin.software-campaigns.toggle', $softwareCampaign) }}" style="border-top:1px solid #f3f4f6;padding-top:16px;">
-            @csrf
-            @if($softwareCampaign->enabled)
-                <button class="btn btn-ghost btn-sm" style="color:#d97706;">Pause campaign</button>
-            @else
-                <button class="btn btn-primary btn-sm">Enable (go live)</button>
-            @endif
         </form>
     </div>
 

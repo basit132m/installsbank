@@ -3,65 +3,60 @@
 namespace App\Http\Controllers\Advertiser;
 
 use App\Http\Controllers\Controller;
-use App\Models\Campaign;
-use App\Models\Click;
+use App\Models\SoftwareCampaign;
+use App\Models\SoftwareInstall;
 
 class DashboardController extends Controller
 {
     public function index()
     {
-        $user = auth()->user();
+        $user    = auth()->user();
         $profile = $user->advertiserProfile;
 
-        // Campaign stats
-        $campaigns = Campaign::where('user_id', $user->id)->latest()->get();
-        $activeCampaign = $campaigns->where('status', 'active')->first();
+        $campaigns = SoftwareCampaign::where('user_id', $user->id)->latest()->get();
 
-        // Live clicks today across all active campaigns
         $campaignIds = $campaigns->pluck('id');
-        $todayClicks = 0;
-        $totalDelivered = $campaigns->sum('delivered_clicks');
-        $totalSpent = (float) ($profile->total_spent ?? 0);
 
-        // Today's clicks via tracking links belonging to user's campaigns
+        // Installs today across all campaigns (by each campaign's counting column).
+        $installsToday = 0;
+        $totalInstalls = (int) $campaigns->sum('total_installs');
+        $totalTarget   = (int) $campaigns->sum('max_installs');
+        $liveCount     = $campaigns->where('status', SoftwareCampaign::S_LIVE)->count();
+
         if ($campaignIds->isNotEmpty()) {
-            $linkIds = \App\Models\TrackingLink::whereIn('campaign_id', $campaignIds)->pluck('id');
-            if ($linkIds->isNotEmpty()) {
-                $todayClicks = Click::whereIn('tracking_link_id', $linkIds)
-                    ->whereDate('created_at', today())
-                    ->where('is_counted', true)
-                    ->count();
+            // opened_at today for "open"-mode campaigns + installed_at today for "install"-mode.
+            $openIds    = $campaigns->where('install_mode', 'open')->pluck('id');
+            $installIds = $campaigns->where('install_mode', '!=', 'open')->pluck('id');
+
+            if ($openIds->isNotEmpty()) {
+                $installsToday += SoftwareInstall::whereIn('software_campaign_id', $openIds)
+                    ->whereDate('opened_at', today())->count();
+            }
+            if ($installIds->isNotEmpty()) {
+                $installsToday += SoftwareInstall::whereIn('software_campaign_id', $installIds)
+                    ->whereDate('installed_at', today())->count();
             }
         }
 
-        // Country breakdown for active campaign
-        $countryBreakdown = null;
-        $countryNames = collect();
-        if ($activeCampaign && $activeCampaign->click_breakdown) {
-            $countryBreakdown = collect($activeCampaign->click_breakdown)->sortByDesc(fn($v) => $v);
-            $countryNames = \App\Models\CountryRate::whereIn('country_code', $countryBreakdown->keys()->toArray())
-                ->pluck('country_name', 'country_code');
-        }
+        // The most relevant campaign to feature (first live, else newest).
+        $activeCampaign = $campaigns->firstWhere('status', SoftwareCampaign::S_LIVE) ?? $campaigns->first();
 
-        // OS breakdown for active campaign's links
-        $osBreakdown = collect();
+        $countryBreakdown = collect();
+        $deviceBreakdown  = collect();
         if ($activeCampaign) {
-            $linkIds = \App\Models\TrackingLink::where('campaign_id', $activeCampaign->id)->pluck('id');
-            if ($linkIds->isNotEmpty()) {
-                $osBreakdown = Click::whereIn('tracking_link_id', $linkIds)
-                    ->where('is_counted', true)
-                    ->selectRaw('os, COUNT(*) as clicks')
-                    ->groupBy('os')
-                    ->orderByDesc('clicks')
-                    ->get()
-                    ->mapWithKeys(fn($r) => [$r->os ?: 'Unknown' => $r->clicks]);
-            }
+            $cc = $activeCampaign->countColumn();
+            $countryBreakdown = $activeCampaign->installs()->whereNotNull($cc)
+                ->selectRaw('country_name, COUNT(*) as installs')
+                ->groupBy('country_name')->orderByDesc('installs')->limit(8)->get();
+            $deviceBreakdown = $activeCampaign->installs()->whereNotNull($cc)
+                ->selectRaw('device_type, COUNT(*) as installs')
+                ->groupBy('device_type')->orderByDesc('installs')->get();
         }
 
         return view('advertiser.dashboard', compact(
             'user', 'profile', 'campaigns', 'activeCampaign',
-            'todayClicks', 'totalDelivered', 'totalSpent',
-            'countryBreakdown', 'countryNames', 'osBreakdown'
+            'installsToday', 'totalInstalls', 'totalTarget', 'liveCount',
+            'countryBreakdown', 'deviceBreakdown'
         ));
     }
 }

@@ -144,24 +144,69 @@ class SoftwareCampaignController extends Controller
         return back()->with('success', 'Counting mode updated to "' . $data['install_mode'] . '".');
     }
 
-    public function toggle(SoftwareCampaign $softwareCampaign)
+    /** Admin accepts the advertiser's offered rate as-is → ready to go live. */
+    public function approve(SoftwareCampaign $softwareCampaign)
     {
-        if (!$softwareCampaign->enabled) {
-            // Can't enable a campaign that has no installer or no stub.
-            if (!$softwareCampaign->hasPayload()) {
-                return back()->with('error', 'Upload the advertiser installer before enabling.');
-            }
-            if (!Storage::disk('local')->exists(self::STUB_PATH)) {
-                return back()->with('error', 'Upload the global stub binary before enabling any campaign.');
-            }
+        $softwareCampaign->update([
+            'final_rate' => $softwareCampaign->offered_rate,
+            'admin_rate' => null,
+            'status'     => SoftwareCampaign::S_APPROVED,
+        ]);
+
+        return back()->with('success', 'Approved at the offered rate. You can now make it live.');
+    }
+
+    /** Admin proposes a different per-install rate → back to the advertiser. */
+    public function counterRate(Request $request, SoftwareCampaign $softwareCampaign)
+    {
+        $data = $request->validate(['admin_rate' => 'required|numeric|min:0|max:1000']);
+
+        $softwareCampaign->update([
+            'admin_rate' => $data['admin_rate'],
+            'status'     => SoftwareCampaign::S_OFFERED,
+        ]);
+
+        return back()->with('success', 'Rate sent to the advertiser for approval.');
+    }
+
+    /** Make an approved campaign live (start serving installs). */
+    public function makeLive(SoftwareCampaign $softwareCampaign)
+    {
+        if ($softwareCampaign->status !== SoftwareCampaign::S_APPROVED) {
+            return back()->with('error', 'The rate must be approved before going live.');
+        }
+        if (!$softwareCampaign->hasPayload()) {
+            return back()->with('error', 'Upload the advertiser installer before going live.');
+        }
+        if (!$softwareCampaign->hasBrandedStub() && !Storage::disk('local')->exists(self::STUB_PATH)) {
+            return back()->with('error', 'Upload the global stub binary before going live.');
         }
 
         $softwareCampaign->update([
-            'enabled' => !$softwareCampaign->enabled,
-            'status'  => !$softwareCampaign->enabled ? 'active' : 'paused',
+            'enabled'    => true,
+            'status'     => SoftwareCampaign::S_LIVE,
+            'final_rate' => $softwareCampaign->final_rate ?? $softwareCampaign->offered_rate,
         ]);
 
-        return back()->with('success', $softwareCampaign->enabled ? 'Campaign is now live.' : 'Campaign paused.');
+        return back()->with('success', 'Campaign is now live.');
+    }
+
+    public function pause(SoftwareCampaign $softwareCampaign)
+    {
+        $softwareCampaign->update(['enabled' => false, 'status' => SoftwareCampaign::S_PAUSED]);
+        return back()->with('success', 'Campaign paused.');
+    }
+
+    public function resume(SoftwareCampaign $softwareCampaign)
+    {
+        if ($softwareCampaign->capReached()) {
+            return back()->with('error', 'Install cap reached — ask the advertiser to raise the target first.');
+        }
+        if (!$softwareCampaign->hasPayload()) {
+            return back()->with('error', 'Upload the advertiser installer first.');
+        }
+        $softwareCampaign->update(['enabled' => true, 'status' => SoftwareCampaign::S_LIVE]);
+        return back()->with('success', 'Campaign resumed.');
     }
 
     public function setNote(Request $request, SoftwareCampaign $softwareCampaign)

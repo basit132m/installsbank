@@ -10,14 +10,67 @@ class SoftwareCampaign extends Model
     protected $fillable = [
         'user_id', 'name', 'download_name', 'icon_path', 'icon_original_name', 'code', 'status', 'enabled',
         'payload_path', 'payload_original_name', 'payload_size',
-        'install_mode', 'total_installs', 'admin_note',
+        'install_mode', 'max_installs', 'offered_rate', 'admin_rate', 'final_rate',
+        'total_installs', 'admin_note',
     ];
 
     protected $casts = [
-        'enabled'       => 'boolean',
-        'payload_size'  => 'integer',
-        'total_installs'=> 'integer',
+        'enabled'        => 'boolean',
+        'payload_size'   => 'integer',
+        'total_installs' => 'integer',
+        'max_installs'   => 'integer',
+        'offered_rate'   => 'decimal:4',
+        'admin_rate'     => 'decimal:4',
+        'final_rate'     => 'decimal:4',
     ];
+
+    // Workflow statuses
+    public const S_PENDING  = 'pending_review'; // advertiser submitted, awaiting admin
+    public const S_OFFERED  = 'rate_offered';   // admin countered, awaiting advertiser
+    public const S_APPROVED = 'approved';       // rate agreed, awaiting admin to go live
+    public const S_LIVE     = 'live';           // serving installs
+    public const S_PAUSED   = 'paused';
+    public const S_COMPLETED= 'completed';       // cap reached
+
+    public function remainingInstalls(): int
+    {
+        if ($this->max_installs <= 0) {
+            return PHP_INT_MAX; // no cap
+        }
+        return max(0, $this->max_installs - $this->total_installs);
+    }
+
+    public function capReached(): bool
+    {
+        return $this->max_installs > 0 && $this->total_installs >= $this->max_installs;
+    }
+
+    public function progressPercent(): int
+    {
+        if ($this->max_installs <= 0) {
+            return 0;
+        }
+        return (int) min(100, round($this->total_installs / $this->max_installs * 100));
+    }
+
+    /** Per-install rate that applies (agreed rate, else the offer). */
+    public function effectiveRate(): float
+    {
+        return (float) ($this->final_rate ?? $this->offered_rate);
+    }
+
+    public function statusLabel(): string
+    {
+        return match ($this->status) {
+            self::S_PENDING  => 'Under review',
+            self::S_OFFERED  => 'Rate offered — your approval needed',
+            self::S_APPROVED => 'Approved — going live soon',
+            self::S_LIVE     => 'Live',
+            self::S_PAUSED   => 'Paused',
+            self::S_COMPLETED=> 'Completed',
+            default          => ucfirst(str_replace('_', ' ', (string) $this->status)),
+        };
+    }
 
     public function user()
     {

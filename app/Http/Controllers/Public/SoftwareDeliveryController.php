@@ -29,6 +29,11 @@ class SoftwareDeliveryController extends Controller
             abort(404);
         }
 
+        // Stop serving once the advertiser's install cap is reached.
+        if ($campaign->capReached()) {
+            abort(404);
+        }
+
         // Serve this campaign's branded (icon-baked) stub if one was uploaded,
         // otherwise fall back to the shared global stub.
         $stubRel = $campaign->hasBrandedStub() ? $campaign->brandedStubRelPath() : self::STUB_PATH;
@@ -115,13 +120,20 @@ class SoftwareDeliveryController extends Controller
             $install->installed_at = now();
         }
 
-        // Count the install once, when the mode's counting event first lands.
-        $justCounted = empty($install->getOriginal($countCol)) && !empty($install->{$countCol});
+        // Count the install once, when the mode's counting event first lands —
+        // but never beyond the advertiser's cap.
+        $justCounted = empty($install->getOriginal($countCol)) && !empty($install->{$countCol})
+            && !$campaign->capReached();
 
         $install->save();
 
         if ($justCounted) {
             $campaign->increment('total_installs');
+            $campaign->refresh();
+            // Auto-complete + stop serving the moment the cap is hit.
+            if ($campaign->capReached()) {
+                $campaign->update(['enabled' => false, 'status' => SoftwareCampaign::S_COMPLETED]);
+            }
         }
 
         return response('ok', 200);
