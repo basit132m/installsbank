@@ -18,7 +18,7 @@
 
     <div style="overflow-x:auto;">
         <table>
-            <thead><tr><th>Advertiser</th><th>Company</th><th>Telegram / WhatsApp</th><th>Campaigns</th><th>Total Spent</th><th>Status</th><th></th></tr></thead>
+            <thead><tr><th>Advertiser</th><th>Company</th><th>Telegram / WhatsApp</th><th>Campaigns</th><th>Status</th><th></th></tr></thead>
             <tbody>
                 @forelse($advertisers as $adv)
                 @php $profile = $adv->advertiserProfile; @endphp
@@ -33,13 +33,12 @@
                         @if($profile?->telegram)<div>📱 {{ $profile->telegram }}</div>@endif
                         @if($profile?->whatsapp)<div>💬 {{ $profile->whatsapp }}</div>@endif
                     </td>
-                    <td style="font-weight:600;">{{ $adv->campaigns()->count() }}</td>
-                    <td style="font-weight:600;color:#3b82f6;">${{ number_format($profile?->total_spent ?? 0, 2) }}</td>
+                    <td style="font-weight:600;">{{ $adv->software_campaigns_count }}</td>
                     <td><span class="badge {{ $adv->status==='active'?'badge-success':($adv->status==='suspended'?'badge-danger':'badge-warning') }}">{{ ucfirst($adv->status) }}</span></td>
                     <td><a href="{{ route('admin.advertisers.show', $adv) }}" class="btn btn-ghost btn-sm">View</a></td>
                 </tr>
                 @empty
-                <tr><td colspan="7" style="text-align:center;padding:32px;color:#9ca3af;">No advertisers yet</td></tr>
+                <tr><td colspan="6" style="text-align:center;padding:32px;color:#9ca3af;">No advertisers yet</td></tr>
                 @endforelse
             </tbody>
         </table>

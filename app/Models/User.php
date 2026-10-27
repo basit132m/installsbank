@@ -69,6 +69,11 @@ class User extends Authenticatable
         return $this->hasMany(Campaign::class);
     }
 
+    public function softwareCampaigns()
+    {
+        return $this->hasMany(SoftwareCampaign::class);
+    }
+
     public function publisherProfile()
     {
         return $this->hasOne(PublisherProfile::class);

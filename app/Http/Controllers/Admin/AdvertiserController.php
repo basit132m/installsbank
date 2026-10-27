@@ -10,7 +10,9 @@ class AdvertiserController extends Controller
 {
     public function index(Request $request)
     {
-        $query = User::where('role', 'advertiser')->with('advertiserProfile');
+        $query = User::where('role', 'advertiser')
+            ->with('advertiserProfile')
+            ->withCount('softwareCampaigns');
 
         if ($request->filled('search')) {
             $query->where(function ($q) use ($request) {
@@ -27,7 +29,7 @@ class AdvertiserController extends Controller
     {
         if ($user->role !== 'advertiser') abort(404);
         $user->load('advertiserProfile');
-        $campaigns = $user->campaigns()->with('payments')->latest()->get();
+        $campaigns = $user->softwareCampaigns()->latest()->get();
         return view('admin.advertisers.show', compact('user', 'campaigns'));
     }
 
