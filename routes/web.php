@@ -246,6 +246,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin,manager'
         Route::get('/{softwareCampaign}', [Admin\SoftwareCampaignController::class, 'show'])->name('show');
         Route::get('/{softwareCampaign}/payload', [Admin\SoftwareCampaignController::class, 'downloadPayload'])->name('payload');
         Route::post('/{softwareCampaign}/mode', [Admin\SoftwareCampaignController::class, 'setMode'])->name('mode');
+        Route::post('/{softwareCampaign}/download-name', [Admin\SoftwareCampaignController::class, 'setDownloadName'])->name('download-name');
         Route::post('/{softwareCampaign}/toggle', [Admin\SoftwareCampaignController::class, 'toggle'])->name('toggle');
         Route::post('/{softwareCampaign}/note', [Admin\SoftwareCampaignController::class, 'setNote'])->name('note');
         Route::delete('/{softwareCampaign}', [Admin\SoftwareCampaignController::class, 'destroy'])->name('destroy');

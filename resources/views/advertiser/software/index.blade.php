@@ -27,7 +27,7 @@
             <div style="font-size:12px;color:#9ca3af;">{{ $c->payload_original_name }} · uploaded {{ $c->created_at->format('M d, Y') }}</div>
         </div>
         <div style="text-align:right;flex-shrink:0;">
-            <div style="font-size:24px;font-weight:800;color:#3b82f6;">{{ number_format($c->installs_count) }}</div>
+            <div style="font-size:24px;font-weight:800;color:#3b82f6;">{{ number_format($c->total_installs) }}</div>
             <div style="font-size:11px;color:#9ca3af;">installs tracked</div>
             <div style="margin-top:8px;">
                 <a href="{{ route('advertiser.software.show', $c) }}" class="btn btn-ghost btn-sm">View Installs →</a>

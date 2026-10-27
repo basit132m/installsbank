@@ -12,7 +12,6 @@ class SoftwareCampaignController extends Controller
     public function index()
     {
         $campaigns = SoftwareCampaign::where('user_id', auth()->id())
-            ->withCount('installs')
             ->latest()
             ->get();
 

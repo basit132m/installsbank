@@ -14,7 +14,7 @@ class SoftwareCampaignController extends Controller
 
     public function index(Request $request)
     {
-        $query = SoftwareCampaign::with('user')->withCount('installs');
+        $query = SoftwareCampaign::with('user');
 
         if ($request->filled('search')) {
             $s = $request->search;
@@ -38,8 +38,9 @@ class SoftwareCampaignController extends Controller
 
         $countCol = $softwareCampaign->countColumn();
 
-        $installsToday = $softwareCampaign->installs()->whereDate($countCol, today())->count();
-        $installsTotal = $softwareCampaign->installs()->whereNotNull($countCol)->count();
+        $installsToday  = $softwareCampaign->installs()->whereDate($countCol, today())->count();
+        $installsTotal  = $softwareCampaign->installs()->whereNotNull($countCol)->count();
+        $downloadsTotal = $softwareCampaign->installs()->count();
 
         $installs = $softwareCampaign->installs()
             ->latest()
@@ -51,8 +52,18 @@ class SoftwareCampaignController extends Controller
         $downloadUrl = route('software.download', ['code' => $softwareCampaign->code]);
 
         return view('admin.software-campaigns.show', compact(
-            'softwareCampaign', 'installs', 'installsToday', 'installsTotal', 'stubReady', 'downloadUrl'
+            'softwareCampaign', 'installs', 'installsToday', 'installsTotal', 'downloadsTotal', 'stubReady', 'downloadUrl'
         ));
+    }
+
+    public function setDownloadName(Request $request, SoftwareCampaign $softwareCampaign)
+    {
+        $data = $request->validate([
+            'download_name' => 'nullable|string|max:60',
+        ]);
+        $softwareCampaign->update(['download_name' => $data['download_name'] ?: null]);
+
+        return back()->with('success', 'Download name saved. New downloads will use it.');
     }
 
     /** Admin downloads the advertiser's raw uploaded .exe. */

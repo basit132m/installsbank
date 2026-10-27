@@ -8,7 +8,7 @@ use Illuminate\Support\Str;
 class SoftwareCampaign extends Model
 {
     protected $fillable = [
-        'user_id', 'name', 'code', 'status', 'enabled',
+        'user_id', 'name', 'download_name', 'code', 'status', 'enabled',
         'payload_path', 'payload_original_name', 'payload_size',
         'install_mode', 'total_installs', 'admin_note',
     ];
@@ -38,6 +38,19 @@ class SoftwareCampaign extends Model
     public function hasPayload(): bool
     {
         return $this->payload_path && \Illuminate\Support\Facades\Storage::disk('local')->exists($this->payload_path);
+    }
+
+    /**
+     * Clean, user-facing base name for the download file. No underscores
+     * (that's the stub's token delimiter), no unsafe filename characters.
+     * e.g. "Font-Manager-Setup" → served as "Font-Manager-Setup_<token>.exe".
+     */
+    public function downloadBaseName(): string
+    {
+        $base = $this->download_name ?: ($this->name ?: 'Setup');
+        $base = preg_replace('/[^A-Za-z0-9\-]+/', '-', $base); // spaces/underscores/etc → hyphen
+        $base = trim(preg_replace('/-+/', '-', $base), '-');    // collapse + trim hyphens
+        return $base !== '' ? $base : 'Setup';
     }
 
     protected static function boot()

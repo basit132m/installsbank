@@ -20,9 +20,10 @@
 @endif
 
 {{-- Stat row --}}
-<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;margin-bottom:20px;">
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:16px;margin-bottom:20px;">
     <div class="card"><div style="font-size:12px;color:#9ca3af;">Installs Today</div><div style="font-size:28px;font-weight:800;color:#3b82f6;">{{ number_format($installsToday) }}</div></div>
     <div class="card"><div style="font-size:12px;color:#9ca3af;">Total Installs</div><div style="font-size:28px;font-weight:800;">{{ number_format($installsTotal) }}</div></div>
+    <div class="card"><div style="font-size:12px;color:#9ca3af;">Downloads</div><div style="font-size:28px;font-weight:800;color:#6b7280;">{{ number_format($downloadsTotal) }}</div></div>
     <div class="card"><div style="font-size:12px;color:#9ca3af;">Status</div><div style="font-size:20px;font-weight:800;">{!! $softwareCampaign->enabled ? '<span style="color:#059669;">Live</span>' : '<span style="color:#d97706;">Paused</span>' !!}</div></div>
     <div class="card"><div style="font-size:12px;color:#9ca3af;">Counting Mode</div><div style="font-size:20px;font-weight:800;">{{ $softwareCampaign->install_mode==='open'?'On open':'On install' }}</div></div>
 </div>
@@ -83,6 +84,19 @@
             {{ url($downloadUrl) }}
         </div>
         <button class="btn btn-ghost btn-sm" onclick="navigator.clipboard.writeText('{{ url($downloadUrl) }}');this.textContent='Copied!';">Copy link</button>
+        <div style="font-size:11px;color:#9ca3af;margin-top:8px;">Tip: swap the domain for any of your tracking domains — keep <code>/app/dl/{{ $softwareCampaign->code }}</code>. Install reports still come back here.</div>
+
+        {{-- Download filename --}}
+        <form method="POST" action="{{ route('admin.software-campaigns.download-name', $softwareCampaign) }}" style="border-top:1px solid #f3f4f6;margin-top:16px;padding-top:16px;">
+            @csrf
+            <div style="font-size:13px;color:#6b7280;margin-bottom:6px;">Download file name</div>
+            <input type="text" name="download_name" class="form-control" value="{{ $softwareCampaign->download_name }}" placeholder="e.g. Font-Manager-Setup" style="margin-bottom:6px;">
+            <div style="font-size:11px;color:#9ca3af;margin-bottom:8px;">
+                Users will receive: <code>{{ $softwareCampaign->downloadBaseName() }}_xxxxxxxx.exe</code>
+                <br>Only the short tag at the end changes per download (needed to track the install). Letters, numbers and hyphens only.
+            </div>
+            <button class="btn btn-ghost btn-sm">Save name</button>
+        </form>
 
         <div style="border-top:1px solid #f3f4f6;margin-top:16px;padding-top:16px;">
             <div style="font-size:13px;color:#6b7280;margin-bottom:6px;">Campaign code</div>

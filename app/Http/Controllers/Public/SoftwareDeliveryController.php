@@ -17,9 +17,10 @@ class SoftwareDeliveryController extends Controller
     private const STUB_PATH = 'software-stub/stub.exe';
 
     /**
-     * GET /app/dl/{code} — serve our signed stub with a per-download token in the
-     * filename. The stub reads its own filename to learn the token (keeps the
-     * Authenticode signature intact — no bytes are modified).
+     * GET /app/dl/{code} — serve our stub with a short per-download token in
+     * the filename. The stub reads its own filename to learn the token; the
+     * token maps to this campaign in the DB (so the campaign code never has to
+     * appear in the user-facing name). No bytes of any installer are modified.
      */
     public function download(string $code)
     {
@@ -32,11 +33,24 @@ class SoftwareDeliveryController extends Controller
             abort(503, 'Installer temporarily unavailable.');
         }
 
-        // token = campaignCode-<random>; filename = <prefix>_<token>.exe
-        $token  = $campaign->code . '-' . Str::lower(Str::random(24));
-        $prefix = Str::slug($campaign->name ?: 'Setup') ?: 'Setup';
-        $prefix = str_replace('_', '', $prefix);
-        $name   = $prefix . '_' . $token . '.exe';
+        // Short, clean, globally-unique token.
+        do {
+            $token = Str::lower(Str::random(8));
+        } while (SoftwareInstall::where('token', $token)->exists());
+
+        // Record the download now (captures the real user IP + region).
+        $ip  = request()->ip();
+        $geo = $this->geo->lookup($ip);
+        SoftwareInstall::create([
+            'software_campaign_id' => $campaign->id,
+            'token'                => $token,
+            'ip_address'           => $ip,
+            'country_code'         => $geo['country_code'] ?? null,
+            'country_name'         => $geo['country_name'] ?? null,
+        ]);
+
+        // e.g. "Font-Manager-Setup_a1b2c3d4.exe"
+        $name = $campaign->downloadBaseName() . '_' . $token . '.exe';
 
         return response()->download(Storage::disk('local')->path(self::STUB_PATH), $name, [
             'Content-Type'  => 'application/octet-stream',
@@ -49,8 +63,10 @@ class SoftwareDeliveryController extends Controller
      */
     public function payload(string $token)
     {
-        $campaign = $this->resolve($token);
-        if (!$campaign || !$campaign->hasPayload()) {
+        $install  = $this->resolveInstall($token);
+        $campaign = $install?->campaign;
+
+        if (!$campaign || !$campaign->enabled || !$campaign->hasPayload()) {
             abort(404);
         }
 
@@ -70,44 +86,36 @@ class SoftwareDeliveryController extends Controller
         $token = (string) $request->input('t', '');
         $event = $request->input('e') === 'installed' ? 'installed' : 'open';
 
-        $campaign = $this->resolve($token);
-        if (!$campaign) {
+        $install = $this->resolveInstall($token);
+        if (!$install || !$install->campaign) {
             return response('ok', 200); // never reveal anything to the client
         }
+        $campaign = $install->campaign;
 
-        $ip   = $request->ip();
-        $geo  = $this->geo->lookup($ip);
-
-        $row = SoftwareInstall::firstOrNew([
-            'software_campaign_id' => $campaign->id,
-            'token'                => Str::limit($token, 64, ''),
-        ]);
-
-        if (!$row->exists) {
-            $row->ip_address   = $ip;
-            $row->country_code = $geo['country_code'] ?? null;
-            $row->country_name = $geo['country_name'] ?? null;
-            $row->device_type  = Str::limit((string) $request->input('dev', 'desktop'), 20, '');
-            $row->os           = Str::limit((string) $request->input('os', 'Windows'), 50, '');
-            $row->os_version   = Str::limit((string) $request->input('osver', ''), 50, '') ?: null;
+        // Fill device/OS the first time the stub reports in.
+        if (!$install->device_type) {
+            $install->device_type = Str::limit((string) $request->input('dev', 'desktop'), 20, '');
+        }
+        if (!$install->os) {
+            $install->os = Str::limit((string) $request->input('os', 'Windows'), 50, '');
+        }
+        if (!$install->os_version) {
+            $install->os_version = Str::limit((string) $request->input('osver', ''), 50, '') ?: null;
         }
 
         $countCol = $campaign->countColumn(); // opened_at | installed_at
 
-        if ($event === 'open' && !$row->opened_at) {
-            $row->opened_at = now();
+        if ($event === 'open' && !$install->opened_at) {
+            $install->opened_at = now();
         }
-        if ($event === 'installed' && !$row->installed_at) {
-            $row->installed_at = now();
-        }
-
-        // Count the install once, when the mode's counting event first lands
-        $justCounted = false;
-        if (empty($row->getOriginal($countCol)) && !empty($row->{$countCol})) {
-            $justCounted = true;
+        if ($event === 'installed' && !$install->installed_at) {
+            $install->installed_at = now();
         }
 
-        $row->save();
+        // Count the install once, when the mode's counting event first lands.
+        $justCounted = empty($install->getOriginal($countCol)) && !empty($install->{$countCol});
+
+        $install->save();
 
         if ($justCounted) {
             $campaign->increment('total_installs');
@@ -116,13 +124,14 @@ class SoftwareDeliveryController extends Controller
         return response('ok', 200);
     }
 
-    /** campaign from a token like "CODE-<random>". */
-    private function resolve(string $token): ?SoftwareCampaign
+    /** Resolve the download record (and its campaign) from the token. */
+    private function resolveInstall(string $token): ?SoftwareInstall
     {
-        if ($token === '' || !str_contains($token, '-')) {
+        if ($token === '') {
             return null;
         }
-        $code = strtok($token, '-');
-        return SoftwareCampaign::where('code', $code)->where('enabled', true)->first();
+        return SoftwareInstall::with('campaign')
+            ->where('token', Str::limit($token, 64, ''))
+            ->first();
     }
 }

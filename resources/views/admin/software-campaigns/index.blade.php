@@ -69,7 +69,7 @@
                         @endif
                     </td>
                     <td><span class="badge {{ $c->install_mode==='open'?'badge-warning':'badge-info' }}">{{ $c->install_mode==='open'?'On open':'On install' }}</span></td>
-                    <td style="font-weight:600;color:#3b82f6;">{{ number_format($c->installs_count) }}</td>
+                    <td style="font-weight:600;color:#3b82f6;">{{ number_format($c->total_installs) }}</td>
                     <td><span class="badge {{ $c->enabled ? 'badge-success' : 'badge-warning' }}">{{ $c->enabled ? 'Live' : 'Paused' }}</span></td>
                     <td><a href="{{ route('admin.software-campaigns.show', $c) }}" class="btn btn-ghost btn-sm">Manage</a></td>
                 </tr>
