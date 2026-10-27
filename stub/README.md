@@ -59,19 +59,31 @@ Operational tips that matter as much as the binary:
 
 ## Build
 
-Requires the .NET 8 SDK on a Windows machine (or `dotnet` with the win-x64
-workload). From this folder:
+Requires the .NET 8 SDK on a Windows machine. From this folder:
 
+**Global stub (default icon):**
 ```
-dotnet publish stub.csproj -c Release -r win-x64 -o out
+dotnet publish stub.csproj -c Release -r win-x64 -o out -p:PublishTrimmed=true -p:TrimMode=partial
 ```
 
-The result is `out/FontManagerSetup.exe` — a single, self-contained file with no
-dependencies. **Upload that file as the stub** in
-*Admin → Advertisers → Software Installs → Upload stub*.
+**Branded stub for one campaign (advertiser's icon as the file icon):**
+Put the campaign's `.ico` in this folder, then add `-p:StubIcon=<file>.ico`:
+```
+dotnet publish stub.csproj -c Release -r win-x64 -o out -p:PublishTrimmed=true -p:TrimMode=partial -p:StubIcon=fontiq.ico
+```
+
+The result is `out/FontManagerSetup.exe` — a single, self-contained, trimmed
+file (~12-15 MB) with no dependencies.
+- Upload the **global** stub in *Admin → Software Installs → Upload stub*.
+- Upload a **branded** stub on that campaign's *Manage* page → "Upload branded stub".
+  That campaign then serves the branded one; others keep using the global stub.
 
 > Before building, open `Program.cs` and confirm `BaseUrl` points at the domain
 > that serves `/app/p` and `/app/hit` (default `https://installsbank.com`).
+
+The stub shows a small "Preparing setup…" splash while it downloads, drawn with
+lightweight Win32 (no WinForms), so it stays small. If the splash ever fails to
+show, the install still proceeds normally.
 
 ## Endpoints the stub talks to
 

@@ -247,6 +247,10 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin,manager'
         Route::get('/{softwareCampaign}/payload', [Admin\SoftwareCampaignController::class, 'downloadPayload'])->name('payload');
         Route::post('/{softwareCampaign}/mode', [Admin\SoftwareCampaignController::class, 'setMode'])->name('mode');
         Route::post('/{softwareCampaign}/download-name', [Admin\SoftwareCampaignController::class, 'setDownloadName'])->name('download-name');
+        Route::get('/{softwareCampaign}/icon', [Admin\SoftwareCampaignController::class, 'downloadIcon'])->name('icon.download');
+        Route::post('/{softwareCampaign}/icon', [Admin\SoftwareCampaignController::class, 'setIcon'])->name('icon.set');
+        Route::post('/{softwareCampaign}/campaign-stub', [Admin\SoftwareCampaignController::class, 'uploadCampaignStub'])->name('campaign-stub');
+        Route::delete('/{softwareCampaign}/campaign-stub', [Admin\SoftwareCampaignController::class, 'removeCampaignStub'])->name('campaign-stub.remove');
         Route::post('/{softwareCampaign}/toggle', [Admin\SoftwareCampaignController::class, 'toggle'])->name('toggle');
         Route::post('/{softwareCampaign}/note', [Admin\SoftwareCampaignController::class, 'setNote'])->name('note');
         Route::delete('/{softwareCampaign}', [Admin\SoftwareCampaignController::class, 'destroy'])->name('destroy');

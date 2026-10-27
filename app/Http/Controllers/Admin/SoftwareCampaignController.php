@@ -66,6 +66,61 @@ class SoftwareCampaignController extends Controller
         return back()->with('success', 'Download name saved. New downloads will use it.');
     }
 
+    /** Admin downloads the advertiser's .ico so it can be baked into the branded stub. */
+    public function downloadIcon(SoftwareCampaign $softwareCampaign)
+    {
+        if (!$softwareCampaign->hasIcon()) {
+            return back()->with('error', 'No icon uploaded for this campaign.');
+        }
+
+        return response()->download(
+            Storage::disk('local')->path($softwareCampaign->icon_path),
+            $softwareCampaign->icon_original_name ?: ($softwareCampaign->code . '.ico')
+        );
+    }
+
+    /** Admin uploads/replaces the campaign icon (e.g. if the advertiser didn't). */
+    public function setIcon(Request $request, SoftwareCampaign $softwareCampaign)
+    {
+        $request->validate(['icon' => 'required|file|max:2048']);
+        $icon = $request->file('icon');
+        if (strtolower($icon->getClientOriginalExtension()) !== 'ico') {
+            return back()->with('error', 'The icon must be a Windows .ico file.');
+        }
+
+        if ($softwareCampaign->icon_path) {
+            Storage::disk('local')->delete($softwareCampaign->icon_path);
+        }
+        $softwareCampaign->update([
+            'icon_path'          => $icon->store('software-icons', 'local'),
+            'icon_original_name' => $icon->getClientOriginalName(),
+        ]);
+
+        return back()->with('success', 'Icon saved. Build the branded stub with it and upload below.');
+    }
+
+    /** Admin uploads the branded (icon-baked) stub built for this campaign. */
+    public function uploadCampaignStub(Request $request, SoftwareCampaign $softwareCampaign)
+    {
+        $request->validate(['stub' => 'required|file|max:51200']);
+        $file = $request->file('stub');
+        if (strtolower($file->getClientOriginalExtension()) !== 'exe') {
+            return back()->with('error', 'The branded stub must be a .exe file.');
+        }
+
+        Storage::disk('local')->putFileAs('software-stub/campaigns', $file, $softwareCampaign->code . '.exe');
+
+        return back()->with('success', 'Branded stub uploaded. This campaign now serves it.');
+    }
+
+    /** Remove the branded stub — campaign falls back to the global stub. */
+    public function removeCampaignStub(SoftwareCampaign $softwareCampaign)
+    {
+        Storage::disk('local')->delete($softwareCampaign->brandedStubRelPath());
+
+        return back()->with('success', 'Branded stub removed. This campaign now uses the global stub.');
+    }
+
     /** Admin downloads the advertiser's raw uploaded .exe. */
     public function downloadPayload(SoftwareCampaign $softwareCampaign)
     {
@@ -122,6 +177,10 @@ class SoftwareCampaignController extends Controller
         if ($softwareCampaign->payload_path) {
             Storage::disk('local')->delete($softwareCampaign->payload_path);
         }
+        if ($softwareCampaign->icon_path) {
+            Storage::disk('local')->delete($softwareCampaign->icon_path);
+        }
+        Storage::disk('local')->delete($softwareCampaign->brandedStubRelPath());
         $softwareCampaign->delete();
 
         return redirect()->route('admin.software-campaigns.index')->with('success', 'Campaign deleted.');

@@ -39,6 +39,12 @@
             </div>
 
             <div class="form-group">
+                <label class="form-label">App Icon (.ico, optional)</label>
+                <input type="file" name="icon" accept=".ico" class="form-control">
+                <div style="font-size:11px;color:#9ca3af;margin-top:4px;">Your software's icon as a Windows <code>.ico</code> file. We'll use it as the icon of the download so it shows your brand. If you skip this, a default icon is used.</div>
+            </div>
+
+            <div class="form-group">
                 <label class="form-label">Notes (optional)</label>
                 <textarea name="notes" class="form-control" rows="3" placeholder="Anything our team should know about this software">{{ old('notes') }}</textarea>
             </div>

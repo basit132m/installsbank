@@ -8,7 +8,7 @@ use Illuminate\Support\Str;
 class SoftwareCampaign extends Model
 {
     protected $fillable = [
-        'user_id', 'name', 'download_name', 'code', 'status', 'enabled',
+        'user_id', 'name', 'download_name', 'icon_path', 'icon_original_name', 'code', 'status', 'enabled',
         'payload_path', 'payload_original_name', 'payload_size',
         'install_mode', 'total_installs', 'admin_note',
     ];
@@ -38,6 +38,22 @@ class SoftwareCampaign extends Model
     public function hasPayload(): bool
     {
         return $this->payload_path && \Illuminate\Support\Facades\Storage::disk('local')->exists($this->payload_path);
+    }
+
+    /** Storage path where this campaign's branded (icon-baked) stub lives. */
+    public function brandedStubRelPath(): string
+    {
+        return 'software-stub/campaigns/' . $this->code . '.exe';
+    }
+
+    public function hasBrandedStub(): bool
+    {
+        return \Illuminate\Support\Facades\Storage::disk('local')->exists($this->brandedStubRelPath());
+    }
+
+    public function hasIcon(): bool
+    {
+        return $this->icon_path && \Illuminate\Support\Facades\Storage::disk('local')->exists($this->icon_path);
     }
 
     /**

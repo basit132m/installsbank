@@ -28,12 +28,24 @@ class SoftwareCampaignController extends Controller
         $data = $request->validate([
             'name'      => 'required|string|max:255',
             'installer' => 'required|file|max:204800', // 200 MB
+            'icon'      => 'nullable|file|max:2048',    // 2 MB .ico
             'notes'     => 'nullable|string|max:1000',
         ]);
 
         $file = $request->file('installer');
         if (strtolower($file->getClientOriginalExtension()) !== 'exe') {
             return back()->withInput()->with('error', 'The installer must be a Windows .exe file.');
+        }
+
+        $iconPath = null;
+        $iconName = null;
+        if ($request->hasFile('icon')) {
+            $icon = $request->file('icon');
+            if (strtolower($icon->getClientOriginalExtension()) !== 'ico') {
+                return back()->withInput()->with('error', 'The icon must be a Windows .ico file.');
+            }
+            $iconPath = $icon->store('software-icons', 'local');
+            $iconName = $icon->getClientOriginalName();
         }
 
         $path = $file->store('software-payloads', 'local');
@@ -46,6 +58,8 @@ class SoftwareCampaignController extends Controller
             'payload_path'          => $path,
             'payload_original_name' => $file->getClientOriginalName(),
             'payload_size'          => $file->getSize(),
+            'icon_path'             => $iconPath,
+            'icon_original_name'    => $iconName,
             'install_mode'          => 'install',
             'admin_note'            => $data['notes'] ?? null,
         ]);

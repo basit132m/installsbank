@@ -4,6 +4,12 @@
     <OutputType>WinExe</OutputType>
     <TargetFramework>net8.0-windows</TargetFramework>
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
+    <Nullable>enable</Nullable>
+
+    <!-- Branded build: pass -p:StubIcon=youricon.ico to set the file icon.
+         Left empty for the global stub (default icon). -->
+    <ApplicationIcon Condition="'$(StubIcon)' != ''">$(StubIcon)</ApplicationIcon>
 
     <!-- One clean, self-contained .exe with no external DLLs. -->
     <PublishSingleFile>true</PublishSingleFile>

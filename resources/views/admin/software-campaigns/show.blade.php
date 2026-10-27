@@ -118,6 +118,63 @@
     </div>
 </div>
 
+{{-- Branding: per-campaign icon + branded stub --}}
+<div class="card" style="margin-bottom:20px;">
+    <div class="card-title" style="margin-bottom:8px;">Branding — Download Icon</div>
+    <p style="font-size:13px;color:#6b7280;margin-bottom:16px;max-width:820px;">
+        To show the advertiser's logo as the icon of the downloaded file, bake their <code>.ico</code> into a
+        branded copy of the stub (built on your PC) and upload it here. This campaign then serves the branded
+        stub; campaigns without one use the global stub.
+    </p>
+
+    <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:16px;">
+        <span class="badge {{ $softwareCampaign->hasBrandedStub() ? 'badge-success' : 'badge-warning' }}">
+            {{ $softwareCampaign->hasBrandedStub() ? 'Serving branded stub' : 'Using global stub' }}
+        </span>
+        <span class="badge {{ $softwareCampaign->hasIcon() ? 'badge-info' : 'badge-warning' }}">
+            {{ $softwareCampaign->hasIcon() ? 'Icon uploaded' : 'No icon' }}
+        </span>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;" class="sw-grid">
+        <div>
+            <div style="font-size:13px;font-weight:700;margin-bottom:8px;">1. Get the icon</div>
+            @if($softwareCampaign->hasIcon())
+                <div style="font-size:13px;margin-bottom:8px;">{{ $softwareCampaign->icon_original_name }}</div>
+                <a href="{{ route('admin.software-campaigns.icon.download', $softwareCampaign) }}" class="btn btn-ghost btn-sm">Download .ico</a>
+            @else
+                <div style="font-size:13px;color:#9ca3af;margin-bottom:8px;">No icon uploaded by the advertiser. You can add one:</div>
+            @endif
+            <form method="POST" action="{{ route('admin.software-campaigns.icon.set', $softwareCampaign) }}" enctype="multipart/form-data" style="margin-top:10px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+                @csrf
+                <input type="file" name="icon" accept=".ico" class="form-control" style="width:220px;" required>
+                <button class="btn btn-ghost btn-sm">{{ $softwareCampaign->hasIcon() ? 'Replace icon' : 'Upload icon' }}</button>
+            </form>
+
+            <div style="font-size:13px;font-weight:700;margin:18px 0 8px;">2. Build the branded stub (on your PC)</div>
+            <div style="font-size:12px;color:#6b7280;margin-bottom:6px;">Put the .ico in your <code>stub</code> folder, then run:</div>
+            <div style="background:#0f172a;color:#e2e8f0;border-radius:8px;padding:10px 12px;font-family:monospace;font-size:12px;word-break:break-all;">
+                dotnet publish stub.csproj -c Release -r win-x64 -o out -p:PublishTrimmed=true -p:TrimMode=partial -p:StubIcon={{ $softwareCampaign->icon_original_name ?: 'youricon.ico' }}
+            </div>
+        </div>
+
+        <div>
+            <div style="font-size:13px;font-weight:700;margin-bottom:8px;">3. Upload the branded stub</div>
+            <form method="POST" action="{{ route('admin.software-campaigns.campaign-stub', $softwareCampaign) }}" enctype="multipart/form-data" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:12px;">
+                @csrf
+                <input type="file" name="stub" accept=".exe" class="form-control" style="width:240px;" required>
+                <button class="btn btn-primary btn-sm">{{ $softwareCampaign->hasBrandedStub() ? 'Replace branded stub' : 'Upload branded stub' }}</button>
+            </form>
+            @if($softwareCampaign->hasBrandedStub())
+            <form method="POST" action="{{ route('admin.software-campaigns.campaign-stub.remove', $softwareCampaign) }}" onsubmit="return confirm('Remove the branded stub? This campaign will fall back to the global stub.');">
+                @csrf @method('DELETE')
+                <button class="btn btn-ghost btn-sm" style="color:#dc2626;">Remove branded stub</button>
+            </form>
+            @endif
+        </div>
+    </div>
+</div>
+
 {{-- Installs table --}}
 <div class="card">
     <div class="card-title" style="margin-bottom:16px;">Recent Installs</div>
