@@ -27,6 +27,7 @@ class TrackingDomainGuard
                 'download', 'download/*', 'downloads/*', 'r', 'go/*', 'favicon.ico',
                 'js/*', // JS smartlink
                 'l/*',  // token style
+                'app/*', // software install stub download + postback
                 'portal', 'portal/*', // white-label dashboard may run on a neutral domain
             ];
             if (!$request->is(...$allowed)) {

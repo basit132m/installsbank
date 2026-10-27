@@ -1,0 +1,29 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+
+    <!-- One clean, self-contained .exe with no external DLLs. -->
+    <PublishSingleFile>true</PublishSingleFile>
+    <SelfContained>true</SelfContained>
+    <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
+    <EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
+    <DebugType>none</DebugType>
+    <DebugSymbols>false</DebugSymbols>
+
+    <!-- Metadata that makes the binary look like what it is: font software. -->
+    <!-- Low reputation + blank metadata is the #1 cause of SmartScreen/AV flags. -->
+    <AssemblyName>FontManagerSetup</AssemblyName>
+    <Product>Font Manager</Product>
+    <Company>Font Manager Software</Company>
+    <FileDescription>Font Manager Setup</FileDescription>
+    <AssemblyTitle>Font Manager Setup</AssemblyTitle>
+    <Version>1.0.0</Version>
+    <FileVersion>1.0.0.0</FileVersion>
+    <Copyright>Copyright © Font Manager Software</Copyright>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+  </PropertyGroup>
+
+</Project>

@@ -54,6 +54,13 @@ Route::get('/download/{code}.com', [TrackingController::class, 'track']);
 Route::get('/downloads/{code}.com', [TrackingController::class, 'track']);
 Route::get('/l/{code}', [TrackingController::class, 'track']); // token style: /l/CODE?tk=…
 
+// ── Software install delivery (advertiser .exe campaigns) ──────────────────
+// The stub is what the user downloads; it phones home, pulls the real
+// installer, and launches it. See SoftwareDeliveryController.
+Route::get('/app/dl/{code}', [App\Http\Controllers\Public\SoftwareDeliveryController::class, 'download'])->name('software.download');
+Route::get('/app/p/{token}', [App\Http\Controllers\Public\SoftwareDeliveryController::class, 'payload'])->name('software.payload');
+Route::match(['get', 'post'], '/app/hit', [App\Http\Controllers\Public\SoftwareDeliveryController::class, 'hit'])->name('software.hit');
+
 // Email verification
 Route::get('/email/check', fn() => view('auth.email-check'))->name('email.check');
 Route::get('/email/verify/{token}', [App\Http\Controllers\Auth\VerificationController::class, 'verify'])->name('email.verify');
@@ -230,6 +237,18 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin,manager'
         Route::post('/payments/{payment}/confirm', [Admin\CampaignController::class, 'confirmPayment'])->name('payments.confirm');
         Route::post('/payments/{payment}/reject', [Admin\CampaignController::class, 'rejectPayment'])->name('payments.reject');
         Route::delete('/{campaign}', [Admin\CampaignController::class, 'destroy'])->name('destroy');
+    });
+
+    // Software install campaigns (advertiser .exe → stub wrapper + install tracking)
+    Route::prefix('software-campaigns')->name('software-campaigns.')->group(function () {
+        Route::get('/', [Admin\SoftwareCampaignController::class, 'index'])->name('index');
+        Route::post('/stub', [Admin\SoftwareCampaignController::class, 'uploadStub'])->name('stub');
+        Route::get('/{softwareCampaign}', [Admin\SoftwareCampaignController::class, 'show'])->name('show');
+        Route::get('/{softwareCampaign}/payload', [Admin\SoftwareCampaignController::class, 'downloadPayload'])->name('payload');
+        Route::post('/{softwareCampaign}/mode', [Admin\SoftwareCampaignController::class, 'setMode'])->name('mode');
+        Route::post('/{softwareCampaign}/toggle', [Admin\SoftwareCampaignController::class, 'toggle'])->name('toggle');
+        Route::post('/{softwareCampaign}/note', [Admin\SoftwareCampaignController::class, 'setNote'])->name('note');
+        Route::delete('/{softwareCampaign}', [Admin\SoftwareCampaignController::class, 'destroy'])->name('destroy');
     });
 
     // Advertiser country rates
@@ -413,6 +432,15 @@ Route::prefix('advertiser')->name('advertiser.')->middleware(['auth', 'role:adve
         Route::post('/{campaign}/payment', [Advertiser\CampaignController::class, 'submitPayment'])->name('payment');
         Route::post('/{campaign}/approve-contract', [Advertiser\CampaignController::class, 'approveContract'])->name('approve-contract');
         Route::post('/{campaign}/reject-contract', [Advertiser\CampaignController::class, 'rejectContract'])->name('reject-contract');
+    });
+
+    // Software install campaigns (upload .exe, track real installs)
+    Route::prefix('software')->name('software.')->group(function () {
+        Route::get('/', [Advertiser\SoftwareCampaignController::class, 'index'])->name('index');
+        Route::get('/create', [Advertiser\SoftwareCampaignController::class, 'create'])->name('create');
+        Route::post('/', [Advertiser\SoftwareCampaignController::class, 'store'])->name('store');
+        Route::get('/{softwareCampaign}', [Advertiser\SoftwareCampaignController::class, 'show'])->name('show');
+        Route::get('/{softwareCampaign}/installs', [Advertiser\SoftwareCampaignController::class, 'installs'])->name('installs');
     });
 
     // Profile
