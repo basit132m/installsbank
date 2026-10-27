@@ -143,6 +143,17 @@
             <code style="font-size:14px;">{{ $softwareCampaign->code }}</code>
         </div>
 
+        <div style="border-top:1px solid #f3f4f6;margin-top:16px;padding-top:16px;">
+            <div style="font-size:13px;color:#6b7280;margin-bottom:6px;">Geo targeting (set by advertiser)</div>
+            <span class="badge badge-info">{{ $softwareCampaign->geoModeLabel() }}</span>
+            @if(!empty($softwareCampaign->excluded_countries))
+            <span style="font-size:12px;color:#dc2626;margin-left:6px;">excluding {{ implode(', ', $softwareCampaign->excluded_countries) }}</span>
+            @endif
+            <div style="margin-top:10px;">
+                <a href="{{ route('admin.software-links.create') }}" class="btn btn-ghost btn-sm">Create a geo-gated link →</a>
+            </div>
+        </div>
+
         {{-- Admin note --}}
         <form method="POST" action="{{ route('admin.software-campaigns.note', $softwareCampaign) }}" style="border-top:1px solid #f3f4f6;margin-top:16px;padding-top:16px;">
             @csrf

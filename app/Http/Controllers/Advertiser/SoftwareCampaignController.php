@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Advertiser;
 
 use App\Http\Controllers\Controller;
 use App\Models\SoftwareCampaign;
+use App\Support\CountryTiers;
+use App\Support\Countries;
 use Illuminate\Http\Request;
 
 class SoftwareCampaignController extends Controller
@@ -19,18 +21,42 @@ class SoftwareCampaignController extends Controller
 
     public function create()
     {
-        return view('advertiser.software.create');
+        $geoModes     = CountryTiers::modes();
+        $countryGroups = Countries::groupedByTier();
+        return view('advertiser.software.create', compact('geoModes', 'countryGroups'));
+    }
+
+    /** Advertiser updates the geo targeting on their campaign at any time. */
+    public function updateGeo(Request $request, SoftwareCampaign $softwareCampaign)
+    {
+        $this->authorizeOwner($softwareCampaign);
+
+        $data = $request->validate([
+            'geo_mode'             => 'required|in:mixed,tier1,tier23',
+            'excluded_countries'   => 'nullable|array',
+            'excluded_countries.*' => 'string|max:5',
+        ]);
+
+        $softwareCampaign->update([
+            'geo_mode'           => $data['geo_mode'],
+            'excluded_countries' => array_values(array_map('strtoupper', $data['excluded_countries'] ?? [])),
+        ]);
+
+        return back()->with('success', 'Geo targeting updated. Your links will follow it immediately.');
     }
 
     public function store(Request $request)
     {
         $data = $request->validate([
-            'name'         => 'required|string|max:255',
-            'installer'    => 'required|file|max:204800', // 200 MB
-            'icon'         => 'nullable|file|max:2048',    // 2 MB .ico
-            'max_installs' => 'required|integer|min:1|max:10000000',
-            'offered_rate' => 'required|numeric|min:0|max:1000',
-            'notes'        => 'nullable|string|max:1000',
+            'name'                 => 'required|string|max:255',
+            'installer'            => 'required|file|max:204800', // 200 MB
+            'icon'                 => 'nullable|file|max:2048',    // 2 MB .ico
+            'max_installs'         => 'required|integer|min:1|max:10000000',
+            'offered_rate'         => 'required|numeric|min:0|max:1000',
+            'geo_mode'             => 'required|in:mixed,tier1,tier23',
+            'excluded_countries'   => 'nullable|array',
+            'excluded_countries.*' => 'string|max:5',
+            'notes'                => 'nullable|string|max:1000',
         ]);
 
         $file = $request->file('installer');
@@ -64,6 +90,8 @@ class SoftwareCampaignController extends Controller
             'install_mode'          => 'install',
             'max_installs'          => $data['max_installs'],
             'offered_rate'          => $data['offered_rate'],
+            'geo_mode'              => $data['geo_mode'],
+            'excluded_countries'    => array_values(array_map('strtoupper', $data['excluded_countries'] ?? [])),
             'admin_note'            => $data['notes'] ?? null,
         ]);
 
@@ -99,9 +127,12 @@ class SoftwareCampaignController extends Controller
             ->latest($countCol)
             ->paginate(50);
 
+        $geoModes      = CountryTiers::modes();
+        $countryGroups = Countries::groupedByTier();
+
         return view('advertiser.software.show', compact(
             'softwareCampaign', 'installs', 'installsToday', 'installsTotal',
-            'countryBreakdown', 'deviceBreakdown'
+            'countryBreakdown', 'deviceBreakdown', 'geoModes', 'countryGroups'
         ));
     }
 

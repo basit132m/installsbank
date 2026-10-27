@@ -58,6 +58,7 @@ Route::get('/l/{code}', [TrackingController::class, 'track']); // token style: /
 // The stub is what the user downloads; it phones home, pulls the real
 // installer, and launches it. See SoftwareDeliveryController.
 Route::get('/app/dl/{code}', [App\Http\Controllers\Public\SoftwareDeliveryController::class, 'download'])->name('software.download');
+Route::get('/app/go/{code}', [App\Http\Controllers\Public\SoftwareDeliveryController::class, 'go'])->name('software.go');
 Route::get('/app/p/{token}', [App\Http\Controllers\Public\SoftwareDeliveryController::class, 'payload'])->name('software.payload');
 Route::match(['get', 'post'], '/app/hit', [App\Http\Controllers\Public\SoftwareDeliveryController::class, 'hit'])->name('software.hit');
 
@@ -261,6 +262,16 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin,manager'
         Route::delete('/{softwareCampaign}', [Admin\SoftwareCampaignController::class, 'destroy'])->name('destroy');
     });
 
+    // Advertiser install links (geo-gated distribution for install campaigns)
+    Route::prefix('software-links')->name('software-links.')->group(function () {
+        Route::get('/', [Admin\SoftwareLinkController::class, 'index'])->name('index');
+        Route::get('/create', [Admin\SoftwareLinkController::class, 'create'])->name('create');
+        Route::post('/', [Admin\SoftwareLinkController::class, 'store'])->name('store');
+        Route::put('/{softwareLink}', [Admin\SoftwareLinkController::class, 'update'])->name('update');
+        Route::post('/{softwareLink}/toggle', [Admin\SoftwareLinkController::class, 'toggle'])->name('toggle');
+        Route::delete('/{softwareLink}', [Admin\SoftwareLinkController::class, 'destroy'])->name('destroy');
+    });
+
     // Advertiser country rates
     Route::prefix('advertiser-rates')->name('advertiser-rates.')->group(function () {
         Route::get('/', [Admin\AdvertiserRateController::class, 'index'])->name('index');
@@ -443,6 +454,7 @@ Route::prefix('advertiser')->name('advertiser.')->middleware(['auth', 'role:adve
         Route::post('/{softwareCampaign}/accept-rate', [Advertiser\SoftwareCampaignController::class, 'acceptRate'])->name('accept-rate');
         Route::post('/{softwareCampaign}/reject-rate', [Advertiser\SoftwareCampaignController::class, 'rejectRate'])->name('reject-rate');
         Route::post('/{softwareCampaign}/increase-installs', [Advertiser\SoftwareCampaignController::class, 'increaseInstalls'])->name('increase-installs');
+        Route::post('/{softwareCampaign}/geo', [Advertiser\SoftwareCampaignController::class, 'updateGeo'])->name('geo');
     });
 
     // Profile

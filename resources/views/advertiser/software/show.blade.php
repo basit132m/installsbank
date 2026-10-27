@@ -60,6 +60,36 @@
     </form>
 </div>
 
+{{-- Geo targeting --}}
+<div class="card" style="margin-bottom:24px;">
+    <div class="card-title" style="margin-bottom:6px;">Geo Targeting</div>
+    <p style="font-size:13px;color:#6b7280;margin-bottom:14px;">Control which countries your installs come from. Changes apply to your links immediately.</p>
+    <form method="POST" action="{{ route('advertiser.campaigns.geo', $softwareCampaign) }}">
+        @csrf
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:8px;margin-bottom:14px;">
+            @foreach($geoModes as $val => $label)
+            <label style="border:2px solid {{ $softwareCampaign->geo_mode===$val ? '#3b82f6' : '#e5e7eb' }};border-radius:10px;padding:12px;cursor:pointer;display:flex;align-items:center;gap:8px;font-size:13px;">
+                <input type="radio" name="geo_mode" value="{{ $val }}" {{ $softwareCampaign->geo_mode===$val?'checked':'' }}>
+                <strong>{{ $label }}</strong>
+            </label>
+            @endforeach
+        </div>
+        <label class="form-label" style="font-size:13px;">Excluded countries</label>
+        <select name="excluded_countries[]" multiple size="6" class="form-control" style="height:auto;margin-bottom:12px;">
+            @php $excl = $softwareCampaign->excluded_countries ?? []; @endphp
+            @foreach($countryGroups as $group => $list)
+            <optgroup label="{{ $group }}">
+                @foreach($list as $code => $cname)
+                <option value="{{ $code }}" {{ in_array($code, $excl) ? 'selected' : '' }}>{{ $cname }} ({{ $code }})</option>
+                @endforeach
+            </optgroup>
+            @endforeach
+        </select>
+        <button class="btn btn-primary btn-sm">Save geo targeting</button>
+        <span style="font-size:12px;color:#6b7280;margin-left:10px;">Currently: <strong>{{ $softwareCampaign->geoModeLabel() }}</strong>@if(!empty($excl)) · excluding {{ implode(', ', $excl) }}@endif</span>
+    </form>
+</div>
+
 <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:24px;" class="sw-grid">
     <div class="card">
         <div class="card-title" style="margin-bottom:16px;">Installs by Region</div>

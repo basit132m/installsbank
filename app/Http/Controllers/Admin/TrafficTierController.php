@@ -4,12 +4,11 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Click;
+use App\Support\CountryTiers;
 use Illuminate\Support\Facades\DB;
 
 class TrafficTierController extends Controller
 {
-    private const TIER1 = ['US', 'GB', 'CA', 'AU', 'DE', 'FR', 'NL', 'SE', 'NO', 'DK'];
-    private const TIER2 = ['ES', 'IT', 'PT', 'PL', 'CZ', 'HU', 'RO', 'GR', 'TR', 'AE'];
 
     public function index()
     {
@@ -36,7 +35,7 @@ class TrafficTierController extends Controller
             }
         }
         foreach ($periodRows as $code => $row) {
-            $tier = in_array($code, self::TIER1) ? 1 : (in_array($code, self::TIER2) ? 2 : 3);
+            $tier = CountryTiers::tierOf($code);
             foreach ($periods as $p) {
                 $periodTotals[$tier][$p] += (int) $row->$p;
             }
@@ -81,8 +80,7 @@ class TrafficTierController extends Controller
         ];
 
         foreach ($rows as $row) {
-            $tier = in_array($row->country_code, self::TIER1) ? 1
-                  : (in_array($row->country_code, self::TIER2) ? 2 : 3);
+            $tier = CountryTiers::tierOf($row->country_code);
 
             $tiers[$tier]['countries'][] = $row;
             $tiers[$tier]['clicks']      += $row->clicks;

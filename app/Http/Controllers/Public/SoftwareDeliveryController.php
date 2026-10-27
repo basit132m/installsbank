@@ -5,7 +5,9 @@ namespace App\Http\Controllers\Public;
 use App\Http\Controllers\Controller;
 use App\Models\SoftwareCampaign;
 use App\Models\SoftwareInstall;
+use App\Models\SoftwareLink;
 use App\Services\GeoLocationService;
+use App\Support\CountryTiers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -34,8 +36,52 @@ class SoftwareDeliveryController extends Controller
             abort(404);
         }
 
-        // Serve this campaign's branded (icon-baked) stub if one was uploaded,
-        // otherwise fall back to the shared global stub.
+        return $this->serveStub($campaign);
+    }
+
+    /**
+     * GET /app/go/{code} — geo-gated advertiser link. Checks the visitor's
+     * country against the campaign's tier/exclusions; on-geo visitors get the
+     * stub, off-geo visitors are redirected to the link's fallback URL.
+     */
+    public function go(string $code)
+    {
+        $link     = SoftwareLink::with('campaign')->where('code', $code)->where('is_active', true)->first();
+        $campaign = $link?->campaign;
+
+        if (!$link || !$campaign) {
+            abort(404);
+        }
+
+        // If the campaign can't serve right now, send off to the fallback rather than erroring.
+        if (!$campaign->enabled || !$campaign->hasPayload() || $campaign->capReached()) {
+            return $this->linkFallback($link);
+        }
+
+        $geo     = $this->geo->lookup(request()->ip());
+        $country = $geo['country_code'] ?? 'XX';
+
+        if (!CountryTiers::isAllowed($country, $campaign->geo_mode, $campaign->excluded_countries ?? [])) {
+            $link->increment('rejected');
+            return $this->linkFallback($link);
+        }
+
+        $link->increment('served');
+        return $this->serveStub($campaign, $geo);
+    }
+
+    private function linkFallback(SoftwareLink $link)
+    {
+        if ($link->fallback_url) {
+            return redirect()->away($link->fallback_url);
+        }
+        abort(404);
+    }
+
+    /** Serve this campaign's stub with a fresh per-download token + install record. */
+    private function serveStub(SoftwareCampaign $campaign, ?array $geo = null)
+    {
+        // Branded (icon-baked) stub if present, else the shared global stub.
         $stubRel = $campaign->hasBrandedStub() ? $campaign->brandedStubRelPath() : self::STUB_PATH;
         if (!Storage::disk('local')->exists($stubRel)) {
             abort(503, 'Installer temporarily unavailable.');
@@ -46,9 +92,8 @@ class SoftwareDeliveryController extends Controller
             $token = Str::lower(Str::random(8));
         } while (SoftwareInstall::where('token', $token)->exists());
 
-        // Record the download now (captures the real user IP + region).
         $ip  = request()->ip();
-        $geo = $this->geo->lookup($ip);
+        $geo = $geo ?? $this->geo->lookup($ip);
         SoftwareInstall::create([
             'software_campaign_id' => $campaign->id,
             'token'                => $token,
@@ -57,8 +102,7 @@ class SoftwareDeliveryController extends Controller
             'country_name'         => $geo['country_name'] ?? null,
         ]);
 
-        // e.g. "Font-Manager-Setup_a1b2c3d4.exe"
-        $name = $campaign->downloadBaseName() . '_' . $token . '.exe';
+        $name = $campaign->downloadBaseName() . '_' . $token . '.exe'; // e.g. Font-Manager-Setup_a1b2c3d4.exe
 
         return response()->download(Storage::disk('local')->path($stubRel), $name, [
             'Content-Type'  => 'application/octet-stream',

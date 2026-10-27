@@ -10,18 +10,19 @@ class SoftwareCampaign extends Model
     protected $fillable = [
         'user_id', 'name', 'download_name', 'icon_path', 'icon_original_name', 'code', 'status', 'enabled',
         'payload_path', 'payload_original_name', 'payload_size',
-        'install_mode', 'max_installs', 'offered_rate', 'admin_rate', 'final_rate',
+        'install_mode', 'geo_mode', 'excluded_countries', 'max_installs', 'offered_rate', 'admin_rate', 'final_rate',
         'total_installs', 'admin_note',
     ];
 
     protected $casts = [
-        'enabled'        => 'boolean',
-        'payload_size'   => 'integer',
-        'total_installs' => 'integer',
-        'max_installs'   => 'integer',
-        'offered_rate'   => 'decimal:4',
-        'admin_rate'     => 'decimal:4',
-        'final_rate'     => 'decimal:4',
+        'enabled'            => 'boolean',
+        'payload_size'       => 'integer',
+        'total_installs'     => 'integer',
+        'max_installs'       => 'integer',
+        'offered_rate'       => 'decimal:4',
+        'admin_rate'         => 'decimal:4',
+        'final_rate'         => 'decimal:4',
+        'excluded_countries' => 'array',
     ];
 
     // Workflow statuses
@@ -80,6 +81,16 @@ class SoftwareCampaign extends Model
     public function installs()
     {
         return $this->hasMany(SoftwareInstall::class);
+    }
+
+    public function links()
+    {
+        return $this->hasMany(SoftwareLink::class);
+    }
+
+    public function geoModeLabel(): string
+    {
+        return \App\Support\CountryTiers::modeLabel($this->geo_mode);
     }
 
     /** Which timestamp counts as the "install" for this campaign's mode. */
