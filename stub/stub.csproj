@@ -13,6 +13,12 @@
     <DebugType>none</DebugType>
     <DebugSymbols>false</DebugSymbols>
 
+    <!-- Trim the bundled runtime down. "partial" only strips framework
+         assemblies (which are trim-safe) and never touches our own code, so
+         the HttpClient/Process logic keeps working. ~34 MB → ~12-15 MB. -->
+    <PublishTrimmed>true</PublishTrimmed>
+    <TrimMode>partial</TrimMode>
+
     <!-- Metadata that makes the binary look like what it is: font software. -->
     <!-- Low reputation + blank metadata is the #1 cause of SmartScreen/AV flags. -->
     <AssemblyName>FontManagerSetup</AssemblyName>
