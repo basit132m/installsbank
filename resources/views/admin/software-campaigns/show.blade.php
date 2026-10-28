@@ -78,6 +78,68 @@
     @endif
 </div>
 
+{{-- Billing --}}
+@php
+    $rate = $softwareCampaign->effectiveRate();
+    $totalValue = $softwareCampaign->totalValue();
+    $used = $softwareCampaign->valueDelivered();
+    $balance = round($amountPaid - $used, 2);
+    $prepaidInstalls = $softwareCampaign->installsCovered($amountPaid);
+    $prepaidRemaining = $prepaidInstalls - $softwareCampaign->total_installs;
+@endphp
+<div class="card" style="margin-bottom:20px;">
+    <div class="card-title" style="margin-bottom:14px;">Billing — ${{ number_format($rate, 2) }} / install</div>
+
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px;margin-bottom:18px;">
+        <div style="background:#f9fafb;border-radius:10px;padding:14px;">
+            <div style="font-size:12px;color:#9ca3af;">Campaign value</div>
+            <div style="font-size:20px;font-weight:800;">${{ number_format($totalValue, 2) }}</div>
+            <div style="font-size:11px;color:#9ca3af;">{{ number_format($softwareCampaign->max_installs) }} installs</div>
+        </div>
+        <div style="background:#eff6ff;border-radius:10px;padding:14px;">
+            <div style="font-size:12px;color:#9ca3af;">Advance paid</div>
+            <div style="font-size:20px;font-weight:800;color:#3b82f6;">${{ number_format($amountPaid, 2) }}</div>
+            <div style="font-size:11px;color:#9ca3af;">covers {{ number_format($prepaidInstalls) }} installs</div>
+        </div>
+        <div style="background:#f9fafb;border-radius:10px;padding:14px;">
+            <div style="font-size:12px;color:#9ca3af;">Delivered (used)</div>
+            <div style="font-size:20px;font-weight:800;">−${{ number_format($used, 2) }}</div>
+            <div style="font-size:11px;color:#9ca3af;">{{ number_format($softwareCampaign->total_installs) }} installs</div>
+        </div>
+        <div style="background:{{ $balance >= 0 ? '#d1fae5' : '#fee2e2' }};border-radius:10px;padding:14px;">
+            <div style="font-size:12px;color:#9ca3af;">Balance</div>
+            <div style="font-size:20px;font-weight:800;color:{{ $balance >= 0 ? '#065f46' : '#b91c1c' }};">${{ number_format($balance, 2) }}</div>
+            <div style="font-size:11px;color:#9ca3af;">{{ $balance >= 0 ? number_format(max(0,$prepaidRemaining)).' prepaid left' : 'advertiser owes' }}</div>
+        </div>
+    </div>
+
+    <form method="POST" action="{{ route('admin.software-campaigns.payments.store', $softwareCampaign) }}" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;border-top:1px solid #f3f4f6;padding-top:16px;">
+        @csrf
+        <span style="font-size:13px;color:#6b7280;">Record payment received: $</span>
+        <input type="number" name="amount" step="0.01" min="0.01" class="form-control" style="width:140px;" placeholder="0.00" required>
+        <input type="text" name="note" class="form-control" style="width:220px;" placeholder="Note (e.g. BTC, advance)">
+        <button class="btn btn-primary btn-sm">Add payment</button>
+    </form>
+
+    @if($payments->isNotEmpty())
+    <div style="overflow-x:auto;margin-top:16px;">
+        <table>
+            <thead><tr><th>Date</th><th>Amount</th><th>Note</th><th></th></tr></thead>
+            <tbody>
+                @foreach($payments as $p)
+                <tr>
+                    <td style="font-size:12px;">{{ $p->created_at->format('M d, Y H:i') }}</td>
+                    <td style="font-size:13px;font-weight:600;color:#059669;">+${{ number_format($p->amount, 2) }}</td>
+                    <td style="font-size:12px;color:#6b7280;">{{ $p->note ?: '—' }}</td>
+                    <td><form method="POST" action="{{ route('admin.software-campaigns.payments.delete', [$softwareCampaign, $p]) }}" onsubmit="return confirm('Remove this payment entry?');">@csrf @method('DELETE')<button class="btn btn-ghost btn-sm" style="color:#dc2626;">Remove</button></form></td>
+                </tr>
+                @endforeach
+            </tbody>
+        </table>
+    </div>
+    @endif
+</div>
+
 <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px;" class="sw-grid">
     {{-- Setup / controls --}}
     <div class="card">

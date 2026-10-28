@@ -167,9 +167,13 @@ class SoftwareCampaignController extends Controller
         $geoModes      = CountryTiers::modes();
         $countryGroups = Countries::groupedByTier();
 
+        $amountPaid = (float) $softwareCampaign->payments()->sum('amount');
+        $payments   = $softwareCampaign->payments()->latest()->get();
+
         return view('advertiser.software.show', compact(
             'softwareCampaign', 'installs', 'installsToday', 'installsTotal',
-            'countryBreakdown', 'deviceBreakdown', 'geoModes', 'countryGroups'
+            'countryBreakdown', 'deviceBreakdown', 'geoModes', 'countryGroups',
+            'amountPaid', 'payments'
         ));
     }
 

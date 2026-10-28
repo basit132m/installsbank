@@ -79,6 +79,71 @@
     </form>
 </div>
 
+{{-- Billing --}}
+@php
+    $rate = $softwareCampaign->effectiveRate();
+    $totalValue = $softwareCampaign->totalValue();
+    $used = $softwareCampaign->valueDelivered();
+    $balance = round($amountPaid - $used, 2);
+    $prepaidInstalls = $softwareCampaign->installsCovered($amountPaid);
+    $prepaidRemaining = $prepaidInstalls - $softwareCampaign->total_installs;
+    $outstanding = max(0, round($totalValue - $amountPaid, 2));
+@endphp
+<div class="card" style="margin-bottom:24px;">
+    <div class="card-title" style="margin-bottom:6px;">Billing</div>
+    <p style="font-size:13px;color:#6b7280;margin-bottom:16px;">
+        You pay <strong>${{ number_format($rate, 2) }}</strong> per install. Payments are made directly to our team
+        (outside this panel) — your balance here updates automatically as installs are delivered.
+    </p>
+
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px;margin-bottom:18px;">
+        <div style="background:#f9fafb;border-radius:10px;padding:14px;">
+            <div style="font-size:12px;color:#9ca3af;">Campaign value</div>
+            <div style="font-size:22px;font-weight:800;">${{ number_format($totalValue, 2) }}</div>
+            <div style="font-size:11px;color:#9ca3af;">{{ number_format($softwareCampaign->max_installs) }} × ${{ number_format($rate, 2) }}</div>
+        </div>
+        <div style="background:#eff6ff;border-radius:10px;padding:14px;">
+            <div style="font-size:12px;color:#9ca3af;">Advance paid</div>
+            <div style="font-size:22px;font-weight:800;color:#3b82f6;">${{ number_format($amountPaid, 2) }}</div>
+            <div style="font-size:11px;color:#9ca3af;">covers {{ number_format($prepaidInstalls) }} installs</div>
+        </div>
+        <div style="background:#f9fafb;border-radius:10px;padding:14px;">
+            <div style="font-size:12px;color:#9ca3af;">Delivered (used)</div>
+            <div style="font-size:22px;font-weight:800;">−${{ number_format($used, 2) }}</div>
+            <div style="font-size:11px;color:#9ca3af;">{{ number_format($softwareCampaign->total_installs) }} installs</div>
+        </div>
+        <div style="background:{{ $balance >= 0 ? '#d1fae5' : '#fee2e2' }};border-radius:10px;padding:14px;">
+            <div style="font-size:12px;color:#9ca3af;">Balance</div>
+            <div style="font-size:22px;font-weight:800;color:{{ $balance >= 0 ? '#065f46' : '#b91c1c' }};">${{ number_format($balance, 2) }}</div>
+            <div style="font-size:11px;color:#9ca3af;">{{ $balance >= 0 ? number_format(max(0,$prepaidRemaining)).' installs left (prepaid)' : 'amount due' }}</div>
+        </div>
+    </div>
+
+    @if($outstanding > 0)
+    <div style="background:#fff7ed;border:1px solid #fed7aa;color:#9a3412;border-radius:8px;padding:12px 14px;font-size:13px;margin-bottom:8px;">
+        To fully fund this campaign ({{ number_format($softwareCampaign->max_installs) }} installs), <strong>${{ number_format($outstanding, 2) }}</strong> is still to be paid. Send it to our team and we'll record it here.
+    </div>
+    @endif
+
+    @if($payments->isNotEmpty())
+    <div style="font-size:13px;font-weight:700;margin:14px 0 8px;">Payments received</div>
+    <div style="overflow-x:auto;">
+        <table>
+            <thead><tr><th>Date</th><th>Amount</th><th>Note</th></tr></thead>
+            <tbody>
+                @foreach($payments as $p)
+                <tr>
+                    <td style="font-size:12px;">{{ $p->created_at->format('M d, Y') }}</td>
+                    <td style="font-size:13px;font-weight:600;color:#059669;">+${{ number_format($p->amount, 2) }}</td>
+                    <td style="font-size:12px;color:#6b7280;">{{ $p->note ?: '—' }}</td>
+                </tr>
+                @endforeach
+            </tbody>
+        </table>
+    </div>
+    @endif
+</div>
+
 {{-- Geo targeting --}}
 <div class="card" style="margin-bottom:24px;">
     <div class="card-title" style="margin-bottom:6px;">Geo Targeting</div>

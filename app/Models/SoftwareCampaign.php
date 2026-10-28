@@ -88,6 +88,30 @@ class SoftwareCampaign extends Model
         return $this->hasMany(SoftwareLink::class);
     }
 
+    public function payments()
+    {
+        return $this->hasMany(SoftwarePayment::class);
+    }
+
+    /** Full campaign value = agreed per-install rate × target installs. */
+    public function totalValue(): float
+    {
+        return round($this->effectiveRate() * $this->max_installs, 2);
+    }
+
+    /** Value of installs already delivered = rate × delivered installs. */
+    public function valueDelivered(): float
+    {
+        return round($this->effectiveRate() * $this->total_installs, 2);
+    }
+
+    /** How many installs a given paid amount covers at the current rate. */
+    public function installsCovered(float $amount): int
+    {
+        $rate = $this->effectiveRate();
+        return $rate > 0 ? (int) floor($amount / $rate) : 0;
+    }
+
     public function geoModeLabel(): string
     {
         return \App\Support\CountryTiers::modeLabel($this->geo_mode);

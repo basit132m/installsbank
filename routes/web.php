@@ -262,6 +262,8 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin,manager'
         Route::delete('/{softwareCampaign}/campaign-stub', [Admin\SoftwareCampaignController::class, 'removeCampaignStub'])->name('campaign-stub.remove');
         Route::post('/{softwareCampaign}/toggle', [Admin\SoftwareCampaignController::class, 'toggle'])->name('toggle');
         Route::post('/{softwareCampaign}/note', [Admin\SoftwareCampaignController::class, 'setNote'])->name('note');
+        Route::post('/{softwareCampaign}/payments', [Admin\SoftwareCampaignController::class, 'recordPayment'])->name('payments.store');
+        Route::delete('/{softwareCampaign}/payments/{payment}', [Admin\SoftwareCampaignController::class, 'deletePayment'])->name('payments.delete');
         Route::delete('/{softwareCampaign}', [Admin\SoftwareCampaignController::class, 'destroy'])->name('destroy');
     });
 

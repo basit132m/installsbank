@@ -51,9 +51,38 @@ class SoftwareCampaignController extends Controller
         // The distributable link the admin drives traffic to.
         $downloadUrl = route('software.download', ['code' => $softwareCampaign->code]);
 
+        $amountPaid = (float) $softwareCampaign->payments()->sum('amount');
+        $payments   = $softwareCampaign->payments()->latest()->get();
+
         return view('admin.software-campaigns.show', compact(
-            'softwareCampaign', 'installs', 'installsToday', 'installsTotal', 'downloadsTotal', 'stubReady', 'downloadUrl'
+            'softwareCampaign', 'installs', 'installsToday', 'installsTotal', 'downloadsTotal',
+            'stubReady', 'downloadUrl', 'amountPaid', 'payments'
         ));
+    }
+
+    public function recordPayment(Request $request, SoftwareCampaign $softwareCampaign)
+    {
+        $data = $request->validate([
+            'amount' => 'required|numeric|min:0.01|max:100000000',
+            'note'   => 'nullable|string|max:255',
+        ]);
+
+        $softwareCampaign->payments()->create([
+            'amount' => $data['amount'],
+            'note'   => $data['note'] ?? null,
+        ]);
+
+        return back()->with('success', 'Payment of $' . number_format($data['amount'], 2) . ' recorded.');
+    }
+
+    public function deletePayment(SoftwareCampaign $softwareCampaign, \App\Models\SoftwarePayment $payment)
+    {
+        if ($payment->software_campaign_id !== $softwareCampaign->id) {
+            abort(404);
+        }
+        $payment->delete();
+
+        return back()->with('success', 'Payment entry removed.');
     }
 
     public function setDownloadName(Request $request, SoftwareCampaign $softwareCampaign)
