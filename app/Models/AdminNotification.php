@@ -16,7 +16,7 @@ class AdminNotification extends Model
     }
 
     /** Convenience creator used across the app. Never throws (best-effort). */
-    public static function push(string $type, string $title, ?string $body = null, ?string $link = null): void
+    public static function notify(string $type, string $title, ?string $body = null, ?string $link = null): void
     {
         try {
             static::create(compact('type', 'title', 'body', 'link'));

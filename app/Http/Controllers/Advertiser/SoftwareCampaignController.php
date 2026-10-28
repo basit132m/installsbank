@@ -284,7 +284,7 @@ class SoftwareCampaignController extends Controller
     private function notifyAdmin(SoftwareCampaign $campaign, string $type, string $title, string $body): void
     {
         $who = auth()->user()?->name ?? 'Advertiser';
-        AdminNotification::push(
+        AdminNotification::notify(
             $type,
             $title . ' — ' . $campaign->name,
             $who . ': ' . $body,
