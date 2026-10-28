@@ -33,25 +33,18 @@ class SoftwareCampaignController extends Controller
         $this->authorizeOwner($softwareCampaign);
 
         $data = $request->validate([
-            'geo_mode'             => 'required|in:mixed,tier1,tier23',
-            'excluded_countries'   => 'nullable|array',
-            'excluded_countries.*' => 'string|max:5',
+            'geo_mode' => 'required|in:mixed,tier1,tier23',
         ]);
 
         $beforeMode = $softwareCampaign->geoModeLabel();
-        $beforeExcl = $softwareCampaign->excluded_countries ?? [];
 
-        // Mixed targets everyone — no country exclusions allowed.
-        $newExcl = $data['geo_mode'] === 'mixed'
-            ? [] : array_values(array_map('strtoupper', $data['excluded_countries'] ?? []));
         $softwareCampaign->update([
             'geo_mode'           => $data['geo_mode'],
-            'excluded_countries' => $newExcl,
+            'excluded_countries' => [],
         ]);
 
         $this->notifyAdmin($softwareCampaign, 'software_geo', 'Geo targeting changed',
-            "Changed geo from \"{$beforeMode}\" (excl: " . ($beforeExcl ? implode(',', $beforeExcl) : 'none') . ") " .
-            "to \"{$softwareCampaign->geoModeLabel()}\" (excl: " . ($newExcl ? implode(',', $newExcl) : 'none') . ").");
+            "Changed geo from \"{$beforeMode}\" to \"{$softwareCampaign->geoModeLabel()}\".");
 
         return back()->with('success', 'Geo targeting updated. Your links will follow it immediately.');
     }
@@ -100,8 +93,6 @@ class SoftwareCampaignController extends Controller
             'max_installs'         => 'required|integer|min:1|max:10000000',
             'offered_rate'         => 'required|numeric|min:0|max:1000',
             'geo_mode'             => 'required|in:mixed,tier1,tier23',
-            'excluded_countries'   => 'nullable|array',
-            'excluded_countries.*' => 'string|max:5',
             'notes'                => 'nullable|string|max:1000',
         ]);
 
@@ -137,9 +128,7 @@ class SoftwareCampaignController extends Controller
             'max_installs'          => $data['max_installs'],
             'offered_rate'          => $data['offered_rate'],
             'geo_mode'              => $data['geo_mode'],
-            // Mixed targets everyone — no country exclusions allowed.
-            'excluded_countries'    => $data['geo_mode'] === 'mixed'
-                                        ? [] : array_values(array_map('strtoupper', $data['excluded_countries'] ?? [])),
+            'excluded_countries'    => [], // advertisers target a tier bucket; no per-country exclusions
             'admin_note'            => $data['notes'] ?? null,
         ]);
 
