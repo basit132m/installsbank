@@ -110,8 +110,8 @@ class SoftwareCampaignController extends Controller
 
         $countryBreakdown = $softwareCampaign->installs()
             ->whereNotNull($countCol)
-            ->selectRaw('country_name, COUNT(*) as installs')
-            ->groupBy('country_name')
+            ->selectRaw('country_code, country_name, COUNT(*) as installs')
+            ->groupBy('country_code', 'country_name')
             ->orderByDesc('installs')
             ->get();
 

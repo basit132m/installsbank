@@ -79,9 +79,17 @@
     <div class="card">
         <div class="card-title" style="margin-bottom:16px;">Installs by Region</div>
         @forelse($countryBreakdown as $row)
-        <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #f3f4f6;font-size:13px;">
-            <span>{{ $row->country_name ?: 'Unknown' }}</span>
-            <strong>{{ number_format($row->installs) }}</strong>
+        @php $fc = strtolower($row->country_code ?? ''); @endphp
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid #f3f4f6;font-size:13px;">
+            <span style="display:flex;align-items:center;gap:8px;min-width:0;">
+                @if($fc && $fc !== 'xx')
+                <img src="https://flagcdn.com/24x18/{{ $fc }}.png" srcset="https://flagcdn.com/48x36/{{ $fc }}.png 2x" width="24" height="18" alt="" loading="lazy" style="border-radius:3px;box-shadow:0 0 0 1px rgba(0,0,0,.06);flex-shrink:0;">
+                @else
+                <span style="width:24px;text-align:center;flex-shrink:0;">🌐</span>
+                @endif
+                <span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ $row->country_name ?: 'Unknown' }}</span>
+            </span>
+            <strong style="flex-shrink:0;">{{ number_format($row->installs) }}</strong>
         </div>
         @empty
         <div style="color:#9ca3af;font-size:13px;">No installs yet</div>
@@ -110,7 +118,8 @@
                 @forelse($installs as $i)
                 <tr>
                     <td style="font-size:12px;">{{ $i->{$cc}?->format('M d, H:i') ?? '—' }}</td>
-                    <td style="font-size:13px;">{{ $i->country_name ?: ($i->country_code ?: '—') }}</td>
+                    @php $lc = strtolower($i->country_code ?? ''); @endphp
+                    <td style="font-size:13px;"><span style="display:inline-flex;align-items:center;gap:6px;">@if($lc && $lc !== 'xx')<img src="https://flagcdn.com/24x18/{{ $lc }}.png" width="20" height="15" alt="" loading="lazy" style="border-radius:2px;box-shadow:0 0 0 1px rgba(0,0,0,.06);">@endif{{ $i->country_name ?: ($i->country_code ?: '—') }}</span></td>
                     <td style="font-size:12px;font-family:monospace;">{{ $i->ip_address ?: '—' }}</td>
                     <td style="font-size:13px;">{{ ucfirst($i->device_type ?: 'desktop') }}</td>
                     <td style="font-size:12px;">{{ trim(($i->os ?: '') . ' ' . ($i->os_version ?: '')) ?: '—' }}</td>
