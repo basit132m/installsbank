@@ -46,8 +46,8 @@ class DashboardController extends Controller
         if ($activeCampaign) {
             $cc = $activeCampaign->countColumn();
             $countryBreakdown = $activeCampaign->installs()->whereNotNull($cc)
-                ->selectRaw('country_name, COUNT(*) as installs')
-                ->groupBy('country_name')->orderByDesc('installs')->limit(8)->get();
+                ->selectRaw('country_code, country_name, COUNT(*) as installs')
+                ->groupBy('country_code', 'country_name')->orderByDesc('installs')->limit(8)->get();
             $deviceBreakdown = $activeCampaign->installs()->whereNotNull($cc)
                 ->selectRaw('device_type, COUNT(*) as installs')
                 ->groupBy('device_type')->orderByDesc('installs')->get();
