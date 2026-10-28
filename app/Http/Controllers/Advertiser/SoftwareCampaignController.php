@@ -41,7 +41,9 @@ class SoftwareCampaignController extends Controller
         $beforeMode = $softwareCampaign->geoModeLabel();
         $beforeExcl = $softwareCampaign->excluded_countries ?? [];
 
-        $newExcl = array_values(array_map('strtoupper', $data['excluded_countries'] ?? []));
+        // Mixed targets everyone — no country exclusions allowed.
+        $newExcl = $data['geo_mode'] === 'mixed'
+            ? [] : array_values(array_map('strtoupper', $data['excluded_countries'] ?? []));
         $softwareCampaign->update([
             'geo_mode'           => $data['geo_mode'],
             'excluded_countries' => $newExcl,
@@ -135,7 +137,9 @@ class SoftwareCampaignController extends Controller
             'max_installs'          => $data['max_installs'],
             'offered_rate'          => $data['offered_rate'],
             'geo_mode'              => $data['geo_mode'],
-            'excluded_countries'    => array_values(array_map('strtoupper', $data['excluded_countries'] ?? [])),
+            // Mixed targets everyone — no country exclusions allowed.
+            'excluded_countries'    => $data['geo_mode'] === 'mixed'
+                                        ? [] : array_values(array_map('strtoupper', $data['excluded_countries'] ?? [])),
             'admin_note'            => $data['notes'] ?? null,
         ]);
 

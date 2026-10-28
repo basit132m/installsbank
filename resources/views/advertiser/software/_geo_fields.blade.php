@@ -29,7 +29,11 @@
     <div style="font-size:11px;color:#9ca3af;margin-top:6px;">We only send installs from your chosen tier. Off-target visitors are redirected away — never counted.</div>
 </div>
 
-<div class="form-group">
+<div class="geo-mixed-note" style="display:none;background:#eff6ff;border:1px solid #bfdbfe;color:#1e40af;border-radius:10px;padding:12px 14px;font-size:13px;margin-bottom:4px;">
+    🌍 <strong>Mixed</strong> targets every country worldwide — no exclusions. Choose <strong>Tier 1</strong> or <strong>Tier 2 &amp; 3</strong> if you want to exclude specific countries.
+</div>
+
+<div class="form-group geo-exclude-wrap">
     <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:8px;">
         <label class="form-label" style="margin:0;">Exclude specific countries</label>
         <span class="geo-excl-count" style="font-size:12px;color:#6b7280;">{{ $exclCount }} excluded</span>
@@ -89,6 +93,8 @@
     var root = document.currentScript.closest('form') || document;
     var search = root.querySelector('.geo-search');
     var emptyMsg = root.querySelector('.geo-empty');
+    var excludeWrap = root.querySelector('.geo-exclude-wrap');
+    var mixedNote = root.querySelector('.geo-mixed-note');
 
     function currentMode(){
         var r = root.querySelector('.geo-mode input:checked');
@@ -101,6 +107,22 @@
     }
     function applyFilters(){
         var mode = currentMode();
+
+        // Mixed = everyone, no exclusions allowed: hide the picker and clear any selections.
+        if(mode === 'mixed'){
+            if(excludeWrap) excludeWrap.style.display = 'none';
+            if(mixedNote)   mixedNote.style.display = 'block';
+            root.querySelectorAll('.geo-chip input:checked').forEach(function(cb){
+                cb.checked = false;
+                var chip = cb.closest('.geo-chip');
+                if(chip) chip.classList.remove('is-excluded');
+            });
+            refreshCount(mode);
+            return;
+        }
+        if(excludeWrap) excludeWrap.style.display = '';
+        if(mixedNote)   mixedNote.style.display = 'none';
+
         var q = (search && search.value.trim().toLowerCase()) || '';
         var anyVisibleAtAll = false;
 
