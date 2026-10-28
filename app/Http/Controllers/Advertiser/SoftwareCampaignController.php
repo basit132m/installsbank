@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Advertiser;
 
 use App\Http\Controllers\Controller;
+use App\Models\AdminNotification;
 use App\Models\SoftwareCampaign;
 use App\Support\CountryTiers;
 use App\Support\Countries;
@@ -37,12 +38,55 @@ class SoftwareCampaignController extends Controller
             'excluded_countries.*' => 'string|max:5',
         ]);
 
+        $beforeMode = $softwareCampaign->geoModeLabel();
+        $beforeExcl = $softwareCampaign->excluded_countries ?? [];
+
+        $newExcl = array_values(array_map('strtoupper', $data['excluded_countries'] ?? []));
         $softwareCampaign->update([
             'geo_mode'           => $data['geo_mode'],
-            'excluded_countries' => array_values(array_map('strtoupper', $data['excluded_countries'] ?? [])),
+            'excluded_countries' => $newExcl,
         ]);
 
+        $this->notifyAdmin($softwareCampaign, 'software_geo', 'Geo targeting changed',
+            "Changed geo from \"{$beforeMode}\" (excl: " . ($beforeExcl ? implode(',', $beforeExcl) : 'none') . ") " .
+            "to \"{$softwareCampaign->geoModeLabel()}\" (excl: " . ($newExcl ? implode(',', $newExcl) : 'none') . ").");
+
         return back()->with('success', 'Geo targeting updated. Your links will follow it immediately.');
+    }
+
+    /** Advertiser stops (pauses) a running campaign → traffic goes to the fallback. */
+    public function stop(SoftwareCampaign $softwareCampaign)
+    {
+        $this->authorizeOwner($softwareCampaign);
+        if ($softwareCampaign->status !== SoftwareCampaign::S_LIVE) {
+            return back()->with('error', 'Only a live campaign can be stopped.');
+        }
+
+        $softwareCampaign->update(['enabled' => false, 'status' => SoftwareCampaign::S_PAUSED]);
+
+        $this->notifyAdmin($softwareCampaign, 'software_stop', 'Campaign stopped by advertiser',
+            'The advertiser stopped this campaign. Traffic is now redirected to the fallback.');
+
+        return back()->with('success', 'Campaign stopped. Traffic now goes to the fallback link.');
+    }
+
+    /** Advertiser resumes a stopped campaign. */
+    public function start(SoftwareCampaign $softwareCampaign)
+    {
+        $this->authorizeOwner($softwareCampaign);
+        if ($softwareCampaign->status !== SoftwareCampaign::S_PAUSED) {
+            return back()->with('error', 'Only a stopped campaign can be resumed.');
+        }
+        if ($softwareCampaign->capReached()) {
+            return back()->with('error', 'Install target reached — increase it first to resume.');
+        }
+
+        $softwareCampaign->update(['enabled' => true, 'status' => SoftwareCampaign::S_LIVE]);
+
+        $this->notifyAdmin($softwareCampaign, 'software_start', 'Campaign resumed by advertiser',
+            'The advertiser resumed this campaign.');
+
+        return back()->with('success', 'Campaign resumed.');
     }
 
     public function store(Request $request)
@@ -184,6 +228,7 @@ class SoftwareCampaignController extends Controller
             return back()->with('error', 'Enter a number higher than the current cap of ' . number_format($softwareCampaign->max_installs) . '.');
         }
 
+        $oldMax = $softwareCampaign->max_installs;
         $softwareCampaign->max_installs = $data['max_installs'];
 
         // If it had completed (cap reached) and the rate is agreed, bring it back live.
@@ -193,6 +238,9 @@ class SoftwareCampaignController extends Controller
             $softwareCampaign->enabled = true;
         }
         $softwareCampaign->save();
+
+        $this->notifyAdmin($softwareCampaign, 'software_cap', 'Install target increased',
+            'Increased target from ' . number_format($oldMax) . ' to ' . number_format($data['max_installs']) . ' installs.');
 
         return back()->with('success', 'Install target increased to ' . number_format($data['max_installs']) . '.');
     }
@@ -231,5 +279,16 @@ class SoftwareCampaignController extends Controller
         if ($campaign->user_id !== auth()->id()) {
             abort(403);
         }
+    }
+
+    private function notifyAdmin(SoftwareCampaign $campaign, string $type, string $title, string $body): void
+    {
+        $who = auth()->user()?->name ?? 'Advertiser';
+        AdminNotification::push(
+            $type,
+            $title . ' — ' . $campaign->name,
+            $who . ': ' . $body,
+            route('admin.software-campaigns.show', $campaign)
+        );
     }
 }

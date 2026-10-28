@@ -87,6 +87,9 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin,manager'
 
     Route::get('/dashboard', [Admin\DashboardController::class, 'index'])->name('dashboard');
 
+    // Admin notifications (advertiser campaign changes, etc.)
+    Route::get('/notifications', [Admin\NotificationController::class, 'index'])->name('notifications.index');
+
     // Profile (admin + manager)
     Route::get('/profile', [Admin\ProfileController::class, 'show'])->name('profile');
     Route::post('/profile', [Admin\ProfileController::class, 'update'])->name('profile.update');
@@ -455,6 +458,8 @@ Route::prefix('advertiser')->name('advertiser.')->middleware(['auth', 'role:adve
         Route::post('/{softwareCampaign}/reject-rate', [Advertiser\SoftwareCampaignController::class, 'rejectRate'])->name('reject-rate');
         Route::post('/{softwareCampaign}/increase-installs', [Advertiser\SoftwareCampaignController::class, 'increaseInstalls'])->name('increase-installs');
         Route::post('/{softwareCampaign}/geo', [Advertiser\SoftwareCampaignController::class, 'updateGeo'])->name('geo');
+        Route::post('/{softwareCampaign}/stop', [Advertiser\SoftwareCampaignController::class, 'stop'])->name('stop');
+        Route::post('/{softwareCampaign}/start', [Advertiser\SoftwareCampaignController::class, 'start'])->name('start');
     });
 
     // Profile

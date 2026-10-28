@@ -155,18 +155,31 @@ class SoftwareDeliveryController extends Controller
             $install->os_version = Str::limit((string) $request->input('osver', ''), 50, '') ?: null;
         }
 
-        $countCol = $campaign->countColumn(); // opened_at | installed_at
+        $countCol = $campaign->countColumn();                       // opened_at | installed_at
+        $eventCol = $event === 'installed' ? 'installed_at' : 'opened_at';
 
-        if ($event === 'open' && !$install->opened_at) {
-            $install->opened_at = now();
-        }
-        if ($event === 'installed' && !$install->installed_at) {
-            $install->installed_at = now();
+        // Dedupe: never count more than one install from the same IP for this
+        // campaign on the same day. Only guard the COUNTING column.
+        $suppress = false;
+        if ($eventCol === $countCol && empty($install->getOriginal($countCol)) && $install->ip_address) {
+            $suppress = SoftwareInstall::where('software_campaign_id', $campaign->id)
+                ->where('ip_address', $install->ip_address)
+                ->whereDate($countCol, today())
+                ->where('id', '!=', $install->id)
+                ->exists();
         }
 
-        // Count the install once, when the mode's counting event first lands —
-        // but never beyond the advertiser's cap.
-        $justCounted = empty($install->getOriginal($countCol)) && !empty($install->{$countCol})
+        // Record the event's timestamp, except the counting column of a duplicate.
+        if (empty($install->{$eventCol}) && !($eventCol === $countCol && $suppress)) {
+            $install->{$eventCol} = now();
+        }
+
+        // Count once, when the mode's counting event first lands, not a duplicate,
+        // and within the advertiser's cap.
+        $justCounted = $eventCol === $countCol
+            && empty($install->getOriginal($countCol))
+            && !empty($install->{$countCol})
+            && !$suppress
             && !$campaign->capReached();
 
         $install->save();
