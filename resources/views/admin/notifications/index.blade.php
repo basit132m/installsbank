@@ -3,6 +3,11 @@
 @section('page-title', 'Notifications')
 
 @section('content')
+@if(!empty($needsMigration))
+<div class="alert" style="background:#fef3c7;color:#92400e;border:1px solid #fde68a;margin-bottom:20px;padding:12px 16px;border-radius:8px;">
+    The notifications table isn't created yet. Run <code>php artisan migrate --force</code> on the server to enable notifications.
+</div>
+@endif
 <div class="card">
     <div class="card-title" style="margin-bottom:16px;">Recent Activity</div>
     @forelse($notifications as $n)
