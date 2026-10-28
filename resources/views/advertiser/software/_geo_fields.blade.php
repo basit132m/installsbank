@@ -38,20 +38,24 @@
 
     <div class="geo-grid-wrap">
         @foreach($countryGroups as $group => $list)
-        <div class="geo-group-title">{{ $group }}</div>
-        <div class="geo-grid">
-            @foreach($list as $code => $cname)
-            <label class="geo-chip {{ in_array($code, $selectedExcluded) ? 'is-excluded' : '' }}" data-search="{{ strtolower($cname.' '.$code) }}">
-                <input type="checkbox" name="excluded_countries[]" value="{{ $code }}" {{ in_array($code, $selectedExcluded) ? 'checked' : '' }}>
-                <img class="geo-flag" src="https://flagcdn.com/24x18/{{ strtolower($code) }}.png" srcset="https://flagcdn.com/48x36/{{ strtolower($code) }}.png 2x" width="24" height="18" alt="" loading="lazy">
-                <span class="geo-chip-name">{{ $cname }}</span>
-                <span class="geo-chip-code">{{ $code }}</span>
-            </label>
-            @endforeach
+        @php $tierNum = ['Tier 1' => 1, 'Tier 2' => 2, 'Tier 3 / Other' => 3][$group] ?? 3; @endphp
+        <div class="geo-group" data-tier="{{ $tierNum }}">
+            <div class="geo-group-title">{{ $group }}</div>
+            <div class="geo-grid">
+                @foreach($list as $code => $cname)
+                <label class="geo-chip {{ in_array($code, $selectedExcluded) ? 'is-excluded' : '' }}" data-search="{{ strtolower($cname.' '.$code) }}">
+                    <input type="checkbox" name="excluded_countries[]" value="{{ $code }}" {{ in_array($code, $selectedExcluded) ? 'checked' : '' }}>
+                    <img class="geo-flag" src="https://flagcdn.com/24x18/{{ strtolower($code) }}.png" srcset="https://flagcdn.com/48x36/{{ strtolower($code) }}.png 2x" width="24" height="18" alt="" loading="lazy">
+                    <span class="geo-chip-name">{{ $cname }}</span>
+                    <span class="geo-chip-code">{{ $code }}</span>
+                </label>
+                @endforeach
+            </div>
         </div>
         @endforeach
+        <div class="geo-empty" style="display:none;font-size:13px;color:#9ca3af;text-align:center;padding:16px;">No countries match.</div>
     </div>
-    <div style="font-size:11px;color:#9ca3af;margin-top:8px;">Tap a country to exclude it (turns red). Example: pick <strong>Tier 1 only</strong> above and exclude <strong>Canada</strong> to get Tier 1 without Canada.</div>
+    <div style="font-size:11px;color:#9ca3af;margin-top:8px;">Only countries in your selected tier are shown. Tap one to exclude it (turns red). Example: pick <strong>Tier 1 only</strong> above and exclude <strong>Canada</strong> to get Tier 1 without Canada.</div>
 </div>
 
 <style>
@@ -65,7 +69,7 @@
     .geo-mode-sub{display:block;font-size:11px;color:#6b7280;margin-top:2px;line-height:1.3;}
     .geo-grid-wrap{max-height:320px;overflow-y:auto;border:1px solid #e5e7eb;border-radius:12px;padding:12px;background:#fafafa;}
     .geo-group-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#9ca3af;margin:4px 0 8px;}
-    .geo-group-title:not(:first-child){margin-top:14px;}
+    .geo-group + .geo-group{margin-top:14px;}
     .geo-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:8px;}
     .geo-chip{display:flex;align-items:center;gap:8px;border:1.5px solid #e5e7eb;border-radius:10px;padding:8px 10px;cursor:pointer;background:#fff;transition:all .12s;user-select:none;}
     .geo-chip:hover{border-color:#cbd5e1;}
@@ -83,41 +87,71 @@
 <script>
 (function(){
     var root = document.currentScript.closest('form') || document;
-    // Toggle excluded state + keep the count in sync.
-    function refreshCount(){
-        var n = root.querySelectorAll('.geo-chip input:checked').length;
+    var search = root.querySelector('.geo-search');
+    var emptyMsg = root.querySelector('.geo-empty');
+
+    function currentMode(){
+        var r = root.querySelector('.geo-mode input:checked');
+        return r ? r.value : 'mixed';
+    }
+    function tierAllowed(mode, tier){
+        if(mode === 'tier1')  return tier === 1;
+        if(mode === 'tier23') return tier === 2 || tier === 3;
+        return true; // mixed
+    }
+    function applyFilters(){
+        var mode = currentMode();
+        var q = (search && search.value.trim().toLowerCase()) || '';
+        var anyVisibleAtAll = false;
+
+        root.querySelectorAll('.geo-group').forEach(function(g){
+            var tier = parseInt(g.dataset.tier, 10);
+            var modeOk = tierAllowed(mode, tier);
+            var groupHasVisible = false;
+
+            g.querySelectorAll('.geo-chip').forEach(function(chip){
+                var searchOk = q === '' || chip.dataset.search.indexOf(q) !== -1;
+                var show = modeOk && searchOk;
+                chip.classList.toggle('geo-hidden', !show);
+                if(show) groupHasVisible = true;
+            });
+
+            g.classList.toggle('geo-hidden', !groupHasVisible);
+            if(groupHasVisible) anyVisibleAtAll = true;
+        });
+
+        if(emptyMsg) emptyMsg.style.display = anyVisibleAtAll ? 'none' : 'block';
+        refreshCount(mode);
+    }
+    function refreshCount(mode){
+        mode = mode || currentMode();
+        var n = 0;
+        root.querySelectorAll('.geo-group').forEach(function(g){
+            if(tierAllowed(mode, parseInt(g.dataset.tier, 10))){
+                n += g.querySelectorAll('.geo-chip input:checked').length;
+            }
+        });
         var el = root.querySelector('.geo-excl-count');
         if(el) el.textContent = n + ' excluded';
     }
+
+    // Exclude toggle.
     root.querySelectorAll('.geo-chip').forEach(function(chip){
         var cb = chip.querySelector('input');
-        chip.addEventListener('click', function(e){
-            // let the native checkbox toggle, then reflect state
+        chip.addEventListener('click', function(){
             setTimeout(function(){ chip.classList.toggle('is-excluded', cb.checked); refreshCount(); }, 0);
         });
     });
-    // Active mode card highlight.
+    // Mode cards: highlight + re-filter the list.
     root.querySelectorAll('.geo-mode input').forEach(function(r){
         r.addEventListener('change', function(){
             root.querySelectorAll('.geo-mode').forEach(function(m){ m.classList.remove('is-active'); });
             if(r.checked) r.closest('.geo-mode').classList.add('is-active');
+            applyFilters();
         });
     });
-    // Search filter.
-    var search = root.querySelector('.geo-search');
-    if(search){
-        search.addEventListener('input', function(){
-            var q = search.value.trim().toLowerCase();
-            root.querySelectorAll('.geo-chip').forEach(function(chip){
-                chip.classList.toggle('geo-hidden', q !== '' && chip.dataset.search.indexOf(q) === -1);
-            });
-            // Hide a group title if all its chips are hidden.
-            root.querySelectorAll('.geo-group-title').forEach(function(title){
-                var grid = title.nextElementSibling;
-                var anyVisible = grid && grid.querySelector('.geo-chip:not(.geo-hidden)');
-                title.classList.toggle('geo-hidden', !anyVisible);
-            });
-        });
-    }
+    if(search) search.addEventListener('input', applyFilters);
+
+    applyFilters(); // initial state matches the pre-selected mode
 })();
 </script>
