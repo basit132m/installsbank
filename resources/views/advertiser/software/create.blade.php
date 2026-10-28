@@ -61,32 +61,10 @@
                 </div>
             </div>
 
-            <div class="form-group">
-                <label class="form-label">Target Countries (Geo) *</label>
-                <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:8px;margin-top:6px;">
-                    @foreach($geoModes as $val => $label)
-                    <label style="border:2px solid #e5e7eb;border-radius:10px;padding:12px;cursor:pointer;display:flex;align-items:center;gap:8px;font-size:13px;">
-                        <input type="radio" name="geo_mode" value="{{ $val }}" {{ old('geo_mode','mixed')===$val?'checked':'' }}>
-                        <span><strong>{{ $label }}</strong></span>
-                    </label>
-                    @endforeach
-                </div>
-                <div style="font-size:11px;color:#9ca3af;margin-top:6px;">We only send installs from your chosen tier. Off-target visitors are redirected away — never counted.</div>
-            </div>
-
-            <div class="form-group">
-                <label class="form-label">Exclude specific countries (optional)</label>
-                <select name="excluded_countries[]" multiple size="8" class="form-control" style="height:auto;">
-                    @foreach($countryGroups as $group => $list)
-                    <optgroup label="{{ $group }}">
-                        @foreach($list as $code => $cname)
-                        <option value="{{ $code }}" {{ in_array($code, old('excluded_countries', [])) ? 'selected' : '' }}>{{ $cname }} ({{ $code }})</option>
-                        @endforeach
-                    </optgroup>
-                    @endforeach
-                </select>
-                <div style="font-size:11px;color:#9ca3af;margin-top:4px;">Hold Ctrl/Cmd to pick several. Example: choose "Tier 1 only" above and exclude Canada here to get Tier 1 without Canada.</div>
-            </div>
+            @include('advertiser.software._geo_fields', [
+                'selectedMode'     => old('geo_mode', 'mixed'),
+                'selectedExcluded' => old('excluded_countries', []),
+            ])
 
             <div class="form-group">
                 <label class="form-label">Additional Notes (optional)</label>
