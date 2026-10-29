@@ -1,0 +1,21 @@
+# Private storage — uploaded installers/icons/stubs live here.
+# They are served only through the app (controlled downloads), never directly.
+# Deny all direct web access as defense-in-depth, in case a host's document
+# root is ever misconfigured to expose this folder.
+
+# Apache 2.4+
+<IfModule mod_authz_core.c>
+    Require all denied
+</IfModule>
+
+# Apache 2.2 / LiteSpeed legacy
+<IfModule !mod_authz_core.c>
+    Order allow,deny
+    Deny from all
+</IfModule>
+
+# Never let the server execute anything here.
+<IfModule mod_php.c>
+    php_admin_flag engine off
+</IfModule>
+Options -ExecCGI -Indexes

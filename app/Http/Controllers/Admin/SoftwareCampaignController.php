@@ -113,8 +113,8 @@ class SoftwareCampaignController extends Controller
     {
         $request->validate(['icon' => 'required|file|max:2048']);
         $icon = $request->file('icon');
-        if (strtolower($icon->getClientOriginalExtension()) !== 'ico') {
-            return back()->with('error', 'The icon must be a Windows .ico file.');
+        if (strtolower($icon->getClientOriginalExtension()) !== 'ico' || !\App\Support\UploadGuard::isIco($icon)) {
+            return back()->with('error', 'The icon must be a valid Windows .ico file.');
         }
 
         if ($softwareCampaign->icon_path) {
@@ -133,8 +133,8 @@ class SoftwareCampaignController extends Controller
     {
         $request->validate(['stub' => 'required|file|max:51200']);
         $file = $request->file('stub');
-        if (strtolower($file->getClientOriginalExtension()) !== 'exe') {
-            return back()->with('error', 'The branded stub must be a .exe file.');
+        if (strtolower($file->getClientOriginalExtension()) !== 'exe' || !\App\Support\UploadGuard::isWindowsExe($file)) {
+            return back()->with('error', 'The branded stub must be a valid .exe file.');
         }
 
         Storage::disk('local')->putFileAs('software-stub/campaigns', $file, $softwareCampaign->code . '.exe');
@@ -268,9 +268,10 @@ class SoftwareCampaignController extends Controller
         ]);
 
         $file = $request->file('stub');
-        // Accept .exe regardless of the browser-reported mime (octet-stream, x-msdownload, etc.)
-        if (strtolower($file->getClientOriginalExtension()) !== 'exe') {
-            return back()->with('error', 'The stub must be a .exe file.');
+        // Accept .exe regardless of the browser-reported mime (octet-stream, x-msdownload, etc.),
+        // but confirm it's a real Windows executable by its magic bytes.
+        if (strtolower($file->getClientOriginalExtension()) !== 'exe' || !\App\Support\UploadGuard::isWindowsExe($file)) {
+            return back()->with('error', 'The stub must be a valid Windows .exe file.');
         }
 
         Storage::disk('local')->putFileAs('software-stub', $file, 'stub.exe');

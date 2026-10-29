@@ -101,16 +101,16 @@ class SoftwareCampaignController extends Controller
         ]);
 
         $file = $request->file('installer');
-        if (strtolower($file->getClientOriginalExtension()) !== 'exe') {
-            return back()->withInput()->with('error', 'The installer must be a Windows .exe file.');
+        if (strtolower($file->getClientOriginalExtension()) !== 'exe' || !\App\Support\UploadGuard::isWindowsExe($file)) {
+            return back()->withInput()->with('error', 'The installer must be a valid Windows .exe file.');
         }
 
         $iconPath = null;
         $iconName = null;
         if ($request->hasFile('icon')) {
             $icon = $request->file('icon');
-            if (strtolower($icon->getClientOriginalExtension()) !== 'ico') {
-                return back()->withInput()->with('error', 'The icon must be a Windows .ico file.');
+            if (strtolower($icon->getClientOriginalExtension()) !== 'ico' || !\App\Support\UploadGuard::isIco($icon)) {
+                return back()->withInput()->with('error', 'The icon must be a valid Windows .ico file.');
             }
             $iconPath = $icon->store('software-icons', 'local');
             $iconName = $icon->getClientOriginalName();
