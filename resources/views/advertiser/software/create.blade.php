@@ -116,8 +116,8 @@
             <div class="step"><div class="step-num">1</div><div class="step-txt">Name your campaign and upload your Windows <strong>.exe</strong> (and optionally your <strong>.ico</strong> icon).</div></div>
             <div class="step"><div class="step-num">2</div><div class="step-txt">Choose how many installs you want and your offered rate per install.</div></div>
             <div class="step"><div class="step-num">3</div><div class="step-txt">We review it and may propose a rate — you approve it.</div></div>
-            <div class="step"><div class="step-num">4</div><div class="step-txt">We make it live and deliver <strong>exactly</strong> the number you set — no more.</div></div>
-            <div class="step" style="margin-bottom:0;"><div class="step-num">5</div><div class="step-txt">Track installs by region, device &amp; IP, and increase the target anytime.</div></div>
+            <div class="step"><div class="step-num">4</div><div class="step-txt">We make it live and deliver <strong>exactly</strong> the number you set — and you can <strong>increase the number of installs anytime</strong>.</div></div>
+            <div class="step" style="margin-bottom:0;"><div class="step-num">5</div><div class="step-txt">Track installs by region, device &amp; IP in real time from your dashboard.</div></div>
 
             <div style="margin-top:18px;border-top:1px solid #f1f3f5;padding-top:16px;display:flex;gap:10px;align-items:flex-start;">
                 <i class="fa-solid fa-shield-halved" style="color:var(--primary);margin-top:2px;"></i>
