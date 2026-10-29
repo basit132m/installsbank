@@ -9,12 +9,12 @@
     @if($softwareCampaign->enabled)
     <form method="POST" action="{{ route('advertiser.campaigns.stop', $softwareCampaign) }}" onsubmit="return confirm('Stop this campaign? Traffic will be redirected to the fallback link until you resume.');">
         @csrf
-        <button class="btn btn-sm" style="background:#fee2e2;color:#b91c1c;border:1px solid #fecaca;">■ Stop campaign</button>
+        <button class="btn btn-sm" style="background:#fee2e2;color:#b91c1c;border:1px solid #fecaca;"><i class="fa-solid fa-circle-stop"></i> Stop campaign</button>
     </form>
     @elseif($softwareCampaign->status === 'paused')
     <form method="POST" action="{{ route('advertiser.campaigns.start', $softwareCampaign) }}">
         @csrf
-        <button class="btn btn-sm btn-primary">▶ Resume campaign</button>
+        <button class="btn btn-sm btn-primary"><i class="fa-solid fa-circle-play"></i> Resume campaign</button>
     </form>
     @endif
 </div>
@@ -59,7 +59,7 @@
 {{-- Target progress + increase --}}
 <div class="card" style="margin-bottom:24px;">
     <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin-bottom:12px;">
-        <div class="card-title">Install Target</div>
+        <div class="card-title"><i class="fa-solid fa-bullseye"></i> Install Target</div>
         <div style="font-size:13px;color:#6b7280;">{{ number_format($installsTotal) }} / {{ number_format($softwareCampaign->max_installs) }} ({{ $softwareCampaign->progressPercent() }}%)</div>
     </div>
     <div style="background:#f3f4f6;border-radius:6px;height:10px;overflow:hidden;margin-bottom:16px;">
@@ -84,7 +84,7 @@
     $outstanding = max(0, round($totalValue - $amountPaid, 2));
 @endphp
 <div class="card" style="margin-bottom:24px;">
-    <div class="card-title" style="margin-bottom:6px;">Billing</div>
+    <div class="card-title" style="margin-bottom:6px;"><i class="fa-solid fa-wallet"></i> Billing</div>
     <p style="font-size:13px;color:#6b7280;margin-bottom:16px;">
         You pay <strong>${{ number_format($rate, 2) }}</strong> per install. Payments are made directly to our team
         (outside this panel) — your balance here updates automatically as installs are delivered.
@@ -140,7 +140,7 @@
 
 {{-- Geo targeting --}}
 <div class="card" style="margin-bottom:24px;">
-    <div class="card-title" style="margin-bottom:6px;">Geo Targeting</div>
+    <div class="card-title" style="margin-bottom:6px;"><i class="fa-solid fa-earth-americas"></i> Geo Targeting</div>
     <p style="font-size:13px;color:#6b7280;margin-bottom:14px;">Control which countries your installs come from. Changes apply to your links immediately.</p>
     <form method="POST" action="{{ route('advertiser.campaigns.geo', $softwareCampaign) }}">
         @csrf
@@ -155,7 +155,7 @@
 
 <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:24px;" class="sw-grid">
     <div class="card">
-        <div class="card-title" style="margin-bottom:16px;">Installs by Region</div>
+        <div class="card-title" style="margin-bottom:16px;"><i class="fa-solid fa-earth-americas"></i> Installs by Region</div>
         @forelse($countryBreakdown as $row)
         @php $fc = strtolower($row->country_code ?? ''); @endphp
         <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid #f3f4f6;font-size:13px;">
@@ -174,7 +174,7 @@
         @endforelse
     </div>
     <div class="card">
-        <div class="card-title" style="margin-bottom:16px;">Installs by Device</div>
+        <div class="card-title" style="margin-bottom:16px;"><i class="fa-solid fa-desktop"></i> Installs by Device</div>
         @forelse($deviceBreakdown as $row)
         <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #f3f4f6;font-size:13px;">
             <span>{{ ucfirst($row->device_type ?: 'desktop') }}</span>
@@ -187,7 +187,7 @@
 </div>
 
 <div class="card">
-    <div class="card-title" style="margin-bottom:16px;">Install Log</div>
+    <div class="card-title" style="margin-bottom:16px;"><i class="fa-solid fa-list"></i> Install Log</div>
     <div style="overflow-x:auto;">
         <table>
             <thead><tr><th>When</th><th>Region</th><th>IP Address</th><th>Device</th><th>OS</th></tr></thead>
@@ -213,12 +213,12 @@
 
 {{-- Danger zone --}}
 <div class="card" style="margin-top:24px;border:1px solid #fecaca;">
-    <div class="card-title" style="color:#b91c1c;margin-bottom:6px;">Danger Zone</div>
+    <div class="card-title" style="color:#b91c1c;margin-bottom:6px;"><i class="fa-solid fa-triangle-exclamation"></i> Danger Zone</div>
     <p style="font-size:13px;color:#6b7280;margin-bottom:14px;">Permanently delete this campaign along with its installs, links and billing records. This cannot be undone.</p>
     <form method="POST" action="{{ route('advertiser.campaigns.destroy', $softwareCampaign) }}"
           onsubmit="return confirm('Delete “{{ $softwareCampaign->name }}” permanently?\n\nThis removes the campaign and ALL its data (installs, links, payment records) and cannot be undone.');">
         @csrf @method('DELETE')
-        <button type="submit" class="btn btn-sm" style="background:#dc2626;color:#fff;">Delete campaign</button>
+        <button type="submit" class="btn btn-sm" style="background:#dc2626;color:#fff;"><i class="fa-solid fa-trash"></i> Delete campaign</button>
     </form>
 </div>
 

@@ -9,7 +9,7 @@
 
 <div style="max-width:680px;">
     <div style="background:#eff6ff;border:1.5px solid #93c5fd;border-radius:14px;padding:18px 20px;margin-bottom:28px;">
-        <div style="font-size:14px;font-weight:700;color:#1e40af;margin-bottom:8px;">How It Works</div>
+        <div style="font-size:14px;font-weight:700;color:#1e40af;margin-bottom:8px;"><i class="fa-solid fa-circle-info"></i> How It Works</div>
         <div style="font-size:13px;color:#1e3a8a;line-height:1.8;">
             1. Enter your campaign name, upload your Windows <strong>.exe</strong> and (optionally) your <strong>.ico</strong> icon.<br>
             2. Choose how many installs you want and your offered rate per install.<br>
@@ -20,7 +20,7 @@
     </div>
 
     <div class="card">
-        <div class="card-title mb-1">Campaign Details</div>
+        <div class="card-title mb-1"><i class="fa-solid fa-circle-plus"></i> Campaign Details</div>
         <div style="font-size:13px;color:#9ca3af;margin-bottom:24px;">Upload your software and set your install target. Our team will review and confirm pricing.</div>
 
         <form method="POST" action="{{ route('advertiser.campaigns.store') }}" enctype="multipart/form-data">
@@ -81,7 +81,7 @@
                 <textarea name="notes" class="form-control" rows="3" placeholder="Anything our team should know about this software">{{ old('notes') }}</textarea>
             </div>
 
-            <button type="submit" id="submitBtn" class="btn btn-primary">Submit Campaign</button>
+            <button type="submit" id="submitBtn" class="btn btn-primary"><i class="fa-solid fa-paper-plane"></i> Submit Campaign</button>
             <a href="{{ route('advertiser.campaigns.index') }}" class="btn btn-ghost" style="margin-left:8px;">Cancel</a>
             <div id="submitHint" style="font-size:12px;color:#9ca3af;margin-top:8px;">Upload your installer above first — the button enables once it finishes.</div>
         </form>

@@ -2,26 +2,46 @@
 @section('title', 'Dashboard')
 @section('page-title', 'Dashboard')
 
+@section('header-actions')
+<a href="{{ route('advertiser.campaigns.create') }}" class="btn btn-primary btn-sm"><i class="fa-solid fa-plus"></i> New Campaign</a>
+@endsection
+
 @section('content')
 @if(session('registered'))
-<div class="alert alert-info mb-6" style="background:linear-gradient(135deg,#eff6ff,#dbeafe);border:1px solid #bfdbfe;color:#1e40af;border-radius:12px;padding:16px 20px;display:flex;align-items:center;gap:12px;">
-    <svg width="20" height="20" fill="none" stroke="#3b82f6" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-    <div><strong>Welcome to Installs Bank!</strong> Create your first campaign to start getting installs.</div>
+<div class="alert alert-info mb-6" style="background:linear-gradient(135deg,#eff6ff,#dbeafe);">
+    <i class="fa-solid fa-circle-check"></i>
+    <span><strong>Welcome to Installs Bank!</strong> Create your first campaign to start getting installs.</span>
 </div>
 @endif
 
 {{-- Top stats --}}
-<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;margin-bottom:24px;">
-    <div class="card"><div style="font-size:12px;color:#9ca3af;">Installs Today</div><div style="font-size:30px;font-weight:800;color:#3b82f6;">{{ number_format($installsToday) }}</div></div>
-    <div class="card"><div style="font-size:12px;color:#9ca3af;">Total Installs</div><div style="font-size:30px;font-weight:800;">{{ number_format($totalInstalls) }}</div></div>
-    <div class="card"><div style="font-size:12px;color:#9ca3af;">Remaining</div><div style="font-size:30px;font-weight:800;color:#059669;">{{ number_format(max(0, $totalTarget - $totalInstalls)) }}</div></div>
-    <div class="card"><div style="font-size:12px;color:#9ca3af;">Live Campaigns</div><div style="font-size:30px;font-weight:800;">{{ number_format($liveCount) }}</div></div>
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-icon" style="background:#eff6ff;color:#3b82f6;"><i class="fa-solid fa-download"></i></div>
+        <div class="stat-value" style="color:#3b82f6;">{{ number_format($installsToday) }}</div>
+        <div class="stat-label">Installs Today</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon" style="background:#f3f4f6;color:#374151;"><i class="fa-solid fa-chart-simple"></i></div>
+        <div class="stat-value">{{ number_format($totalInstalls) }}</div>
+        <div class="stat-label">Total Installs</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon" style="background:#e6faf2;color:#059669;"><i class="fa-solid fa-hourglass-half"></i></div>
+        <div class="stat-value" style="color:#059669;">{{ number_format(max(0, $totalTarget - $totalInstalls)) }}</div>
+        <div class="stat-label">Remaining</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon" style="background:#fef3c7;color:#d97706;"><i class="fa-solid fa-bullhorn"></i></div>
+        <div class="stat-value">{{ number_format($liveCount) }}</div>
+        <div class="stat-label">Live Campaigns</div>
+    </div>
 </div>
 
 {{-- Campaigns with progress --}}
-<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:12px;">
-    <div class="card-title" style="font-size:16px;">Your Campaigns</div>
-    <a href="{{ route('advertiser.campaigns.create') }}" class="btn btn-primary btn-sm">+ New Campaign</a>
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:12px;">
+    <div class="card-title" style="font-size:16px;"><i class="fa-solid fa-bullhorn"></i> Your Campaigns</div>
+    <a href="{{ route('advertiser.campaigns.create') }}" class="btn btn-primary btn-sm"><i class="fa-solid fa-plus"></i> New Campaign</a>
 </div>
 
 @forelse($campaigns as $c)
@@ -58,11 +78,11 @@
     </div>
 </div>
 @empty
-<div class="card" style="text-align:center;padding:48px 24px;">
-    <div style="font-size:44px;margin-bottom:10px;">💿</div>
+<div class="card" style="text-align:center;padding:52px 24px;">
+    <div style="width:64px;height:64px;border-radius:16px;background:var(--primary-light);color:var(--primary);display:flex;align-items:center;justify-content:center;font-size:26px;margin:0 auto 14px;"><i class="fa-solid fa-compact-disc"></i></div>
     <div style="font-size:17px;font-weight:700;margin-bottom:6px;">No campaigns yet</div>
     <div style="font-size:14px;color:#6b7280;margin-bottom:20px;">Upload your Windows software to start getting installs.</div>
-    <a href="{{ route('advertiser.campaigns.create') }}" class="btn btn-primary">+ New Campaign</a>
+    <a href="{{ route('advertiser.campaigns.create') }}" class="btn btn-primary"><i class="fa-solid fa-plus"></i> New Campaign</a>
 </div>
 @endforelse
 
@@ -70,7 +90,7 @@
 @if($activeCampaign && $activeCampaign->total_installs > 0)
 <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:8px;" class="sw-grid">
     <div class="card">
-        <div class="card-title" style="margin-bottom:14px;">{{ $activeCampaign->name }} — by Region</div>
+        <div class="card-title" style="margin-bottom:14px;"><i class="fa-solid fa-earth-americas"></i> {{ $activeCampaign->name }} — by Region</div>
         @forelse($countryBreakdown as $row)
         @php $fc = strtolower($row->country_code ?? ''); @endphp
         <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid #f3f4f6;font-size:13px;">
@@ -89,7 +109,7 @@
         @endforelse
     </div>
     <div class="card">
-        <div class="card-title" style="margin-bottom:14px;">{{ $activeCampaign->name }} — by Device</div>
+        <div class="card-title" style="margin-bottom:14px;"><i class="fa-solid fa-desktop"></i> {{ $activeCampaign->name }} — by Device</div>
         @forelse($deviceBreakdown as $row)
         <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #f3f4f6;font-size:13px;">
             <span>{{ ucfirst($row->device_type ?: 'desktop') }}</span><strong>{{ number_format($row->installs) }}</strong>
