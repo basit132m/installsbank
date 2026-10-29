@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Advertiser;
 use App\Http\Controllers\Controller;
 use App\Models\SoftwareCampaign;
 use App\Models\SoftwareInstall;
+use App\Models\SoftwarePayment;
 
 class DashboardController extends Controller
 {
@@ -38,6 +39,13 @@ class DashboardController extends Controller
             }
         }
 
+        // Account balance = total paid in − value of installs delivered.
+        $totalPaid = $campaignIds->isNotEmpty()
+            ? (float) SoftwarePayment::whereIn('software_campaign_id', $campaignIds)->sum('amount')
+            : 0.0;
+        $totalUsed = (float) $campaigns->sum(fn($c) => $c->effectiveRate() * $c->total_installs);
+        $balance   = round($totalPaid - $totalUsed, 2);
+
         // The most relevant campaign to feature (first live, else newest).
         $activeCampaign = $campaigns->firstWhere('status', SoftwareCampaign::S_LIVE) ?? $campaigns->first();
 
@@ -56,6 +64,7 @@ class DashboardController extends Controller
         return view('advertiser.dashboard', compact(
             'user', 'profile', 'campaigns', 'activeCampaign',
             'installsToday', 'totalInstalls', 'totalTarget', 'liveCount',
+            'totalPaid', 'totalUsed', 'balance',
             'countryBreakdown', 'deviceBreakdown'
         ));
     }

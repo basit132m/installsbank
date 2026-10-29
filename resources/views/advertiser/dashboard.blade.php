@@ -14,6 +14,28 @@
 </div>
 @endif
 
+{{-- Account balance --}}
+<div class="card mb-6" style="display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;background:linear-gradient(135deg,#ecfdf5,#ffffff);border-color:#a7f3d0;">
+    <div style="display:flex;align-items:center;gap:15px;">
+        <div style="width:54px;height:54px;border-radius:14px;background:linear-gradient(135deg,var(--primary),#00d873);color:#fff;display:flex;align-items:center;justify-content:center;font-size:22px;box-shadow:0 4px 12px rgba(1,191,99,.28);"><i class="fa-solid fa-wallet"></i></div>
+        <div>
+            <div style="font-size:13px;color:#6b7280;">Account Balance</div>
+            <div style="font-size:32px;font-weight:800;line-height:1.1;color:{{ $balance >= 0 ? '#059669' : '#b91c1c' }};">${{ number_format($balance, 2) }}</div>
+            <div style="font-size:11px;color:#9ca3af;margin-top:2px;">Decreases automatically as installs are delivered.</div>
+        </div>
+    </div>
+    <div style="display:flex;gap:26px;flex-wrap:wrap;">
+        <div>
+            <div style="font-size:12px;color:#9ca3af;"><i class="fa-solid fa-arrow-down" style="color:#059669;"></i> Total paid</div>
+            <div style="font-size:19px;font-weight:800;">${{ number_format($totalPaid, 2) }}</div>
+        </div>
+        <div>
+            <div style="font-size:12px;color:#9ca3af;"><i class="fa-solid fa-arrow-up" style="color:#9a3412;"></i> Used (delivered)</div>
+            <div style="font-size:19px;font-weight:800;color:#9a3412;">−${{ number_format($totalUsed, 2) }}</div>
+        </div>
+    </div>
+</div>
+
 {{-- Top stats --}}
 <div class="stats-grid">
     <div class="stat-card">
