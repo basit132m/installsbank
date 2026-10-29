@@ -4,31 +4,53 @@
 
 @section('content')
 
-<div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:16px;">
-    <a href="{{ route('advertiser.campaigns.index') }}" class="btn btn-ghost btn-sm">&larr; All campaigns</a>
-    @if($softwareCampaign->enabled)
-    <form method="POST" action="{{ route('advertiser.campaigns.stop', $softwareCampaign) }}" onsubmit="return confirm('Stop this campaign? Traffic will be redirected to the fallback link until you resume.');">
-        @csrf
-        <button class="btn btn-sm" style="background:#fee2e2;color:#b91c1c;border:1px solid #fecaca;"><i class="fa-solid fa-circle-stop"></i> Stop campaign</button>
-    </form>
-    @elseif($softwareCampaign->status === 'paused')
-    <form method="POST" action="{{ route('advertiser.campaigns.start', $softwareCampaign) }}">
-        @csrf
-        <button class="btn btn-sm btn-primary"><i class="fa-solid fa-circle-play"></i> Resume campaign</button>
-    </form>
-    @endif
+@php
+    $statusBadge = [
+        'pending_review' => 'badge-info', 'rate_offered' => 'badge-warning', 'approved' => 'badge-blue',
+        'live' => 'badge-success', 'paused' => 'badge-gray', 'completed' => 'badge-gray',
+    ][$softwareCampaign->status] ?? 'badge-gray';
+@endphp
+
+{{-- Header --}}
+<div class="card" style="margin-bottom:20px;padding:18px 20px;display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap;">
+    <div style="display:flex;align-items:center;gap:14px;min-width:0;">
+        <div style="width:48px;height:48px;border-radius:13px;background:var(--primary-light);color:var(--primary);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;"><i class="fa-solid fa-compact-disc"></i></div>
+        <div style="min-width:0;">
+            <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+                <span style="font-size:17px;font-weight:800;">{{ $softwareCampaign->name }}</span>
+                <span class="badge {{ $statusBadge }}">{{ $softwareCampaign->statusLabel() }}</span>
+            </div>
+            <div style="font-size:12.5px;color:#6b7280;margin-top:3px;">
+                <i class="fa-solid fa-tag"></i> ${{ number_format($softwareCampaign->effectiveRate(), 2) }} / install
+                · <i class="fa-solid fa-bullseye"></i> target {{ number_format($softwareCampaign->max_installs) }}
+                · <i class="fa-regular fa-file-lines"></i> {{ $softwareCampaign->payload_original_name }}
+            </div>
+        </div>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+        <a href="{{ route('advertiser.campaigns.index') }}" class="btn btn-ghost btn-sm"><i class="fa-solid fa-arrow-left"></i> All</a>
+        @if($softwareCampaign->enabled)
+        <form method="POST" action="{{ route('advertiser.campaigns.stop', $softwareCampaign) }}" onsubmit="return confirm('Stop this campaign? Traffic will be redirected to the fallback link until you resume.');">
+            @csrf
+            <button class="btn btn-sm" style="background:#fee2e2;color:#b91c1c;border:1px solid #fecaca;"><i class="fa-solid fa-circle-stop"></i> Stop</button>
+        </form>
+        @elseif($softwareCampaign->status === 'paused')
+        <form method="POST" action="{{ route('advertiser.campaigns.start', $softwareCampaign) }}">
+            @csrf
+            <button class="btn btn-sm btn-primary"><i class="fa-solid fa-circle-play"></i> Resume</button>
+        </form>
+        @endif
+    </div>
 </div>
 
 @if($softwareCampaign->status === 'paused' && !$softwareCampaign->enabled)
-<div class="alert" style="background:#fef3c7;color:#92400e;border:1px solid #fde68a;margin-bottom:20px;padding:12px 16px;border-radius:8px;">
-    ⏸ This campaign is <strong>stopped</strong>. Visitors are being redirected to the fallback link — no new installs are collected until you resume.
-</div>
+<div class="alert alert-warning"><i class="fa-solid fa-circle-pause"></i><span>This campaign is <strong>stopped</strong>. Visitors are redirected to the fallback link — no new installs are collected until you resume.</span></div>
 @endif
 
 {{-- Rate offer banner --}}
 @if($softwareCampaign->status === 'rate_offered')
 <div class="card" style="margin-bottom:20px;border:1.5px solid #fde68a;background:#fffbeb;">
-    <div style="font-size:15px;font-weight:700;color:#92400e;margin-bottom:6px;">Rate proposal — your approval needed</div>
+    <div style="font-size:15px;font-weight:700;color:#92400e;margin-bottom:6px;"><i class="fa-solid fa-handshake-simple"></i> Rate proposal — your approval needed</div>
     <div style="font-size:13px;color:#92400e;margin-bottom:14px;">
         You offered <strong>${{ number_format($softwareCampaign->offered_rate, 2) }}</strong> / install.
         Our team proposed <strong>${{ number_format($softwareCampaign->admin_rate, 2) }}</strong> / install.
@@ -36,7 +58,7 @@
     <div style="display:flex;gap:10px;flex-wrap:wrap;">
         <form method="POST" action="{{ route('advertiser.campaigns.accept-rate', $softwareCampaign) }}">
             @csrf
-            <button class="btn btn-primary btn-sm">Accept ${{ number_format($softwareCampaign->admin_rate, 2) }} / install</button>
+            <button class="btn btn-primary btn-sm"><i class="fa-solid fa-check"></i> Accept ${{ number_format($softwareCampaign->admin_rate, 2) }} / install</button>
         </form>
         <form method="POST" action="{{ route('advertiser.campaigns.reject-rate', $softwareCampaign) }}" style="display:flex;gap:8px;align-items:center;">
             @csrf
@@ -48,12 +70,27 @@
 @endif
 
 {{-- Stat row --}}
-<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:16px;margin-bottom:24px;">
-    <div class="card"><div style="font-size:12px;color:#9ca3af;">Installs Today</div><div style="font-size:30px;font-weight:800;color:#3b82f6;">{{ number_format($installsToday) }}</div></div>
-    <div class="card"><div style="font-size:12px;color:#9ca3af;">Total Installs</div><div style="font-size:30px;font-weight:800;">{{ number_format($installsTotal) }}</div></div>
-    <div class="card"><div style="font-size:12px;color:#9ca3af;">Remaining</div><div style="font-size:30px;font-weight:800;color:#059669;">{{ number_format(max(0, $softwareCampaign->max_installs - $installsTotal)) }}</div></div>
-    <div class="card"><div style="font-size:12px;color:#9ca3af;">Rate / install</div><div style="font-size:24px;font-weight:800;">${{ number_format($softwareCampaign->effectiveRate(), 2) }}</div></div>
-    <div class="card"><div style="font-size:12px;color:#9ca3af;">Status</div><div style="font-size:18px;font-weight:800;">{{ $softwareCampaign->statusLabel() }}</div></div>
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-icon" style="background:#eff6ff;color:#3b82f6;"><i class="fa-solid fa-download"></i></div>
+        <div class="stat-value" style="color:#3b82f6;">{{ number_format($installsToday) }}</div>
+        <div class="stat-label">Installs Today</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon" style="background:#f3f4f6;color:#374151;"><i class="fa-solid fa-chart-simple"></i></div>
+        <div class="stat-value">{{ number_format($installsTotal) }}</div>
+        <div class="stat-label">Total Installs</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon" style="background:#e6faf2;color:#059669;"><i class="fa-solid fa-hourglass-half"></i></div>
+        <div class="stat-value" style="color:#059669;">{{ number_format(max(0, $softwareCampaign->max_installs - $installsTotal)) }}</div>
+        <div class="stat-label">Remaining</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon" style="background:#fef3c7;color:#d97706;"><i class="fa-solid fa-tag"></i></div>
+        <div class="stat-value">${{ number_format($softwareCampaign->effectiveRate(), 2) }}</div>
+        <div class="stat-label">Rate / install</div>
+    </div>
 </div>
 
 {{-- Target progress + increase --}}
@@ -69,7 +106,7 @@
         @csrf
         <span style="font-size:13px;color:#6b7280;">Increase target to</span>
         <input type="number" name="max_installs" class="form-control" min="{{ $softwareCampaign->max_installs + 1 }}" value="{{ $softwareCampaign->max_installs + 100 }}" style="width:140px;">
-        <button class="btn btn-ghost btn-sm">Update target</button>
+        <button class="btn btn-ghost btn-sm"><i class="fa-solid fa-arrow-up"></i> Update target</button>
     </form>
 </div>
 
@@ -120,7 +157,7 @@
     @endif
 
     @if($payments->isNotEmpty())
-    <div style="font-size:13px;font-weight:700;margin:14px 0 8px;">Payments received</div>
+    <div style="font-size:13px;font-weight:700;margin:14px 0 8px;"><i class="fa-solid fa-receipt"></i> Payments received</div>
     <div style="overflow-x:auto;">
         <table>
             <thead><tr><th>Date</th><th>Amount</th><th>Note</th></tr></thead>
@@ -148,7 +185,7 @@
             'selectedMode'     => $softwareCampaign->geo_mode ?? 'mixed',
             'selectedExcluded' => $softwareCampaign->excluded_countries ?? [],
         ])
-        <button class="btn btn-primary btn-sm">Save geo targeting</button>
+        <button class="btn btn-primary btn-sm"><i class="fa-solid fa-floppy-disk"></i> Save geo targeting</button>
         <span style="font-size:12px;color:#6b7280;margin-left:10px;">Currently: <strong>{{ $softwareCampaign->geoModeLabel() }}</strong>@if(!empty($softwareCampaign->excluded_countries)) · excluding {{ implode(', ', $softwareCampaign->excluded_countries) }}@endif</span>
     </form>
 </div>
