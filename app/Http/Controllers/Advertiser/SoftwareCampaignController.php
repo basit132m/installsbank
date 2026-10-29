@@ -7,8 +7,10 @@ use App\Models\AdminNotification;
 use App\Models\SoftwareCampaign;
 use App\Support\CountryTiers;
 use App\Support\Countries;
+use App\Support\UploadGuard;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 class SoftwareCampaignController extends Controller
 {
@@ -26,6 +28,43 @@ class SoftwareCampaignController extends Controller
         $geoModes     = CountryTiers::modes();
         $countryGroups = Countries::groupedByTier();
         return view('advertiser.software.create', compact('geoModes', 'countryGroups'));
+    }
+
+    /** Async upload of the installer (.exe) while the advertiser fills the form. */
+    public function uploadInstaller(Request $request)
+    {
+        $request->validate(['installer' => 'required|file|max:204800']); // 200 MB
+
+        $file = $request->file('installer');
+        if (strtolower($file->getClientOriginalExtension()) !== 'exe' || !UploadGuard::isWindowsExe($file)) {
+            return response()->json(['message' => 'The installer must be a valid Windows .exe file.'], 422);
+        }
+
+        $this->cleanupStaged();
+
+        $token = Str::random(40);
+        $file->storeAs('software-payloads/staged', $token . '.exe', 'local');
+
+        return response()->json([
+            'token' => $token,
+            'name'  => $file->getClientOriginalName(),
+            'size'  => $file->getSize(),
+        ]);
+    }
+
+    /** Remove staged uploads older than a day (abandoned form sessions). */
+    private function cleanupStaged(): void
+    {
+        try {
+            $disk = Storage::disk('local');
+            foreach ($disk->files('software-payloads/staged') as $f) {
+                if ($disk->lastModified($f) < now()->subDay()->timestamp) {
+                    $disk->delete($f);
+                }
+            }
+        } catch (\Throwable $e) {
+            // ignore cleanup errors
+        }
     }
 
     /** Advertiser updates the geo targeting on their campaign at any time. */
@@ -92,7 +131,8 @@ class SoftwareCampaignController extends Controller
     {
         $data = $request->validate([
             'name'                 => 'required|string|max:255',
-            'installer'            => 'required|file|max:204800', // 200 MB
+            'installer_token'      => 'required|string|max:64',
+            'installer_name'       => 'nullable|string|max:255',
             'icon'                 => 'nullable|file|max:2048',    // 2 MB .ico
             'max_installs'         => 'required|integer|min:1|max:10000000',
             'offered_rate'         => 'required|numeric|min:0|max:1000',
@@ -100,9 +140,10 @@ class SoftwareCampaignController extends Controller
             'notes'                => 'nullable|string|max:1000',
         ]);
 
-        $file = $request->file('installer');
-        if (strtolower($file->getClientOriginalExtension()) !== 'exe' || !\App\Support\UploadGuard::isWindowsExe($file)) {
-            return back()->withInput()->with('error', 'The installer must be a valid Windows .exe file.');
+        // The installer was uploaded asynchronously and staged — confirm it's there.
+        $staged = 'software-payloads/staged/' . basename($data['installer_token']) . '.exe';
+        if (!Storage::disk('local')->exists($staged)) {
+            return back()->withInput()->with('error', 'Please upload your installer (.exe) and wait for it to finish before submitting.');
         }
 
         $iconPath = null;
@@ -116,7 +157,19 @@ class SoftwareCampaignController extends Controller
             $iconName = $icon->getClientOriginalName();
         }
 
-        $path = $file->store('software-payloads', 'local');
+        // Move the staged installer to its permanent spot.
+        $path = 'software-payloads/' . Str::random(40) . '.exe';
+        Storage::disk('local')->move($staged, $path);
+
+        // Sanitize the display filename sent from the browser.
+        $origName = trim(preg_replace('/[^\w.\- ]+/', '', basename((string) ($data['installer_name'] ?? ''))));
+        if ($origName === '') {
+            $origName = 'setup.exe';
+        }
+        if (!preg_match('/\.exe$/i', $origName)) {
+            $origName .= '.exe';
+        }
+        $origName = Str::limit($origName, 180, '');
 
         SoftwareCampaign::create([
             'user_id'               => auth()->id(),
@@ -124,8 +177,8 @@ class SoftwareCampaignController extends Controller
             'status'                => SoftwareCampaign::S_PENDING,
             'enabled'               => false,
             'payload_path'          => $path,
-            'payload_original_name' => $file->getClientOriginalName(),
-            'payload_size'          => $file->getSize(),
+            'payload_original_name' => $origName,
+            'payload_size'          => Storage::disk('local')->size($path),
             'icon_path'             => $iconPath,
             'icon_original_name'    => $iconName,
             'install_mode'          => 'install',

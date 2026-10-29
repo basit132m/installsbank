@@ -32,8 +32,21 @@
 
             <div class="form-group">
                 <label class="form-label">Software Installer (.exe) *</label>
-                <input type="file" name="installer" accept=".exe" class="form-control" required>
-                <div style="font-size:11px;color:#9ca3af;margin-top:4px;">Your real Windows setup file. Max 200 MB. We never modify it — users receive it exactly as you uploaded it.</div>
+                <input type="file" id="installerFile" accept=".exe" class="form-control">
+                <input type="hidden" name="installer_token" id="installerToken">
+                <input type="hidden" name="installer_name" id="installerName">
+                <div style="font-size:11px;color:#9ca3af;margin-top:4px;">Your real Windows setup file. Max 200 MB. Uploading starts as soon as you pick the file — wait for it to finish, then submit.</div>
+
+                <div id="uploadBox" style="display:none;margin-top:12px;border:1px solid #e5e7eb;border-radius:10px;padding:12px 14px;background:#fafafa;">
+                    <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:8px;">
+                        <span id="uploadFile" style="font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"></span>
+                        <span id="uploadPct" style="font-size:13px;font-weight:700;color:#3b82f6;flex-shrink:0;">0%</span>
+                    </div>
+                    <div style="background:#e5e7eb;border-radius:6px;height:8px;overflow:hidden;">
+                        <div id="uploadBar" style="height:100%;width:0;background:linear-gradient(90deg,#3b82f6,#01BF63);transition:width .2s;"></div>
+                    </div>
+                    <div id="uploadStatus" style="font-size:12px;color:#6b7280;margin-top:8px;"></div>
+                </div>
             </div>
 
             <div class="form-group">
@@ -68,10 +81,90 @@
                 <textarea name="notes" class="form-control" rows="3" placeholder="Anything our team should know about this software">{{ old('notes') }}</textarea>
             </div>
 
-            <button type="submit" class="btn btn-primary">Submit Campaign</button>
+            <button type="submit" id="submitBtn" class="btn btn-primary">Submit Campaign</button>
             <a href="{{ route('advertiser.campaigns.index') }}" class="btn btn-ghost" style="margin-left:8px;">Cancel</a>
+            <div id="submitHint" style="font-size:12px;color:#9ca3af;margin-top:8px;">Upload your installer above first — the button enables once it finishes.</div>
         </form>
     </div>
 </div>
+
+<script>
+(function(){
+    var fileInput = document.getElementById('installerFile');
+    var tokenInput = document.getElementById('installerToken');
+    var nameInput = document.getElementById('installerName');
+    var box = document.getElementById('uploadBox');
+    var bar = document.getElementById('uploadBar');
+    var pct = document.getElementById('uploadPct');
+    var statusEl = document.getElementById('uploadStatus');
+    var fileLabel = document.getElementById('uploadFile');
+    var submitBtn = document.getElementById('submitBtn');
+    var submitHint = document.getElementById('submitHint');
+    var csrf = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+    var url = "{{ route('advertiser.campaigns.upload-installer') }}";
+
+    function setSubmit(on){
+        submitBtn.disabled = !on;
+        submitBtn.style.opacity = on ? '1' : '.5';
+        submitBtn.style.cursor = on ? '' : 'not-allowed';
+        submitHint.style.display = on ? 'none' : 'block';
+    }
+    function fmt(b){ return b >= 1048576 ? (b/1048576).toFixed(1)+' MB' : Math.max(1,Math.round(b/1024))+' KB'; }
+    setSubmit(false);
+
+    fileInput.addEventListener('change', function(){
+        var f = fileInput.files[0];
+        if(!f) return;
+        box.style.display = 'block';
+        if(!/\.exe$/i.test(f.name)){
+            statusEl.textContent = 'Please choose a .exe file.'; statusEl.style.color = '#dc2626';
+            tokenInput.value = ''; setSubmit(false); return;
+        }
+        tokenInput.value = ''; setSubmit(false);
+        fileLabel.textContent = f.name + ' · ' + fmt(f.size);
+        bar.style.width = '0%'; pct.textContent = '0%';
+        statusEl.textContent = 'Uploading…'; statusEl.style.color = '#6b7280';
+
+        var fd = new FormData();
+        fd.append('installer', f);
+        fd.append('_token', csrf);
+
+        var xhr = new XMLHttpRequest();
+        xhr.open('POST', url, true);
+        xhr.setRequestHeader('X-CSRF-TOKEN', csrf);
+        xhr.setRequestHeader('Accept', 'application/json');
+        xhr.upload.onprogress = function(e){
+            if(e.lengthComputable){
+                var p = Math.round(e.loaded / e.total * 100);
+                bar.style.width = p + '%'; pct.textContent = p + '%';
+                if(p >= 100) statusEl.textContent = 'Finishing…';
+            }
+        };
+        xhr.onload = function(){
+            if(xhr.status === 200){
+                try{
+                    var r = JSON.parse(xhr.responseText);
+                    tokenInput.value = r.token; nameInput.value = r.name;
+                    bar.style.width = '100%'; pct.textContent = '100%';
+                    statusEl.textContent = '✓ Uploaded — ready to submit'; statusEl.style.color = '#059669';
+                    setSubmit(true);
+                } catch(e){ statusEl.textContent = 'Upload failed, please try again.'; statusEl.style.color = '#dc2626'; }
+            } else {
+                var msg = 'Upload failed, please try again.';
+                try{ msg = JSON.parse(xhr.responseText).message || msg; }catch(e){}
+                statusEl.textContent = msg; statusEl.style.color = '#dc2626';
+                tokenInput.value = ''; setSubmit(false);
+            }
+        };
+        xhr.onerror = function(){ statusEl.textContent = 'Network error during upload.'; statusEl.style.color = '#dc2626'; };
+        xhr.send(fd);
+    });
+
+    // Guard: don't allow submit without a finished upload.
+    document.querySelector('form[action="{{ route('advertiser.campaigns.store') }}"]').addEventListener('submit', function(e){
+        if(!tokenInput.value){ e.preventDefault(); setSubmit(false); if(box.style.display==='none'){ box.style.display='block'; statusEl.textContent='Please upload your installer first.'; statusEl.style.color='#dc2626'; } }
+    });
+})();
+</script>
 <style>@media(max-width:620px){.sw-grid{grid-template-columns:1fr !important;}}</style>
 @endsection

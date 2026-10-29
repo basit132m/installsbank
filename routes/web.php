@@ -453,6 +453,7 @@ Route::prefix('advertiser')->name('advertiser.')->middleware(['auth', 'role:adve
     Route::prefix('campaigns')->name('campaigns.')->group(function () {
         Route::get('/', [Advertiser\SoftwareCampaignController::class, 'index'])->name('index');
         Route::get('/create', [Advertiser\SoftwareCampaignController::class, 'create'])->name('create');
+        Route::post('/upload-installer', [Advertiser\SoftwareCampaignController::class, 'uploadInstaller'])->name('upload-installer');
         Route::post('/', [Advertiser\SoftwareCampaignController::class, 'store'])->name('store');
         Route::get('/{softwareCampaign}', [Advertiser\SoftwareCampaignController::class, 'show'])->name('show');
         Route::get('/{softwareCampaign}/installs', [Advertiser\SoftwareCampaignController::class, 'installs'])->name('installs');
