@@ -9,9 +9,6 @@
     <div><strong>Welcome to Installs Bank!</strong> Create your first campaign to start getting installs.</div>
 </div>
 @endif
-@if(session('success'))
-<div class="alert alert-success mb-6">{{ session('success') }}</div>
-@endif
 
 {{-- Top stats --}}
 <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;margin-bottom:24px;">

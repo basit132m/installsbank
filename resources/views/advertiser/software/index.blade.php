@@ -3,12 +3,6 @@
 @section('page-title', 'My Campaigns')
 
 @section('content')
-@if(session('success'))
-<div class="alert alert-success mb-6">{{ session('success') }}</div>
-@endif
-@if(session('error'))
-<div class="alert" style="background:#fee2e2;color:#991b1b;border:1px solid #fecaca;margin-bottom:20px;padding:12px 16px;border-radius:8px;">{{ session('error') }}</div>
-@endif
 
 <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;flex-wrap:wrap;gap:12px;">
     <div style="font-size:14px;color:#6b7280;">Upload your Windows software and track real installs — region, device and IP, per campaign.</div>
