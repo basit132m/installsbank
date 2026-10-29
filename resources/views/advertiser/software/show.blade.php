@@ -12,7 +12,7 @@
 
 <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:16px;">
     <a href="{{ route('advertiser.campaigns.index') }}" class="btn btn-ghost btn-sm">&larr; All campaigns</a>
-    @if($softwareCampaign->status === 'live')
+    @if($softwareCampaign->enabled)
     <form method="POST" action="{{ route('advertiser.campaigns.stop', $softwareCampaign) }}" onsubmit="return confirm('Stop this campaign? Traffic will be redirected to the fallback link until you resume.');">
         @csrf
         <button class="btn btn-sm" style="background:#fee2e2;color:#b91c1c;border:1px solid #fecaca;">■ Stop campaign</button>
@@ -25,7 +25,7 @@
     @endif
 </div>
 
-@if($softwareCampaign->status === 'paused')
+@if($softwareCampaign->status === 'paused' && !$softwareCampaign->enabled)
 <div class="alert" style="background:#fef3c7;color:#92400e;border:1px solid #fde68a;margin-bottom:20px;padding:12px 16px;border-radius:8px;">
     ⏸ This campaign is <strong>stopped</strong>. Visitors are being redirected to the fallback link — no new installs are collected until you resume.
 </div>

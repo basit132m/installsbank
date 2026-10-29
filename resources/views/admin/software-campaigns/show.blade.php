@@ -63,7 +63,7 @@
             <button class="btn btn-primary btn-sm">Make live</button>
             <span style="font-size:12px;color:#9ca3af;margin-left:8px;">Rate agreed at ${{ number_format($softwareCampaign->effectiveRate(), 2) }}. Make sure a stub is uploaded.</span>
         </form>
-    @elseif($softwareCampaign->status === 'live')
+    @elseif($softwareCampaign->enabled)
         <form method="POST" action="{{ route('admin.software-campaigns.pause', $softwareCampaign) }}">
             @csrf
             <button class="btn btn-ghost btn-sm" style="color:#d97706;">Pause campaign</button>

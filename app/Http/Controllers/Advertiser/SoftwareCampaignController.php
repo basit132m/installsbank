@@ -53,8 +53,8 @@ class SoftwareCampaignController extends Controller
     public function stop(SoftwareCampaign $softwareCampaign)
     {
         $this->authorizeOwner($softwareCampaign);
-        if ($softwareCampaign->status !== SoftwareCampaign::S_LIVE) {
-            return back()->with('error', 'Only a live campaign can be stopped.');
+        if (!$softwareCampaign->enabled) {
+            return back()->with('error', 'This campaign is not running.');
         }
 
         $softwareCampaign->update(['enabled' => false, 'status' => SoftwareCampaign::S_PAUSED]);
@@ -69,6 +69,9 @@ class SoftwareCampaignController extends Controller
     public function start(SoftwareCampaign $softwareCampaign)
     {
         $this->authorizeOwner($softwareCampaign);
+        if ($softwareCampaign->enabled) {
+            return back()->with('error', 'This campaign is already running.');
+        }
         if ($softwareCampaign->status !== SoftwareCampaign::S_PAUSED) {
             return back()->with('error', 'Only a stopped campaign can be resumed.');
         }
