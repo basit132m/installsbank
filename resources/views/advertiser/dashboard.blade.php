@@ -67,23 +67,12 @@
 </div>
 
 @forelse($campaigns as $c)
-@php
-    $statusColors = [
-        'pending_review' => ['bg'=>'#dbeafe','text'=>'#1e40af'],
-        'rate_offered'   => ['bg'=>'#fef3c7','text'=>'#92400e'],
-        'approved'       => ['bg'=>'#e0e7ff','text'=>'#3730a3'],
-        'live'           => ['bg'=>'#d1fae5','text'=>'#065f46'],
-        'paused'         => ['bg'=>'#f3f4f6','text'=>'#374151'],
-        'completed'      => ['bg'=>'#f3f4f6','text'=>'#374151'],
-    ];
-    $sc = $statusColors[$c->status] ?? ['bg'=>'#f3f4f6','text'=>'#374151'];
-@endphp
 <div class="card mb-4">
     <div style="display:flex;gap:16px;align-items:center;flex-wrap:wrap;">
         <div style="flex:1;min-width:200px;">
             <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px;flex-wrap:wrap;">
                 <span style="font-size:15px;font-weight:700;">{{ $c->name }}</span>
-                <span style="background:{{ $sc['bg'] }};color:{{ $sc['text'] }};font-size:11px;font-weight:700;padding:3px 10px;border-radius:12px;">{{ $c->statusLabel() }}</span>
+                <span class="badge {{ $c->statusBadgeClass() }}">{{ $c->statusLabel() }}</span>
             </div>
             <div style="font-size:12px;color:#6b7280;">${{ number_format($c->effectiveRate(), 2) }} / install · target {{ number_format($c->max_installs) }}</div>
         </div>

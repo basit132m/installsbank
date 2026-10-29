@@ -4,13 +4,6 @@
 
 @section('content')
 
-@php
-    $statusBadge = [
-        'pending_review' => 'badge-info', 'rate_offered' => 'badge-warning', 'approved' => 'badge-blue',
-        'live' => 'badge-success', 'paused' => 'badge-gray', 'completed' => 'badge-gray',
-    ][$softwareCampaign->status] ?? 'badge-gray';
-@endphp
-
 {{-- Header --}}
 <div class="card" style="margin-bottom:20px;padding:18px 20px;display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap;">
     <div style="display:flex;align-items:center;gap:14px;min-width:0;">
@@ -18,7 +11,7 @@
         <div style="min-width:0;">
             <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
                 <span style="font-size:17px;font-weight:800;">{{ $softwareCampaign->name }}</span>
-                <span class="badge {{ $statusBadge }}">{{ $softwareCampaign->statusLabel() }}</span>
+                <span class="badge {{ $softwareCampaign->statusBadgeClass() }}">{{ $softwareCampaign->statusLabel() }}</span>
             </div>
             <div style="font-size:12.5px;color:#6b7280;margin-top:3px;">
                 <i class="fa-solid fa-tag"></i> ${{ number_format($softwareCampaign->effectiveRate(), 2) }} / install

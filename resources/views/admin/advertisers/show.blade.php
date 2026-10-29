@@ -71,7 +71,7 @@
             <div style="font-size:13px;font-weight:600;">{{ $c->name }}</div>
             <div style="font-size:11px;color:#9ca3af;">${{ number_format($c->effectiveRate(), 2) }} / install · {{ $c->payload_original_name ?: 'no installer' }}</div>
         </div>
-        <span class="badge {{ $live ? 'badge-success' : ($needs ? 'badge-warning' : 'badge-info') }}">{{ $c->statusLabel() }}</span>
+        <span class="badge {{ $c->statusBadgeClass() }}">{{ $c->statusLabel() }}</span>
         <div style="font-size:13px;color:#6b7280;">{{ number_format($c->total_installs) }} / {{ number_format($c->max_installs) }}</div>
         <a href="{{ route('admin.software-campaigns.show', $c) }}" class="btn btn-ghost btn-sm">Manage</a>
     </div>

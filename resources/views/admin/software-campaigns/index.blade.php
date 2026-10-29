@@ -63,7 +63,7 @@
                     <td><code style="font-size:12px;">{{ $c->code }}</code></td>
                     <td style="font-size:13px;font-weight:600;">${{ number_format($c->effectiveRate(), 2) }}</td>
                     <td style="font-weight:600;color:#3b82f6;">{{ number_format($c->total_installs) }}<span style="color:#9ca3af;font-weight:500;">/{{ number_format($c->max_installs) }}</span></td>
-                    <td><span class="badge {{ $live ? 'badge-success' : ($needs ? 'badge-warning' : 'badge-info') }}">{{ $c->statusLabel() }}</span></td>
+                    <td><span class="badge {{ $c->statusBadgeClass() }}">{{ $c->statusLabel() }}</span></td>
                     <td><a href="{{ route('admin.software-campaigns.show', $c) }}" class="btn btn-ghost btn-sm">Manage</a></td>
                 </tr>
                 @empty

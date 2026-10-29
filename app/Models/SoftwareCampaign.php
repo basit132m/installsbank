@@ -62,14 +62,33 @@ class SoftwareCampaign extends Model
 
     public function statusLabel(): string
     {
+        // A running campaign shows "Active" (all set up) until the first install
+        // lands, then "Live".
+        if ($this->status === self::S_LIVE) {
+            return $this->total_installs > 0 ? 'Live' : 'Active';
+        }
+
         return match ($this->status) {
             self::S_PENDING  => 'Under review',
             self::S_OFFERED  => 'Rate offered — your approval needed',
             self::S_APPROVED => 'Approved — going live soon',
-            self::S_LIVE     => 'Live',
             self::S_PAUSED   => 'Paused',
             self::S_COMPLETED=> 'Completed',
             default          => ucfirst(str_replace('_', ' ', (string) $this->status)),
+        };
+    }
+
+    /** Badge CSS class for the current status (Active vs Live distinguished). */
+    public function statusBadgeClass(): string
+    {
+        return match ($this->status) {
+            self::S_PENDING  => 'badge-info',
+            self::S_OFFERED  => 'badge-warning',
+            self::S_APPROVED => 'badge-blue',
+            self::S_LIVE     => $this->total_installs > 0 ? 'badge-success' : 'badge-blue',
+            self::S_PAUSED   => 'badge-gray',
+            self::S_COMPLETED=> 'badge-gray',
+            default          => 'badge-gray',
         };
     }
 

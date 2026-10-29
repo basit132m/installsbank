@@ -11,23 +11,12 @@
 <div style="font-size:14px;color:#6b7280;margin-bottom:22px;">Upload your Windows software and track real installs — region, device and IP, per campaign.</div>
 
 @forelse($campaigns as $c)
-@php
-    $statusColors = [
-        'pending_review' => ['bg'=>'#dbeafe','text'=>'#1e40af'],
-        'rate_offered'   => ['bg'=>'#fef3c7','text'=>'#92400e'],
-        'approved'       => ['bg'=>'#e0e7ff','text'=>'#3730a3'],
-        'live'           => ['bg'=>'#d1fae5','text'=>'#065f46'],
-        'paused'         => ['bg'=>'#f3f4f6','text'=>'#374151'],
-        'completed'      => ['bg'=>'#f3f4f6','text'=>'#374151'],
-    ];
-    $sc = $statusColors[$c->status] ?? ['bg'=>'#f3f4f6','text'=>'#374151'];
-@endphp
 <div class="card mb-4">
     <div style="display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap;">
         <div style="flex:1;min-width:220px;">
             <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;flex-wrap:wrap;">
                 <span style="font-size:16px;font-weight:700;">{{ $c->name }}</span>
-                <span style="background:{{ $sc['bg'] }};color:{{ $sc['text'] }};font-size:11px;font-weight:700;padding:3px 10px;border-radius:12px;">{{ $c->statusLabel() }}</span>
+                <span class="badge {{ $c->statusBadgeClass() }}">{{ $c->statusLabel() }}</span>
             </div>
             <div style="font-size:12px;color:#9ca3af;margin-bottom:6px;"><i class="fa-regular fa-file-lines"></i> {{ $c->payload_original_name }}</div>
             <div style="display:flex;gap:16px;flex-wrap:wrap;font-size:13px;color:#6b7280;">
