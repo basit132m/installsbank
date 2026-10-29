@@ -3,12 +3,6 @@
 @section('page-title', 'Software Campaign — ' . $softwareCampaign->name)
 
 @section('content')
-@if(session('success'))
-<div class="alert" style="background:#d1fae5;color:#065f46;border:1px solid #a7f3d0;margin-bottom:20px;">{{ session('success') }}</div>
-@endif
-@if(session('error'))
-<div class="alert" style="background:#fee2e2;color:#991b1b;border:1px solid #fecaca;margin-bottom:20px;">{{ session('error') }}</div>
-@endif
 
 <a href="{{ route('admin.software-campaigns.index') }}" class="btn btn-ghost btn-sm" style="margin-bottom:16px;">&larr; All campaigns</a>
 

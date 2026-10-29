@@ -3,12 +3,6 @@
 @section('page-title', 'Advertiser Install Links')
 
 @section('content')
-@if(session('success'))
-<div class="alert" style="background:#d1fae5;color:#065f46;border:1px solid #a7f3d0;margin-bottom:20px;word-break:break-all;">{{ session('success') }}</div>
-@endif
-@if(session('error'))
-<div class="alert" style="background:#fee2e2;color:#991b1b;border:1px solid #fecaca;margin-bottom:20px;">{{ session('error') }}</div>
-@endif
 
 <div class="card">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:12px;">
