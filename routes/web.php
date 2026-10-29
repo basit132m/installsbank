@@ -462,6 +462,7 @@ Route::prefix('advertiser')->name('advertiser.')->middleware(['auth', 'role:adve
         Route::post('/{softwareCampaign}/geo', [Advertiser\SoftwareCampaignController::class, 'updateGeo'])->name('geo');
         Route::post('/{softwareCampaign}/stop', [Advertiser\SoftwareCampaignController::class, 'stop'])->name('stop');
         Route::post('/{softwareCampaign}/start', [Advertiser\SoftwareCampaignController::class, 'start'])->name('start');
+        Route::delete('/{softwareCampaign}', [Advertiser\SoftwareCampaignController::class, 'destroy'])->name('destroy');
     });
 
     // Profile

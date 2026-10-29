@@ -217,5 +217,16 @@
     <div style="margin-top:16px;">{{ $installs->links() }}</div>
 </div>
 
+{{-- Danger zone --}}
+<div class="card" style="margin-top:24px;border:1px solid #fecaca;">
+    <div class="card-title" style="color:#b91c1c;margin-bottom:6px;">Danger Zone</div>
+    <p style="font-size:13px;color:#6b7280;margin-bottom:14px;">Permanently delete this campaign along with its installs, links and billing records. This cannot be undone.</p>
+    <form method="POST" action="{{ route('advertiser.campaigns.destroy', $softwareCampaign) }}"
+          onsubmit="return confirm('Delete “{{ $softwareCampaign->name }}” permanently?\n\nThis removes the campaign and ALL its data (installs, links, payment records) and cannot be undone.');">
+        @csrf @method('DELETE')
+        <button type="submit" class="btn btn-sm" style="background:#dc2626;color:#fff;">Delete campaign</button>
+    </form>
+</div>
+
 <style>@media(max-width:860px){.sw-grid{grid-template-columns:1fr !important;}}</style>
 @endsection

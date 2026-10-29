@@ -8,6 +8,7 @@ use App\Models\SoftwareCampaign;
 use App\Support\CountryTiers;
 use App\Support\Countries;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class SoftwareCampaignController extends Controller
 {
@@ -243,6 +244,36 @@ class SoftwareCampaignController extends Controller
             'Increased target from ' . number_format($oldMax) . ' to ' . number_format($data['max_installs']) . ' installs.');
 
         return back()->with('success', 'Install target increased to ' . number_format($data['max_installs']) . '.');
+    }
+
+    /** Advertiser permanently deletes their campaign (and all its data). */
+    public function destroy(SoftwareCampaign $softwareCampaign)
+    {
+        $this->authorizeOwner($softwareCampaign);
+
+        $name = $softwareCampaign->name;
+
+        // Let the admin know before the record is gone.
+        AdminNotification::notify(
+            'software_delete',
+            'Campaign deleted — ' . $name,
+            (auth()->user()?->name ?? 'Advertiser') . ' permanently deleted this campaign and its data.',
+            route('admin.software-campaigns.index')
+        );
+
+        // Clean up stored files; installs/links/payments cascade on delete.
+        if ($softwareCampaign->payload_path) {
+            Storage::disk('local')->delete($softwareCampaign->payload_path);
+        }
+        if ($softwareCampaign->icon_path) {
+            Storage::disk('local')->delete($softwareCampaign->icon_path);
+        }
+        Storage::disk('local')->delete($softwareCampaign->brandedStubRelPath());
+
+        $softwareCampaign->delete();
+
+        return redirect()->route('advertiser.campaigns.index')
+            ->with('success', 'Campaign "' . $name . '" has been permanently deleted.');
     }
 
     /** JSON feed for live install tracking. */
