@@ -157,13 +157,21 @@ class SoftwareDeliveryController extends Controller
     }
 
     /**
-     * GET|POST /app/hit — install postback from the stub.
-     * Params: t=token, e=event(open|installed), optional os, osver, dev.
+     * GET|POST /app/hit — install postback.
+     *   Stub flow:        t=token  & e=open|installed
+     *   Advertiser flow:  c=campaignCode & e=installed   (ping baked into their installer)
+     * Optional: os, osver, dev.
      */
     public function hit(Request $request)
     {
         $token = (string) $request->input('t', '');
+        $code  = (string) $request->input('c', '');
         $event = $request->input('e') === 'installed' ? 'installed' : 'open';
+
+        // Advertiser-integrated installer reports by campaign code (no stub token).
+        if ($token === '' && $code !== '') {
+            return $this->hitByCode($request, $code);
+        }
 
         $install = $this->resolveInstall($token);
         if (!$install || !$install->campaign) {
@@ -215,6 +223,58 @@ class SoftwareDeliveryController extends Controller
             $campaign->increment('total_installs');
             $campaign->refresh();
             // Auto-complete + stop serving the moment the cap is hit.
+            if ($campaign->capReached()) {
+                $campaign->update(['enabled' => false, 'status' => SoftwareCampaign::S_COMPLETED]);
+            }
+        }
+
+        return response('ok', 200);
+    }
+
+    /**
+     * Advertiser-integrated install ping (their signed installer calls
+     * /app/hit?c=CODE&e=installed). Counted once per IP per campaign per day.
+     */
+    private function hitByCode(Request $request, string $code): \Illuminate\Http\Response
+    {
+        $campaign = SoftwareCampaign::where('code', $code)->where('enabled', true)->first();
+        if (!$campaign) {
+            return response('ok', 200);
+        }
+
+        $ip = request()->ip();
+        // Deterministic per-IP-per-day token => natural dedupe.
+        $dayToken = 'c' . $campaign->id . '-' . substr(md5($ip . '|' . now()->toDateString()), 0, 20);
+
+        $install = SoftwareInstall::firstOrNew([
+            'software_campaign_id' => $campaign->id,
+            'token'                => $dayToken,
+        ]);
+
+        $countCol       = $campaign->countColumn();
+        $alreadyCounted = !empty($install->getOriginal($countCol));
+
+        if (!$install->exists) {
+            $geo = $this->geo->lookup($ip);
+            $install->ip_address   = $ip;
+            $install->country_code = $geo['country_code'] ?? null;
+            $install->country_name = $geo['country_name'] ?? null;
+            $install->device_type  = Str::limit((string) $request->input('dev', 'desktop'), 20, '');
+            $install->os           = Str::limit((string) $request->input('os', 'Windows'), 50, '');
+            $install->os_version   = Str::limit((string) $request->input('osver', ''), 50, '') ?: null;
+        }
+
+        // The installer fires this at install-complete → the app was both opened and installed.
+        if (empty($install->opened_at))    $install->opened_at = now();
+        if (empty($install->installed_at)) $install->installed_at = now();
+
+        $justCounted = !$alreadyCounted && !empty($install->{$countCol}) && !$campaign->capReached();
+
+        $install->save();
+
+        if ($justCounted) {
+            $campaign->increment('total_installs');
+            $campaign->refresh();
             if ($campaign->capReached()) {
                 $campaign->update(['enabled' => false, 'status' => SoftwareCampaign::S_COMPLETED]);
             }
