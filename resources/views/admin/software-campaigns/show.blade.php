@@ -289,6 +289,59 @@
     </div>
 </div>
 
+{{-- Link traffic analytics --}}
+@php
+    $clicksServed = (int) ($linkClicks->served ?? 0);
+    $clicksFallback = (int) ($linkClicks->fallback ?? 0);
+    $clicksTotal = $clicksServed + $clicksFallback;
+@endphp
+<div class="card" style="margin-bottom:20px;">
+    <div class="card-title" style="margin-bottom:6px;">Link Traffic</div>
+    <p style="font-size:13px;color:#6b7280;margin-bottom:16px;">Clicks to this campaign's distribution links, by country and device. On-geo clicks got the installer; off-geo were sent to the fallback.</p>
+
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px;margin-bottom:18px;">
+        <div style="background:#f9fafb;border-radius:10px;padding:14px;"><div style="font-size:12px;color:#9ca3af;">Total clicks</div><div style="font-size:24px;font-weight:800;">{{ number_format($clicksTotal) }}</div></div>
+        <div style="background:#e6faf2;border-radius:10px;padding:14px;"><div style="font-size:12px;color:#9ca3af;">On-geo (served)</div><div style="font-size:24px;font-weight:800;color:#059669;">{{ number_format($clicksServed) }}</div></div>
+        <div style="background:#fef2f2;border-radius:10px;padding:14px;"><div style="font-size:12px;color:#9ca3af;">Off-geo (fallback)</div><div style="font-size:24px;font-weight:800;color:#b91c1c;">{{ number_format($clicksFallback) }}</div></div>
+    </div>
+
+    @if($clicksTotal === 0)
+    <div style="color:#9ca3af;font-size:13px;">No link clicks recorded yet. Create a link (Advertiser Links) and drive traffic to it.</div>
+    @else
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;" class="sw-grid">
+        <div>
+            <div style="font-size:13px;font-weight:700;margin-bottom:10px;">By country</div>
+            <div style="overflow-x:auto;">
+                <table>
+                    <thead><tr><th>Country</th><th>Clicks</th><th>On-geo</th><th>Off-geo</th></tr></thead>
+                    <tbody>
+                        @foreach($linkByCountry as $row)
+                        @php $fc = strtolower($row->country_code ?? ''); @endphp
+                        <tr>
+                            <td style="font-size:13px;"><span style="display:inline-flex;align-items:center;gap:7px;">@if($fc && $fc !== 'xx')<img src="https://flagcdn.com/24x18/{{ $fc }}.png" width="22" height="16" alt="" loading="lazy" style="border-radius:2px;box-shadow:0 0 0 1px rgba(0,0,0,.06);">@else 🌐 @endif {{ $row->country_name ?: ($row->country_code ?: 'Unknown') }}</span></td>
+                            <td style="font-weight:700;">{{ number_format($row->clicks) }}</td>
+                            <td style="color:#059669;">{{ number_format($row->served) }}</td>
+                            <td style="color:#b91c1c;">{{ number_format($row->fallback) }}</td>
+                        </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div>
+            <div style="font-size:13px;font-weight:700;margin-bottom:10px;">By device</div>
+            @foreach($linkByDevice as $row)
+            @php $di = ['mobile'=>'fa-mobile-screen','tablet'=>'fa-tablet-screen-button','desktop'=>'fa-desktop'][$row->device_type] ?? 'fa-desktop'; @endphp
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #f3f4f6;font-size:13px;">
+                <span><i class="fa-solid {{ $di }}" style="color:#9ca3af;width:18px;"></i> {{ ucfirst($row->device_type) }}</span>
+                <span><strong>{{ number_format($row->clicks) }}</strong> <span style="color:#9ca3af;font-size:12px;">({{ number_format($row->served) }} on-geo)</span></span>
+            </div>
+            @endforeach
+        </div>
+    </div>
+    @endif
+</div>
+
 {{-- Installs table --}}
 <div class="card">
     <div class="card-title" style="margin-bottom:16px;">Recent Installs</div>

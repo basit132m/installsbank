@@ -63,11 +63,38 @@ class SoftwareDeliveryController extends Controller
 
         if (!CountryTiers::isAllowed($country, $campaign->geo_mode, $campaign->excluded_countries ?? [])) {
             $link->increment('rejected');
+            $this->recordLinkHit($link, $campaign, $geo, 'fallback');
             return $this->linkFallback($link);
         }
 
         $link->increment('served');
+        $this->recordLinkHit($link, $campaign, $geo, 'served');
         return $this->serveStub($campaign, $geo);
+    }
+
+    /** Aggregate a link click by country + device (never breaks delivery). */
+    private function recordLinkHit(SoftwareLink $link, SoftwareCampaign $campaign, array $geo, string $result): void
+    {
+        try {
+            $agent = new \Jenssegers\Agent\Agent();
+            $agent->setUserAgent(request()->userAgent() ?? '');
+            $device = $agent->isTablet() ? 'tablet' : ($agent->isMobile() ? 'mobile' : 'desktop');
+
+            $stat = \App\Models\SoftwareLinkStat::firstOrCreate(
+                [
+                    'software_link_id' => $link->id,
+                    'country_code'     => strtoupper($geo['country_code'] ?? 'XX'),
+                    'device_type'      => $device,
+                ],
+                [
+                    'software_campaign_id' => $campaign->id,
+                    'country_name'         => $geo['country_name'] ?? null,
+                ]
+            );
+            $stat->increment($result === 'served' ? 'served' : 'fallback');
+        } catch (\Throwable $e) {
+            // analytics must never affect delivery
+        }
     }
 
     private function linkFallback(SoftwareLink $link)

@@ -54,9 +54,20 @@ class SoftwareCampaignController extends Controller
         $amountPaid = (float) $softwareCampaign->payments()->sum('amount');
         $payments   = $softwareCampaign->payments()->latest()->get();
 
+        // Link click analytics (across this campaign's links) by country + device.
+        $statQ = \App\Models\SoftwareLinkStat::where('software_campaign_id', $softwareCampaign->id);
+        $linkClicks = (clone $statQ)->selectRaw('COALESCE(SUM(served),0) as served, COALESCE(SUM(fallback),0) as fallback')->first();
+        $linkByCountry = (clone $statQ)
+            ->selectRaw('country_code, country_name, SUM(served) as served, SUM(fallback) as fallback, SUM(served+fallback) as clicks')
+            ->groupBy('country_code', 'country_name')->orderByDesc('clicks')->limit(30)->get();
+        $linkByDevice = (clone $statQ)
+            ->selectRaw('device_type, SUM(served) as served, SUM(fallback) as fallback, SUM(served+fallback) as clicks')
+            ->groupBy('device_type')->orderByDesc('clicks')->get();
+
         return view('admin.software-campaigns.show', compact(
             'softwareCampaign', 'installs', 'installsToday', 'installsTotal', 'downloadsTotal',
-            'stubReady', 'downloadUrl', 'amountPaid', 'payments'
+            'stubReady', 'downloadUrl', 'amountPaid', 'payments',
+            'linkClicks', 'linkByCountry', 'linkByDevice'
         ));
     }
 
