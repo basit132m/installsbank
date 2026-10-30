@@ -78,10 +78,12 @@ class SoftwareCampaignController extends Controller
 
         $beforeMode = $softwareCampaign->geoModeLabel();
 
-        $softwareCampaign->update([
-            'geo_mode'           => $data['geo_mode'],
-            'excluded_countries' => [],
-        ]);
+        $update = ['geo_mode' => $data['geo_mode'], 'excluded_countries' => []];
+        // Until a rate is agreed, the active offered rate follows the chosen tier.
+        if ($softwareCampaign->final_rate === null) {
+            $update['offered_rate'] = $softwareCampaign->offeredRateFor($data['geo_mode']);
+        }
+        $softwareCampaign->update($update);
 
         $this->notifyAdmin($softwareCampaign, 'software_geo', 'Geo targeting changed',
             "Changed geo from \"{$beforeMode}\" to \"{$softwareCampaign->geoModeLabel()}\".");
@@ -135,10 +137,23 @@ class SoftwareCampaignController extends Controller
             'installer_name'       => 'nullable|string|max:255',
             'icon'                 => 'nullable|file|max:2048',    // 2 MB .ico
             'max_installs'         => 'required|integer|min:1|max:10000000',
-            'offered_rate'         => 'required|numeric|min:0|max:1000',
+            'offered_rate_mixed'   => 'required|numeric|min:0|max:1000',
+            'offered_rate_tier23'  => 'required|numeric|min:0|max:1000|gt:offered_rate_mixed',
+            'offered_rate_tier1'   => 'required|numeric|min:0|max:1000|gt:offered_rate_tier23',
             'geo_mode'             => 'required|in:mixed,tier1,tier23',
             'notes'                => 'nullable|string|max:1000',
+        ], [
+            'offered_rate_tier23.gt' => 'The Tier 2 & 3 rate must be higher than the Mixed rate.',
+            'offered_rate_tier1.gt'  => 'The Tier 1 rate must be higher than the Tier 2 & 3 rate.',
         ]);
+
+        // Active offered rate = the rate for the selected tier.
+        $ratesByMode = [
+            'mixed'  => $data['offered_rate_mixed'],
+            'tier23' => $data['offered_rate_tier23'],
+            'tier1'  => $data['offered_rate_tier1'],
+        ];
+        $activeRate = $ratesByMode[$data['geo_mode']];
 
         // The installer was uploaded asynchronously and staged — confirm it's there.
         $staged = 'software-payloads/staged/' . basename($data['installer_token']) . '.exe';
@@ -183,7 +198,10 @@ class SoftwareCampaignController extends Controller
             'icon_original_name'    => $iconName,
             'install_mode'          => 'install',
             'max_installs'          => $data['max_installs'],
-            'offered_rate'          => $data['offered_rate'],
+            'offered_rate'          => $activeRate,
+            'offered_rate_mixed'    => $data['offered_rate_mixed'],
+            'offered_rate_tier23'   => $data['offered_rate_tier23'],
+            'offered_rate_tier1'    => $data['offered_rate_tier1'],
             'geo_mode'              => $data['geo_mode'],
             'excluded_countries'    => [], // advertisers target a tier bucket; no per-country exclusions
             'admin_note'            => $data['notes'] ?? null,

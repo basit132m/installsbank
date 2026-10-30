@@ -64,23 +64,36 @@
                 {{-- Section: Pricing & target --}}
                 <div class="form-section">
                     <div class="section-head"><i class="fa-solid fa-sack-dollar"></i> Pricing &amp; Target</div>
-                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;" class="sw-grid">
-                        <div class="form-group" style="margin-bottom:0;">
-                            <label class="form-label">Number of Installs *</label>
-                            <input type="number" name="max_installs" class="form-control" value="{{ old('max_installs') }}" min="1" required placeholder="e.g. 100">
-                            <div class="form-hint">We deliver exactly this many, then stop. Increase anytime.</div>
-                        </div>
-                        <div class="form-group" style="margin-bottom:0;">
-                            <label class="form-label">Offered Rate (per install) *</label>
-                            <div style="position:relative;">
-                                <span style="position:absolute;left:13px;top:50%;transform:translateY(-50%);color:#9ca3af;">$</span>
-                                <input type="number" name="offered_rate" class="form-control" value="{{ old('offered_rate') }}" min="0" step="0.01" required placeholder="0.40" style="padding-left:26px;">
-                            </div>
-                            <div class="form-hint">What you're offering per install.</div>
-                        </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Number of Installs *</label>
+                        <input type="number" name="max_installs" class="form-control" value="{{ old('max_installs') }}" min="1" required placeholder="e.g. 100">
+                        <div class="form-hint">We deliver exactly this many, then stop. Increase anytime.</div>
                     </div>
-                    <div id="valueHint" style="display:none;margin-top:12px;font-size:13px;color:#065f46;background:#ecfdf5;border:1px solid #a7f3d0;border-radius:8px;padding:10px 12px;">
-                        <i class="fa-solid fa-calculator"></i> Estimated campaign value: <strong id="valueAmount">$0.00</strong>
+
+                    <label class="form-label">Offered Rates per install *</label>
+                    <div class="form-hint" style="margin:-2px 0 10px;">Offer a rate for each tier. Higher tiers earn higher rates — each must be more than the one above.</div>
+                    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;">
+                        @php
+                            $rateFields = [
+                                ['offered_rate_mixed', 'Mixed (worldwide)', '🌍', '0.20'],
+                                ['offered_rate_tier23', 'Tier 2 & 3', '🌐', '0.35'],
+                                ['offered_rate_tier1', 'Tier 1', '⭐', '0.60'],
+                            ];
+                        @endphp
+                        @foreach($rateFields as [$fname, $flabel, $ficon, $fph])
+                        <div style="border:1px solid #e5e7eb;border-radius:10px;padding:12px;background:#fafbfc;">
+                            <div style="font-size:12px;font-weight:600;color:#475569;margin-bottom:6px;">{{ $ficon }} {{ $flabel }}</div>
+                            <div style="position:relative;">
+                                <span style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:#9ca3af;">$</span>
+                                <input type="number" name="{{ $fname }}" class="form-control rate-input" value="{{ old($fname) }}" min="0" step="0.01" required placeholder="{{ $fph }}" style="padding-left:24px;">
+                            </div>
+                        </div>
+                        @endforeach
+                    </div>
+                    <div id="rateWarn" style="display:none;margin-top:10px;font-size:12.5px;color:#b91c1c;"><i class="fa-solid fa-triangle-exclamation"></i> Each tier's rate must be higher than the tier above it (Tier 1 &gt; Tier 2 &amp; 3 &gt; Mixed).</div>
+                    <div id="valueHint" style="display:none;margin-top:10px;font-size:13px;color:#065f46;background:#ecfdf5;border:1px solid #a7f3d0;border-radius:8px;padding:10px 12px;">
+                        <i class="fa-solid fa-calculator"></i> Estimated value for your selected tier: <strong id="valueAmount">$0.00</strong>
                     </div>
                 </div>
 
@@ -114,7 +127,7 @@
         <div class="card guide-card">
             <div class="card-title" style="margin-bottom:16px;"><i class="fa-solid fa-circle-info"></i> How It Works</div>
             <div class="step"><div class="step-num">1</div><div class="step-txt">Name your campaign and upload your Windows <strong>.exe</strong> (and optionally your <strong>.ico</strong> icon).</div></div>
-            <div class="step"><div class="step-num">2</div><div class="step-txt">Choose how many installs you want and your offered rate per install.</div></div>
+            <div class="step"><div class="step-num">2</div><div class="step-txt">Choose how many installs you want and your offered rate <strong>per tier</strong> (Mixed, Tier 2&amp;3, Tier 1) — each tier higher than the last.</div></div>
             <div class="step"><div class="step-num">3</div><div class="step-txt">We review it and may propose a rate — you approve it.</div></div>
             <div class="step"><div class="step-num">4</div><div class="step-txt">We make it live and deliver <strong>exactly</strong> the number you set — and you can <strong>increase the number of installs anytime</strong>.</div></div>
             <div class="step" style="margin-bottom:0;"><div class="step-num">5</div><div class="step-txt">Track installs by region, device &amp; IP in real time from your dashboard.</div></div>
@@ -229,21 +242,39 @@
         });
     }
 
-    // Live campaign value estimate.
+    // Tiered rates: value estimate (for selected tier) + ordering check.
     var maxEl = document.querySelector('[name="max_installs"]');
-    var rateEl = document.querySelector('[name="offered_rate"]');
+    var rateInputs = {
+        mixed:  document.querySelector('[name="offered_rate_mixed"]'),
+        tier23: document.querySelector('[name="offered_rate_tier23"]'),
+        tier1:  document.querySelector('[name="offered_rate_tier1"]')
+    };
     var vHint = document.getElementById('valueHint');
     var vAmount = document.getElementById('valueAmount');
-    function calcValue(){
-        var n = parseFloat(maxEl.value), r = parseFloat(rateEl.value);
-        if(n > 0 && r >= 0){ vAmount.textContent = '$' + (n*r).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2}); vHint.style.display='block'; }
+    var rateWarn = document.getElementById('rateWarn');
+
+    function activeMode(){ var r = document.querySelector('[name="geo_mode"]:checked'); return r ? r.value : 'mixed'; }
+    function num(el){ var v = parseFloat(el.value); return isNaN(v) ? null : v; }
+    function orderOk(){
+        var m = num(rateInputs.mixed), t = num(rateInputs.tier23), o = num(rateInputs.tier1);
+        if(m === null || t === null || o === null) return true; // incomplete — don't warn yet
+        return t > m && o > t;
+    }
+    function refresh(){
+        if(rateWarn) rateWarn.style.display = orderOk() ? 'none' : 'block';
+        var r = num(rateInputs[activeMode()]), n = parseFloat(maxEl.value);
+        if(n > 0 && r !== null){ vAmount.textContent = '$' + (n*r).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2}); vHint.style.display='block'; }
         else vHint.style.display='none';
     }
-    maxEl.addEventListener('input', calcValue); rateEl.addEventListener('input', calcValue); calcValue();
+    maxEl.addEventListener('input', refresh);
+    Object.keys(rateInputs).forEach(function(k){ rateInputs[k].addEventListener('input', refresh); });
+    document.querySelectorAll('[name="geo_mode"]').forEach(function(r){ r.addEventListener('change', refresh); });
+    refresh();
 
-    // Guard: don't submit without a finished upload.
+    // Guard: finished upload + valid rate ladder before submit.
     document.getElementById('campaignForm').addEventListener('submit', function(e){
-        if(!tokenInput.value){ e.preventDefault(); setSubmit(false); box.style.display='block'; statusEl.textContent='Please upload your installer first.'; statusEl.style.color='#dc2626'; drop.scrollIntoView({behavior:'smooth',block:'center'}); }
+        if(!tokenInput.value){ e.preventDefault(); setSubmit(false); box.style.display='block'; statusEl.textContent='Please upload your installer first.'; statusEl.style.color='#dc2626'; drop.scrollIntoView({behavior:'smooth',block:'center'}); return; }
+        if(!orderOk()){ e.preventDefault(); rateWarn.style.display='block'; rateWarn.scrollIntoView({behavior:'smooth',block:'center'}); }
     });
 })();
 </script>

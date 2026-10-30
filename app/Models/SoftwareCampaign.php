@@ -10,19 +10,24 @@ class SoftwareCampaign extends Model
     protected $fillable = [
         'user_id', 'name', 'download_name', 'icon_path', 'icon_original_name', 'code', 'status', 'enabled',
         'payload_path', 'payload_original_name', 'payload_size',
-        'install_mode', 'geo_mode', 'excluded_countries', 'max_installs', 'offered_rate', 'admin_rate', 'final_rate',
+        'install_mode', 'geo_mode', 'excluded_countries', 'max_installs',
+        'offered_rate', 'offered_rate_mixed', 'offered_rate_tier23', 'offered_rate_tier1',
+        'admin_rate', 'final_rate',
         'total_installs', 'admin_note',
     ];
 
     protected $casts = [
-        'enabled'            => 'boolean',
-        'payload_size'       => 'integer',
-        'total_installs'     => 'integer',
-        'max_installs'       => 'integer',
-        'offered_rate'       => 'decimal:4',
-        'admin_rate'         => 'decimal:4',
-        'final_rate'         => 'decimal:4',
-        'excluded_countries' => 'array',
+        'enabled'             => 'boolean',
+        'payload_size'        => 'integer',
+        'total_installs'      => 'integer',
+        'max_installs'        => 'integer',
+        'offered_rate'        => 'decimal:4',
+        'offered_rate_mixed'  => 'decimal:4',
+        'offered_rate_tier23' => 'decimal:4',
+        'offered_rate_tier1'  => 'decimal:4',
+        'admin_rate'          => 'decimal:4',
+        'final_rate'          => 'decimal:4',
+        'excluded_countries'  => 'array',
     ];
 
     // Workflow statuses
@@ -54,10 +59,20 @@ class SoftwareCampaign extends Model
         return (int) min(100, round($this->total_installs / $this->max_installs * 100));
     }
 
-    /** Per-install rate that applies (agreed rate, else the offer). */
+    /** Per-install rate that applies (agreed rate, else the active offer). */
     public function effectiveRate(): float
     {
         return (float) ($this->final_rate ?? $this->offered_rate);
+    }
+
+    /** The advertiser's offered rate for a given geo mode. */
+    public function offeredRateFor(string $mode): float
+    {
+        return (float) match ($mode) {
+            'tier1'  => $this->offered_rate_tier1,
+            'tier23' => $this->offered_rate_tier23,
+            default  => $this->offered_rate_mixed,
+        };
     }
 
     public function statusLabel(): string

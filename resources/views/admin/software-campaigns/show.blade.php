@@ -36,6 +36,13 @@
         @endif
     </div>
 
+    <div style="font-size:12.5px;color:#6b7280;background:#f8fafc;border:1px solid #eef0f3;border-radius:8px;padding:10px 12px;margin-bottom:16px;">
+        <strong>Advertiser's rate ladder</strong> (targeting {{ $softwareCampaign->geoModeLabel() }}):
+        🌍 Mixed <strong>${{ number_format($softwareCampaign->offered_rate_mixed, 2) }}</strong>
+        · 🌐 Tier 2&amp;3 <strong>${{ number_format($softwareCampaign->offered_rate_tier23, 2) }}</strong>
+        · ⭐ Tier 1 <strong>${{ number_format($softwareCampaign->offered_rate_tier1, 2) }}</strong>
+    </div>
+
     @if($softwareCampaign->status === 'pending_review')
         <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
             <form method="POST" action="{{ route('admin.software-campaigns.approve', $softwareCampaign) }}">
