@@ -21,8 +21,16 @@ class AdvertiserController extends Controller
             });
         }
 
-        $advertisers = $query->latest()->paginate(20);
-        return view('admin.advertisers.index', compact('advertisers'));
+        $advertisers = $query->latest()->paginate(20)->withQueryString();
+
+        $stats = [
+            'total'      => User::where('role', 'advertiser')->count(),
+            'active'     => User::where('role', 'advertiser')->where('status', 'active')->count(),
+            'campaigns'  => \App\Models\SoftwareCampaign::count(),
+            'installs'   => (int) \App\Models\SoftwareCampaign::sum('total_installs'),
+        ];
+
+        return view('admin.advertisers.index', compact('advertisers', 'stats'));
     }
 
     public function show(User $user)
