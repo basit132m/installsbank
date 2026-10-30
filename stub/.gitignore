@@ -1,0 +1,7 @@
+# Local signing config holds your cert path/password — never commit it.
+sign-config.bat
+
+# Build output
+/out/
+/bin/
+/obj/

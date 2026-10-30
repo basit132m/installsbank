@@ -81,6 +81,30 @@ file (~12-15 MB) with no dependencies.
 > Before building, open `Program.cs` and confirm `BaseUrl` points at the domain
 > that serves `/app/p` and `/app/hit` (default `https://installsbank.com`).
 
+## Code signing (removes the "Unknown publisher" / SmartScreen warning)
+
+An **unsigned** stub triggers SmartScreen ("Windows protected your PC") and
+browser download warnings, which kills installs. Signing with a code-signing
+certificate (ideally **EV**) fixes this. The build scripts sign automatically —
+set it up once:
+
+1. Get a code-signing certificate (EV recommended) from a CA (SSL.com, DigiCert,
+   Sectigo, GoGetSSL, …). You need a registered business; EV certs come on a
+   hardware token or cloud HSM.
+2. Install the Windows 10/11 SDK (gives `signtool.exe`).
+3. In this folder, copy `sign-config.sample.bat` to **`sign-config.bat`** and
+   fill in your certificate details (a `.pfx` file + password, or a cert in the
+   Windows store / EV token by thumbprint or subject name).
+   `sign-config.bat` is git-ignored, so your password is never committed.
+
+After that, every `build.bat` / `build-branded.bat` run **publishes and signs**
+the stub automatically. If `sign-config.bat` is absent, building still works but
+the stub is left unsigned (with a warning).
+
+Already-built unsigned stubs can also be reported as false positives to speed up
+reputation: https://www.microsoft.com/en-us/wdsi/filesubmission (Microsoft) and
+https://safebrowsing.google.com/safebrowsing/report_error/ (Google/Chrome).
+
 The stub shows a small "Preparing setup…" splash while it downloads, drawn with
 lightweight Win32 (no WinForms), so it stays small. If the splash ever fails to
 show, the install still proceeds normally.
