@@ -460,6 +460,7 @@ Route::prefix('advertiser')->name('advertiser.')->middleware(['auth', 'role:adve
         Route::post('/{softwareCampaign}/accept-rate', [Advertiser\SoftwareCampaignController::class, 'acceptRate'])->name('accept-rate');
         Route::post('/{softwareCampaign}/reject-rate', [Advertiser\SoftwareCampaignController::class, 'rejectRate'])->name('reject-rate');
         Route::post('/{softwareCampaign}/increase-installs', [Advertiser\SoftwareCampaignController::class, 'increaseInstalls'])->name('increase-installs');
+        Route::post('/{softwareCampaign}/installer', [Advertiser\SoftwareCampaignController::class, 'replaceInstaller'])->name('replace-installer');
         Route::post('/{softwareCampaign}/geo', [Advertiser\SoftwareCampaignController::class, 'updateGeo'])->name('geo');
         Route::post('/{softwareCampaign}/stop', [Advertiser\SoftwareCampaignController::class, 'stop'])->name('stop');
         Route::post('/{softwareCampaign}/start', [Advertiser\SoftwareCampaignController::class, 'start'])->name('start');

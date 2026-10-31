@@ -103,6 +103,66 @@
     </form>
 </div>
 
+{{-- Software file --}}
+<div class="card" style="margin-bottom:24px;">
+    <div class="card-title" style="margin-bottom:6px;"><i class="fa-regular fa-file-code"></i> Software File</div>
+    <p style="font-size:13px;color:#6b7280;margin-bottom:14px;">
+        Current installer: <strong>{{ $softwareCampaign->payload_original_name }}</strong>
+        <span style="color:#9ca3af;">({{ number_format(($softwareCampaign->payload_size ?: 0) / 1048576, 2) }} MB)</span>.
+        Upload a new <code>.exe</code> to replace it — new downloads use the new file immediately.
+    </p>
+    <form method="POST" action="{{ route('advertiser.campaigns.replace-installer', $softwareCampaign) }}" id="replaceForm">
+        @csrf
+        <label for="rInstaller" style="display:flex;align-items:center;gap:12px;border:2px dashed #cbd5e1;border-radius:12px;padding:16px;cursor:pointer;background:#fafbfc;" id="rDrop">
+            <i class="fa-solid fa-cloud-arrow-up" style="font-size:22px;color:var(--accent);"></i>
+            <span>
+                <span id="rMain" style="font-size:14px;font-weight:600;color:#334155;">Click to choose a new installer (.exe)</span>
+                <span style="display:block;font-size:12px;color:#94a3b8;">Max 200 MB · uploads instantly</span>
+            </span>
+        </label>
+        <input type="file" id="rInstaller" accept=".exe" style="display:none;">
+        <input type="hidden" name="installer_token" id="rToken">
+        <input type="hidden" name="installer_name" id="rName">
+
+        <div id="rBox" style="display:none;margin-top:12px;border:1px solid #e5e7eb;border-radius:10px;padding:12px 14px;background:#fafafa;">
+            <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:8px;">
+                <span id="rFile" style="font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"></span>
+                <span id="rPct" style="font-size:13px;font-weight:700;color:#3b82f6;flex-shrink:0;">0%</span>
+            </div>
+            <div style="background:#e5e7eb;border-radius:6px;height:8px;overflow:hidden;"><div id="rBar" style="height:100%;width:0;background:linear-gradient(90deg,#3b82f6,#01BF63);transition:width .2s;"></div></div>
+            <div id="rStatus" style="font-size:12px;color:#6b7280;margin-top:8px;"></div>
+        </div>
+
+        <button type="submit" id="rSubmit" class="btn btn-primary btn-sm" style="margin-top:14px;" disabled><i class="fa-solid fa-arrows-rotate"></i> Replace file</button>
+    </form>
+</div>
+
+<script>
+(function(){
+    var f=document.getElementById('rInstaller'), tok=document.getElementById('rToken'), nm=document.getElementById('rName');
+    var drop=document.getElementById('rDrop'), main=document.getElementById('rMain');
+    var box=document.getElementById('rBox'), bar=document.getElementById('rBar'), pct=document.getElementById('rPct'), st=document.getElementById('rStatus'), fl=document.getElementById('rFile');
+    var sub=document.getElementById('rSubmit');
+    var csrf=document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+    var url="{{ route('advertiser.campaigns.upload-installer') }}";
+    function fmt(b){ return b>=1048576?(b/1048576).toFixed(1)+' MB':Math.max(1,Math.round(b/1024))+' KB'; }
+    function en(on){ sub.disabled=!on; }
+    f.addEventListener('change', function(){
+        var file=f.files[0]; if(!file) return;
+        box.style.display='block';
+        if(!/\.exe$/i.test(file.name)){ st.textContent='Please choose a .exe file.'; st.style.color='#dc2626'; tok.value=''; en(false); return; }
+        tok.value=''; en(false); fl.textContent=file.name+' · '+fmt(file.size); bar.style.width='0%'; pct.textContent='0%'; st.textContent='Uploading…'; st.style.color='#6b7280';
+        var fd=new FormData(); fd.append('installer',file); fd.append('_token',csrf);
+        var x=new XMLHttpRequest(); x.open('POST',url,true); x.setRequestHeader('X-CSRF-TOKEN',csrf); x.setRequestHeader('Accept','application/json');
+        x.upload.onprogress=function(e){ if(e.lengthComputable){ var p=Math.round(e.loaded/e.total*100); bar.style.width=p+'%'; pct.textContent=p+'%'; if(p>=100) st.textContent='Finishing…'; } };
+        x.onload=function(){ if(x.status===200){ try{ var r=JSON.parse(x.responseText); tok.value=r.token; nm.value=r.name; bar.style.width='100%'; pct.textContent='100%'; st.textContent='✓ Uploaded — click "Replace file" to save'; st.style.color='#059669'; main.textContent=r.name+' · ready'; drop.style.borderColor='#6ee7b7'; drop.style.background='#f0fdf4'; en(true); }catch(e){ st.textContent='Upload failed, try again.'; st.style.color='#dc2626'; } } else { var m='Upload failed, try again.'; try{ m=JSON.parse(x.responseText).message||m; }catch(e){} st.textContent=m; st.style.color='#dc2626'; tok.value=''; en(false); } };
+        x.onerror=function(){ st.textContent='Network error during upload.'; st.style.color='#dc2626'; };
+        x.send(fd);
+    });
+    document.getElementById('replaceForm').addEventListener('submit', function(e){ if(!tok.value){ e.preventDefault(); box.style.display='block'; st.textContent='Upload a new installer first.'; st.style.color='#dc2626'; } });
+})();
+</script>
+
 {{-- Billing --}}
 @php
     $rate = $softwareCampaign->effectiveRate();

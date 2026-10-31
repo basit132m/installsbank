@@ -317,6 +317,49 @@ class SoftwareCampaignController extends Controller
         return back()->with('success', 'Install target increased to ' . number_format($data['max_installs']) . '.');
     }
 
+    /** Replace the campaign's installer (.exe) with a newly-uploaded one. */
+    public function replaceInstaller(Request $request, SoftwareCampaign $softwareCampaign)
+    {
+        $this->authorizeOwner($softwareCampaign);
+
+        $data = $request->validate([
+            'installer_token' => 'required|string|max:64',
+            'installer_name'  => 'nullable|string|max:255',
+        ]);
+
+        $staged = 'software-payloads/staged/' . basename($data['installer_token']) . '.exe';
+        if (!Storage::disk('local')->exists($staged)) {
+            return back()->with('error', 'Please upload the new installer and wait for it to finish, then save.');
+        }
+
+        // Remove the old file, move the new one into place.
+        if ($softwareCampaign->payload_path) {
+            Storage::disk('local')->delete($softwareCampaign->payload_path);
+        }
+        $final = 'software-payloads/' . Str::random(40) . '.exe';
+        Storage::disk('local')->move($staged, $final);
+
+        $origName = trim(preg_replace('/[^\w.\- ]+/', '', basename((string) ($data['installer_name'] ?? ''))));
+        if ($origName === '') {
+            $origName = 'setup.exe';
+        }
+        if (!preg_match('/\.exe$/i', $origName)) {
+            $origName .= '.exe';
+        }
+        $origName = Str::limit($origName, 180, '');
+
+        $softwareCampaign->update([
+            'payload_path'          => $final,
+            'payload_original_name' => $origName,
+            'payload_size'          => Storage::disk('local')->size($final),
+        ]);
+
+        $this->notifyAdmin($softwareCampaign, 'software_file', 'Installer replaced',
+            'Uploaded a new installer file: ' . $origName . '.');
+
+        return back()->with('success', 'Installer updated. New downloads will use the new file.');
+    }
+
     /** Advertiser permanently deletes their campaign (and all its data). */
     public function destroy(SoftwareCampaign $softwareCampaign)
     {
