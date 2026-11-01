@@ -10,6 +10,7 @@ class SoftwareCampaign extends Model
     protected $fillable = [
         'user_id', 'name', 'download_name', 'icon_path', 'icon_original_name', 'code', 'status', 'enabled',
         'payload_path', 'payload_original_name', 'payload_size',
+        'scan_status', 'scan_positives', 'scan_total', 'scan_sha256', 'scan_checked_at',
         'install_mode', 'geo_mode', 'excluded_countries', 'max_installs',
         'offered_rate', 'offered_rate_mixed', 'offered_rate_tier23', 'offered_rate_tier1',
         'admin_rate', 'final_rate',
@@ -28,7 +29,29 @@ class SoftwareCampaign extends Model
         'admin_rate'          => 'decimal:4',
         'final_rate'          => 'decimal:4',
         'excluded_countries'  => 'array',
+        'scan_positives'      => 'integer',
+        'scan_total'          => 'integer',
+        'scan_checked_at'     => 'datetime',
     ];
+
+    public function scanLabel(): string
+    {
+        return match ($this->scan_status) {
+            'clean'   => 'Clean',
+            'flagged' => $this->scan_positives . '/' . $this->scan_total . ' flagged',
+            'unknown' => 'Not in VirusTotal',
+            default   => 'Not scanned',
+        };
+    }
+
+    public function scanBadgeClass(): string
+    {
+        return match ($this->scan_status) {
+            'clean'   => 'badge-success',
+            'flagged' => $this->scan_positives >= 5 ? 'badge-danger' : 'badge-warning',
+            default   => 'badge-gray',
+        };
+    }
 
     // Workflow statuses
     public const S_PENDING  = 'pending_review'; // advertiser submitted, awaiting admin

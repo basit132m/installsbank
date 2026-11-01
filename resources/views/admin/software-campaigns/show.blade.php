@@ -154,6 +154,24 @@
             @if($softwareCampaign->payload_path)
                 <div style="font-weight:600;">{{ $softwareCampaign->payload_original_name }}</div>
                 <div style="font-size:12px;color:#9ca3af;margin-bottom:8px;">{{ number_format($softwareCampaign->payload_size / 1048576, 2) }} MB</div>
+
+                {{-- Malware scan verdict --}}
+                <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px;">
+                    <span class="badge {{ $softwareCampaign->scanBadgeClass() }}">
+                        <i class="fa-solid {{ $softwareCampaign->scan_status === 'clean' ? 'fa-shield-halved' : ($softwareCampaign->scan_status === 'flagged' ? 'fa-triangle-exclamation' : 'fa-shield') }}"></i>
+                        {{ $softwareCampaign->scanLabel() }}
+                    </span>
+                    @if($softwareCampaign->scan_sha256)
+                    <a href="https://www.virustotal.com/gui/file/{{ $softwareCampaign->scan_sha256 }}" target="_blank" rel="noopener" style="font-size:12px;color:#3b82f6;">VirusTotal report ↗</a>
+                    @endif
+                    <form method="POST" action="{{ route('admin.software-campaigns.rescan', $softwareCampaign) }}" style="display:inline;">@csrf<button class="btn btn-ghost btn-sm" style="padding:3px 9px;"><i class="fa-solid fa-arrows-rotate"></i> Re-scan</button></form>
+                </div>
+                @if($softwareCampaign->scan_status === 'flagged')
+                <div style="font-size:11px;color:#b91c1c;margin-bottom:8px;">⚠ Flagged by {{ $softwareCampaign->scan_positives }} of {{ $softwareCampaign->scan_total }} engines — review before going live.</div>
+                @elseif($softwareCampaign->scan_status === 'unknown')
+                <div style="font-size:11px;color:#9ca3af;margin-bottom:8px;">New file, not yet in VirusTotal. Re-scan later, or open the report to submit it.</div>
+                @endif
+
                 <a href="{{ route('admin.software-campaigns.payload', $softwareCampaign) }}" class="btn btn-ghost btn-sm">Download advertiser .exe</a>
             @else
                 <span class="badge badge-danger">No installer uploaded</span>

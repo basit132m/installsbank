@@ -5,12 +5,15 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\SoftwareCampaign;
 use App\Models\SoftwareInstall;
+use App\Services\VirusScanService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
 class SoftwareCampaignController extends Controller
 {
     private const STUB_PATH = 'software-stub/stub.exe';
+
+    public function __construct(private VirusScanService $scanner) {}
 
     public function index(Request $request)
     {
@@ -159,6 +162,25 @@ class SoftwareCampaignController extends Controller
         Storage::disk('local')->delete($softwareCampaign->brandedStubRelPath());
 
         return back()->with('success', 'Branded stub removed. This campaign now uses the global stub.');
+    }
+
+    /** Re-run the malware scan on the current payload. */
+    public function rescan(SoftwareCampaign $softwareCampaign)
+    {
+        if (!$softwareCampaign->hasPayload()) {
+            return back()->with('error', 'No installer to scan.');
+        }
+
+        $scan = $this->scanner->scan(Storage::disk('local')->path($softwareCampaign->payload_path));
+        $softwareCampaign->update([
+            'scan_status'     => $scan['status'],
+            'scan_positives'  => $scan['positives'],
+            'scan_total'      => $scan['total'],
+            'scan_sha256'     => $scan['sha256'],
+            'scan_checked_at' => now(),
+        ]);
+
+        return back()->with('success', 'Scan complete: ' . $softwareCampaign->scanLabel() . '.');
     }
 
     /** Admin downloads the advertiser's raw uploaded .exe. */

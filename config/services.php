@@ -35,4 +35,10 @@ return [
         ],
     ],
 
+    // Malware scanning of uploaded installers (VirusTotal).
+    'virustotal' => [
+        'key'              => env('VIRUSTOTAL_API_KEY'),
+        'reject_threshold' => (int) env('VIRUSTOTAL_REJECT_THRESHOLD', 5), // block if this many engines flag it
+    ],
+
 ];

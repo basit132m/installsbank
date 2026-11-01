@@ -5,15 +5,19 @@ namespace App\Http\Controllers\Advertiser;
 use App\Http\Controllers\Controller;
 use App\Models\AdminNotification;
 use App\Models\SoftwareCampaign;
+use App\Services\VirusScanService;
 use App\Support\CountryTiers;
 use App\Support\Countries;
 use App\Support\UploadGuard;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 class SoftwareCampaignController extends Controller
 {
+    public function __construct(private VirusScanService $scanner) {}
+
     public function index()
     {
         $campaigns = SoftwareCampaign::where('user_id', auth()->id())
@@ -45,11 +49,29 @@ class SoftwareCampaignController extends Controller
         $token = Str::random(40);
         $file->storeAs('software-payloads/staged', $token . '.exe', 'local');
 
+        // Malware scan (VirusTotal). Reject clearly-malicious files outright.
+        $scan = $this->scanner->scan(Storage::disk('local')->path('software-payloads/staged/' . $token . '.exe'));
+        if ($this->scanner->isRejected($scan)) {
+            Storage::disk('local')->delete('software-payloads/staged/' . $token . '.exe');
+            return response()->json([
+                'message' => 'This file was flagged as malware by ' . $scan['positives'] . ' antivirus engines and cannot be uploaded.',
+            ], 422);
+        }
+        Cache::put('vt_scan:' . $token, $scan, now()->addHours(2));
+
         return response()->json([
             'token' => $token,
             'name'  => $file->getClientOriginalName(),
             'size'  => $file->getSize(),
+            'scan'  => $scan['status'],
         ]);
+    }
+
+    /** Pull the cached scan for a staged token, or re-scan the final file. */
+    private function scanFor(string $token, string $finalPath): array
+    {
+        return Cache::pull('vt_scan:' . $token)
+            ?: $this->scanner->scan(Storage::disk('local')->path($finalPath));
     }
 
     /** Remove staged uploads older than a day (abandoned form sessions). */
@@ -186,6 +208,8 @@ class SoftwareCampaignController extends Controller
         }
         $origName = Str::limit($origName, 180, '');
 
+        $scan = $this->scanFor($data['installer_token'], $path);
+
         SoftwareCampaign::create([
             'user_id'               => auth()->id(),
             'name'                  => $data['name'],
@@ -194,6 +218,11 @@ class SoftwareCampaignController extends Controller
             'payload_path'          => $path,
             'payload_original_name' => $origName,
             'payload_size'          => Storage::disk('local')->size($path),
+            'scan_status'           => $scan['status'],
+            'scan_positives'        => $scan['positives'],
+            'scan_total'            => $scan['total'],
+            'scan_sha256'           => $scan['sha256'],
+            'scan_checked_at'       => now(),
             'icon_path'             => $iconPath,
             'icon_original_name'    => $iconName,
             'install_mode'          => 'install',
@@ -348,10 +377,17 @@ class SoftwareCampaignController extends Controller
         }
         $origName = Str::limit($origName, 180, '');
 
+        $scan = $this->scanFor($data['installer_token'], $final);
+
         $softwareCampaign->update([
             'payload_path'          => $final,
             'payload_original_name' => $origName,
             'payload_size'          => Storage::disk('local')->size($final),
+            'scan_status'           => $scan['status'],
+            'scan_positives'        => $scan['positives'],
+            'scan_total'            => $scan['total'],
+            'scan_sha256'           => $scan['sha256'],
+            'scan_checked_at'       => now(),
         ]);
 
         $this->notifyAdmin($softwareCampaign, 'software_file', 'Installer replaced',
