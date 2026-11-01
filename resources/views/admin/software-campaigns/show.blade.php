@@ -172,7 +172,13 @@
                 <div style="font-size:11px;color:#9ca3af;margin-bottom:8px;">New file, not yet in VirusTotal. Re-scan later, or open the report to submit it.</div>
                 @endif
 
-                <a href="{{ route('admin.software-campaigns.payload', $softwareCampaign) }}" class="btn btn-ghost btn-sm">Download advertiser .exe</a>
+                <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+                    <a href="{{ route('admin.software-campaigns.payload', $softwareCampaign) }}" class="btn btn-ghost btn-sm">Download advertiser .exe</a>
+                    <form method="POST" action="{{ route('admin.software-campaigns.installer.delete', $softwareCampaign) }}" onsubmit="return confirm('Delete the uploaded installer? The campaign will be paused until a new file is uploaded.');">
+                        @csrf @method('DELETE')
+                        <button class="btn btn-ghost btn-sm" style="color:#dc2626;"><i class="fa-solid fa-trash"></i> Delete installer</button>
+                    </form>
+                </div>
             @else
                 <span class="badge badge-danger">No installer uploaded</span>
             @endif

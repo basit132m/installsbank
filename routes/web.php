@@ -251,6 +251,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth', 'role:admin,manager'
         Route::get('/{softwareCampaign}', [Admin\SoftwareCampaignController::class, 'show'])->name('show');
         Route::get('/{softwareCampaign}/payload', [Admin\SoftwareCampaignController::class, 'downloadPayload'])->name('payload');
         Route::post('/{softwareCampaign}/rescan', [Admin\SoftwareCampaignController::class, 'rescan'])->name('rescan');
+        Route::delete('/{softwareCampaign}/installer', [Admin\SoftwareCampaignController::class, 'deleteInstaller'])->name('installer.delete');
         Route::post('/{softwareCampaign}/mode', [Admin\SoftwareCampaignController::class, 'setMode'])->name('mode');
         Route::post('/{softwareCampaign}/approve', [Admin\SoftwareCampaignController::class, 'approve'])->name('approve');
         Route::post('/{softwareCampaign}/counter-rate', [Admin\SoftwareCampaignController::class, 'counterRate'])->name('counter-rate');

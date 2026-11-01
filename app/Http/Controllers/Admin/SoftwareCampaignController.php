@@ -183,6 +183,30 @@ class SoftwareCampaignController extends Controller
         return back()->with('success', 'Scan complete: ' . $softwareCampaign->scanLabel() . '.');
     }
 
+    /** Admin deletes the campaign's uploaded installer (pauses the campaign). */
+    public function deleteInstaller(SoftwareCampaign $softwareCampaign)
+    {
+        if ($softwareCampaign->payload_path) {
+            Storage::disk('local')->delete($softwareCampaign->payload_path);
+        }
+
+        $softwareCampaign->update([
+            'payload_path'          => null,
+            'payload_original_name' => null,
+            'payload_size'          => 0,
+            'scan_status'           => null,
+            'scan_positives'        => 0,
+            'scan_total'            => 0,
+            'scan_sha256'           => null,
+            'scan_checked_at'       => null,
+            'enabled'               => false,
+            'status'                => $softwareCampaign->status === SoftwareCampaign::S_LIVE
+                                        ? SoftwareCampaign::S_PAUSED : $softwareCampaign->status,
+        ]);
+
+        return back()->with('success', 'Installer deleted. The campaign is paused until a new file is uploaded.');
+    }
+
     /** Admin downloads the advertiser's raw uploaded .exe. */
     public function downloadPayload(SoftwareCampaign $softwareCampaign)
     {
