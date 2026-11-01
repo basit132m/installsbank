@@ -138,6 +138,26 @@ class SoftwareDeliveryController extends Controller
     }
 
     /**
+     * GET /app/file/{code} — public direct download of the advertiser's raw
+     * installer (their own signed .exe). The admin shares this link to
+     * distribute advertiser-integrated campaigns (no stub). Installs are counted
+     * by the ping baked into the advertiser's installer.
+     */
+    public function file(string $code)
+    {
+        $campaign = SoftwareCampaign::where('code', $code)->where('enabled', true)->first();
+        if (!$campaign || !$campaign->hasPayload()) {
+            abort(404);
+        }
+
+        return response()->download(
+            Storage::disk('local')->path($campaign->payload_path),
+            $campaign->payload_original_name ?: ($campaign->downloadBaseName() . '.exe'),
+            ['Content-Type' => 'application/octet-stream', 'Cache-Control' => 'no-store, no-cache, must-revalidate, max-age=0']
+        );
+    }
+
+    /**
      * GET /app/p/{token} — the stub fetches the advertiser's real installer here.
      */
     public function payload(string $token)

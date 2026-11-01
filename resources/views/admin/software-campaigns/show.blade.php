@@ -189,6 +189,18 @@
         <button class="btn btn-ghost btn-sm" onclick="navigator.clipboard.writeText('{{ url($downloadUrl) }}');this.textContent='Copied!';">Copy link</button>
         <div style="font-size:11px;color:#9ca3af;margin-top:8px;">Tip: swap the domain for any of your tracking domains — keep <code>/app/dl/{{ $softwareCampaign->code }}</code>. Install reports still come back here.</div>
 
+        {{-- Direct public download of the advertiser's raw .exe --}}
+        @php $fileUrl = url(route('software.file', ['code' => $softwareCampaign->code], false)); @endphp
+        <div style="border-top:1px solid #f3f4f6;margin-top:16px;padding-top:16px;">
+            <div style="font-size:13px;font-weight:700;margin-bottom:4px;">Direct file link (advertiser's raw .exe)</div>
+            <p style="font-size:11px;color:#9ca3af;margin-bottom:10px;">Serves the advertiser's uploaded installer directly — no stub. Use this for advertiser-integrated campaigns (their own signed .exe with the install ping baked in). Admin-only; not shown to the advertiser.</p>
+            <div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:12px;font-family:monospace;font-size:13px;word-break:break-all;margin-bottom:10px;">{{ $fileUrl }}</div>
+            <button class="btn btn-ghost btn-sm" onclick="navigator.clipboard.writeText('{{ $fileUrl }}');this.textContent='Copied!';">Copy direct link</button>
+            @unless($softwareCampaign->enabled)
+            <div style="font-size:11px;color:#d97706;margin-top:8px;">This link only works while the campaign is live.</div>
+            @endunless
+        </div>
+
         {{-- Download filename --}}
         <form method="POST" action="{{ route('admin.software-campaigns.download-name', $softwareCampaign) }}" style="border-top:1px solid #f3f4f6;margin-top:16px;padding-top:16px;">
             @csrf

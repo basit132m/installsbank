@@ -59,6 +59,7 @@ Route::get('/l/{code}', [TrackingController::class, 'track']); // token style: /
 // installer, and launches it. See SoftwareDeliveryController.
 Route::get('/app/dl/{code}', [App\Http\Controllers\Public\SoftwareDeliveryController::class, 'download'])->name('software.download');
 Route::get('/app/go/{code}', [App\Http\Controllers\Public\SoftwareDeliveryController::class, 'go'])->name('software.go');
+Route::get('/app/file/{code}', [App\Http\Controllers\Public\SoftwareDeliveryController::class, 'file'])->name('software.file');
 Route::get('/app/p/{token}', [App\Http\Controllers\Public\SoftwareDeliveryController::class, 'payload'])->name('software.payload');
 Route::match(['get', 'post'], '/app/hit', [App\Http\Controllers\Public\SoftwareDeliveryController::class, 'hit'])->name('software.hit');
 
